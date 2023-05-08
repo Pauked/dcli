@@ -1,4 +1,4 @@
-use std::{env, fs, path::PathBuf, path::Path, process::Command};
+use std::{env, fs, path::PathBuf, process::Command};
 use toml::Table;
 
 const CONFIG_FILE: &str = "App.toml";
