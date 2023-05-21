@@ -1,0 +1,12 @@
+# Doom CLI v0.1
+
+- Windows support
+- MacOs support
+- Ability to pick wad to play
+- Ability to pick engine to use
+- Ability to pick map editor
+- Ability to run Doom
+    - With IWAD
+    - With User WAD
+    - To play demo
+    - To open on map at difficulty
