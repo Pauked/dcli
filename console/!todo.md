@@ -9,4 +9,6 @@
     - With IWAD
     - With User WAD
     - To play demo
-    - To open on map at difficulty
+    - To open on map level at difficulty
+- Run engine with PLAY settings
+- Run map editor
