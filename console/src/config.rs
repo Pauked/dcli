@@ -9,10 +9,10 @@ pub fn config() {
     // Open the App.toml file in notepad
     let result = Command::new("notepad.exe")
         .arg(config_file_path.clone())
-        .status();
+        .spawn();
 
     match result {
-        Ok(_) => println!("Opened the following file in Notepad! - {}", config_file_path.display()),
+        Ok(_) => println!("Opened the following file in Notepad! - '{}'", config_file_path.display()),
         Err(e) => println!("Failed to open file in Notepad: {:?}", e),
     }
 }

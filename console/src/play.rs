@@ -24,10 +24,11 @@ pub fn play() {
         .arg(iwad)
         .arg("-file")
         .arg(&file)
-        .status();
+        //.status();
+        .spawn();
 
     match result {
-        Ok(_) => println!("Opened the following file in Doom! - {}", file),
+        Ok(_) => println!("Opened the following file in Doom! - '{}'", file),
         Err(e) => println!("Failed to Doom! {:?}", e),
     }
 }

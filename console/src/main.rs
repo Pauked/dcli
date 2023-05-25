@@ -2,6 +2,7 @@ use std::{io::Write, env, process};
 
 mod config;
 mod constants;
+mod editor;
 mod play;
 mod settings;
 
@@ -16,17 +17,21 @@ fn main() {
             process::exit(0);
         } else if arg == constants::ARG_CONFIG {
             config::config();
+        } else if arg == constants::ARG_EDITOR {
+            editor::editor();
         }
     }
 
     // Wait for user input
     loop {
-        let input = prompt("> ");
+        let input = prompt(constants::PROMPT);
 
         if input == constants::CMD_PLAY {
             play::play();
         } else if input == constants::CMD_CONFIG {
             config::config();
+        } else if input == constants::CMD_EDITOR {
+            editor::editor();
         } else if input == constants::CMD_EXIT {
             break;
         }
