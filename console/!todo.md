@@ -12,3 +12,8 @@
     - To open on map level at difficulty
 - Run engine with PLAY settings
 - Run map editor
+- Track amount of time playing. Record against WAD
+- Short arg options
+- Short cmd options in CLI
+- Built in mini-WIKI of Doom help.
+    - Weapon stats, monster stats

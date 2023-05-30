@@ -12,29 +12,32 @@ fn main() {
     // Attempt to run from arguments
     let args: Vec<String> = env::args().collect();
     for arg in args {
-        if arg == constants::ARG_PLAY {
-            play::play();
-            process::exit(0);
-        } else if arg == constants::ARG_CONFIG {
-            config::config();
-        } else if arg == constants::ARG_EDITOR {
-            editor::editor();
-        }
+        run_option(convert_arg_to_cmd(&arg));
     }
 
     // Wait for user input
     loop {
         let input = prompt(constants::PROMPT);
+        run_option(&input);
+    }
+}
 
-        if input == constants::CMD_PLAY {
-            play::play();
-        } else if input == constants::CMD_CONFIG {
-            config::config();
-        } else if input == constants::CMD_EDITOR {
-            editor::editor();
-        } else if input == constants::CMD_EXIT {
-            break;
-        }
+fn convert_arg_to_cmd(arg: &str) -> &str {
+    match arg {
+        constants::ARG_PLAY => constants::CMD_PLAY,
+        constants::ARG_EDITOR => constants::CMD_EDITOR,
+        constants::ARG_CONFIG => constants::CMD_CONFIG,
+        _ => constants::CMD_EXIT
+    }
+}
+
+fn run_option(option: &str) {
+    match option {
+        constants::CMD_PLAY => play::play(),
+        constants::CMD_CONFIG => config::config(),
+        constants::CMD_EDITOR => editor::editor(),
+        constants::CMD_EXIT => process::exit(0),
+        _ => ()
     }
 }
 
