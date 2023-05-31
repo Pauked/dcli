@@ -7,7 +7,7 @@ mod play;
 mod settings;
 
 fn main() {
-    println!("Doom CLI...");
+    println!("Starting {}...", constants::UI_DOOM_CLI);
 
     // Attempt to run from arguments
     let args: Vec<String> = env::args().collect();
@@ -27,16 +27,17 @@ fn convert_arg_to_cmd(arg: &str) -> &str {
         constants::ARG_PLAY => constants::CMD_PLAY,
         constants::ARG_EDITOR => constants::CMD_EDITOR,
         constants::ARG_CONFIG => constants::CMD_CONFIG,
-        _ => constants::CMD_EXIT
+        _ => constants::CMD_USER_INPUT
     }
 }
 
 fn run_option(option: &str) {
+    println!("Running Option - {}", option);
     match option {
         constants::CMD_PLAY => play::play(),
         constants::CMD_CONFIG => config::config(),
         constants::CMD_EDITOR => editor::editor(),
-        constants::CMD_EXIT => process::exit(0),
+        constants::CMD_EXIT => exit(),
         _ => ()
     }
 }
@@ -50,4 +51,9 @@ fn prompt(name: &str) -> String {
         .expect("Error: Could not read a line");
 
     return line.trim().to_string();
+}
+
+fn exit() {
+    println!("Exiting {}...", constants::UI_DOOM_CLI);
+    process::exit(0);
 }

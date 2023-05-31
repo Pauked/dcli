@@ -13,4 +13,7 @@ pub const ARG_EDITOR: &str = "--editor";
 pub const CMD_PLAY: &str = "play";
 pub const CMD_CONFIG: &str = "config";
 pub const CMD_EDITOR: &str = "editor";
+pub const CMD_USER_INPUT: &str = "user_input";
 pub const CMD_EXIT: &str = "exit";
+
+pub const UI_DOOM_CLI: &str = "Doom CLI";
