@@ -1,4 +1,4 @@
-use std::{io::Write, env, process};
+use std::{env, io::Write, process};
 
 mod config;
 mod constants;
@@ -27,18 +27,30 @@ fn convert_arg_to_cmd(arg: &str) -> &str {
         constants::ARG_PLAY => constants::CMD_PLAY,
         constants::ARG_EDITOR => constants::CMD_EDITOR,
         constants::ARG_CONFIG => constants::CMD_CONFIG,
-        _ => constants::CMD_USER_INPUT
+        _ => constants::CMD_USER_INPUT,
     }
 }
 
 fn run_option(option: &str) {
     println!("Running Option - {}", option);
+
+    let config_file_path = settings::get_config_filename(constants::CONFIG_FILE);
+    let settings = settings::get(config_file_path.clone());
+    println!(
+        "Settings:
+Doom Exe - '{}'
+IWAD     - '{}'
+File     - '{}'
+Editor   - '{}'",
+        settings.doom_exe, settings.iwad, settings.file, settings.editor_exe
+    );
+
     match option {
-        constants::CMD_PLAY => play::play(),
-        constants::CMD_CONFIG => config::config(),
-        constants::CMD_EDITOR => editor::editor(),
+        constants::CMD_PLAY => play::play(settings),
+        constants::CMD_CONFIG => config::config(config_file_path),
+        constants::CMD_EDITOR => editor::editor(settings),
         constants::CMD_EXIT => exit(),
-        _ => ()
+        _ => (),
     }
 }
 

@@ -1,16 +1,9 @@
 use std::process::Command;
 //use subprocess::{Exec, Redirection};
 
-use crate::constants;
 use crate::settings;
 
-pub fn play() {
-    let doom_exe =
-        settings::get_setting_from_config(constants::CONFIG_FILE, constants::KEY_DOOM_EXE);
-    let iwad = settings::get_setting_from_config(constants::CONFIG_FILE, constants::KEY_IWAD);
-    let file = settings::get_setting_from_config(constants::CONFIG_FILE, constants::KEY_FILE);
-
-    println!("{} - {} - {}", doom_exe, iwad, file);
+pub fn play(settings: settings::Settings) {
 
     // Change the current working dir
     /*
@@ -37,16 +30,16 @@ pub fn play() {
     */
 
     // Open Doom
-    let result = Command::new(doom_exe)
+    let result = Command::new(settings.doom_exe)
         .arg("-iwad")
-        .arg(iwad)
+        .arg(settings.iwad)
         .arg("-file")
-        .arg(&file)
+        .arg(&settings.file)
         .status();
         //.spawn();
 
     match result {
-        Ok(_) => println!("Opened the following file in Doom! - '{}'", file),
+        Ok(_) => println!("Opened the following file in Doom! - '{}'", settings.file),
         Err(e) => println!("Failed to run Doom! {:?}", e),
     }
 }

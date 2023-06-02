@@ -1,11 +1,6 @@
-use std::process::Command;
+use std::{process::Command, path::PathBuf};
 
-use crate::{settings, constants};
-
-pub fn config() {
-    // Get config file path
-    let config_file_path = settings::get_config_filename(constants::CONFIG_FILE);
-
+pub fn config(config_file_path: PathBuf) {
     // Open the App.toml file in notepad
     let result = Command::new("notepad.exe")
         .arg(config_file_path.clone())
