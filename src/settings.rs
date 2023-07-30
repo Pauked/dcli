@@ -8,6 +8,7 @@ pub struct Settings {
     pub iwad: String,
     pub file: String,
     pub editor_exe: String,
+    pub save_game: Option<String>,
 }
 
 pub fn get(config_file_path: PathBuf) -> Settings {
