@@ -5,7 +5,7 @@ pub const CONFIG_FILE: &str = "App.toml";
 //pub const KEY_EDITOR_EXE: &str = "editor_exe";
 
 pub const PROMPT: &str = "> ";
-pub const PROMPT_CONFIG: &str = "Config > ";
+// pub const PROMPT_CONFIG: &str = "Config > ";
 
 pub const ARG_PLAY: &str = "--play";
 pub const ARG_CONFIG: &str = "--config";

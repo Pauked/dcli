@@ -17,14 +17,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build
-      run: | 
-        cd console
+      run: |
         cargo build --verbose
     - name: Run tests
       run: |
-        cd console
         cargo test --verbose
     - name: Clippy
       run: |
-        cd console
         cargo clippy --verbose -- -D warnings
