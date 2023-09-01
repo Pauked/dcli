@@ -13,3 +13,5 @@ Cargo.lock
 .idea/
 App.toml
 .DS_Store
+
+sqlite.db

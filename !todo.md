@@ -21,6 +21,7 @@ What do I want in the config?
  - To track wads played
  - To track time played at a WAD and Engine level
  - Have last played based on machine name
+ - Play queues, different queues to play wads. One based on my ordering, one based on random, one based on DoomWorld scores.
 
 Orginal thoughts:
 - Windows support
