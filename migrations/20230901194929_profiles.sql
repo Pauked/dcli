@@ -1,21 +1,22 @@
 
 CREATE TABLE IF NOT EXISTS engines (
     id INTEGER PRIMARY KEY NOT NULL,
-    name TEXT NOT NULL,
     path TEXT NOT NULL,
-    version TEXT NOT NULL
+    version TEXT NOT NULL,
+    game_engine_type TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS iwads (
     id INTEGER PRIMARY KEY NOT NULL,
-    name TEXT NOT NULL,
-    path TEXT NOT NULL
+    path TEXT NOT NULL,
+    internal_wad_type TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS pwads (
     id INTEGER PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
-    path TEXT NOT NULL
+    path TEXT NOT NULL,
+    pwad_type TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS profiles (
@@ -31,13 +32,13 @@ CREATE TABLE IF NOT EXISTS profiles (
 
 CREATE TABLE IF NOT EXISTS settings (
     id INTEGER PRIMARY KEY NOT NULL,
-    name TEXT NOT NULL,
-    value TEXT NOT NULL
+    exe_search_folder: TEXT NOT NULL,
+    iwad_search_folder: TEXT NOT NULL,
 );
 
-CREATE TABLE IF NOT EXISTS search_paths (
-    id INTEGER PRIMARY KEY NOT NULL,
-    path TEXT NOT NULL,
-    path_type TEXT NOT NULL
-);
+-- CREATE TABLE IF NOT EXISTS search_paths (
+--     id INTEGER PRIMARY KEY NOT NULL,
+--     path TEXT NOT NULL,
+--     path_type TEXT NOT NULL
+-- );
 -- Map Editors???

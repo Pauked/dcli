@@ -5,7 +5,10 @@ use log::{debug, info};
 
 mod actions;
 mod constants;
+mod data;
+mod doom_data;
 mod db;
+mod finder;
 mod init;
 mod log_config;
 mod paths;
@@ -25,11 +28,21 @@ async fn run() -> eyre::Result<String> {
         constants::CRATE_VERSION,
     );
 
-    info!("Starting {}...", constants::APP_NAME);
+    //info!("Starting {}...", constants::APP_NAME);
 
     // Attempt to run from arguments
     // We don't want the full exe path, just the args
     let args: Vec<String> = env::args().skip(1).collect();
+
+    let reset_mode = args.contains(&constants::ARG_RESET.to_string());
+    if !reset_mode {
+        db::create_db().await?;
+        if db::is_empty_settings_table().await? {
+            info!("No settings found, running init...");
+            init::init().await?;
+        }
+    }
+
     for arg in args {
         debug!("Running arg: {}", arg);
         actions::run_option(constants::convert_arg_to_cmd(&arg)).await?;
@@ -41,6 +54,7 @@ async fn run() -> eyre::Result<String> {
         if let constants::Command::Quit = input {
             return Ok("Quitting...".to_string())
         }
+
         let result = actions::run_option(input).await?;
         info!("{}", result)
     }

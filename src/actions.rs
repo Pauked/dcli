@@ -1,10 +1,13 @@
 use std::{path::PathBuf, process::Command};
 
-use color_eyre::{Report, Result, eyre::{self, Context}};
+use color_eyre::{
+    eyre::{self, Context},
+    Report, Result,
+};
 use colored::Colorize;
-use dialoguer::{Confirm, theme::ColorfulTheme};
+use dialoguer::{theme::ColorfulTheme, Confirm};
 
-use crate::{db, constants, settings, init};
+use crate::{constants, db, init, settings};
 
 pub async fn run_option(command: constants::Command) -> Result<String, eyre::Report> {
     let config_file_path = settings::get_config_filename(constants::CONFIG_FILE);
@@ -17,17 +20,11 @@ pub async fn run_option(command: constants::Command) -> Result<String, eyre::Rep
         }
     }
 
-    // FIXME: Add init when db empty back in
-    // if option != constants::CMD_RESET && db::is_empty_settings_table().await? {
-    //     println!("No settings found, running init...");
-    //     init::init()?;
-    // }
-
     match command {
         constants::Command::Play => play(settings),
         constants::Command::Config => config(config_file_path),
         constants::Command::Editor => editor(settings),
-        constants::Command::Init => init::init(),
+        constants::Command::Init => init::init().await,
         constants::Command::Reset => reset(false).await,
         _ => Ok("".to_string()),
     }
@@ -38,9 +35,15 @@ pub fn config(config_file_path: PathBuf) -> Result<String, eyre::Report> {
     Command::new("notepad.exe")
         .arg(config_file_path.clone())
         .spawn()
-        .wrap_err(format!("Failed to open file in Notepad! - '{}'", config_file_path.display()))?;
+        .wrap_err(format!(
+            "Failed to open file in Notepad! - '{}'",
+            config_file_path.display()
+        ))?;
 
-    Ok(format!("Opened the following file in Notepad! - '{}'", config_file_path.display()))
+    Ok(format!(
+        "Opened the following file in Notepad! - '{}'",
+        config_file_path.display()
+    ))
 }
 
 pub fn editor(settings: settings::Settings) -> Result<String, eyre::Report> {
@@ -49,9 +52,15 @@ pub fn editor(settings: settings::Settings) -> Result<String, eyre::Report> {
         .arg(&settings.file)
         //.arg(format!("'{}'", &file))
         .spawn()
-        .wrap_err(format!("Failed to open file in Editor! - '{}' / '{}'", settings.editor_exe, settings.file))?;
+        .wrap_err(format!(
+            "Failed to open file in Editor! - '{}' / '{}'",
+            settings.editor_exe, settings.file
+        ))?;
 
-    Ok(format!("Opened the following file in Editor! - '{}' / '{}'", settings.editor_exe, settings.file))
+    Ok(format!(
+        "Opened the following file in Editor! - '{}' / '{}'",
+        settings.editor_exe, settings.file
+    ))
 }
 
 fn play(settings: settings::Settings) -> Result<String, eyre::Report> {
@@ -65,8 +74,12 @@ fn play(settings: settings::Settings) -> Result<String, eyre::Report> {
     }
 
     // cmd.status().wrap_err(format!("Failed to run Doom! - '{}'", settings.doom_exe))?;
-    cmd.spawn().wrap_err(format!("Failed to run Doom! - '{}'", settings.doom_exe))?;
-    Ok(format!("Opened the following file in Doom! - '{}' / '{}''", settings.doom_exe, settings.file))
+    cmd.spawn()
+        .wrap_err(format!("Failed to run Doom! - '{}'", settings.doom_exe))?;
+    Ok(format!(
+        "Opened the following file in Doom! - '{}' / '{}''",
+        settings.doom_exe, settings.file
+    ))
 }
 
 async fn reset(force: bool) -> Result<String, Report> {

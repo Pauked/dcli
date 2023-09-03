@@ -9,6 +9,7 @@ pub fn prompt() -> constants::Command {
         constants::Command::Play.to_string(),
         constants::Command::Config.to_string(),
         constants::Command::Editor.to_string(),
+        constants::Command::Init.to_string(),
         constants::Command::Quit.to_string(),
     ];
 
