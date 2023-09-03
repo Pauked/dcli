@@ -32,7 +32,7 @@ pub fn extract_file_name(full_path: &str) -> String {
     let path = Path::new(full_path);
     path.file_name().and_then(|file_name| file_name.to_str())
         .map(|s| s.to_string())
-        .unwrap_or_else(|| String::new())
+        .unwrap_or_else(String::new)
 }
 
 pub fn get_full_path(base_path: &str, file_name: &str) -> String {

@@ -7,7 +7,9 @@ use crate::doom_data;
 pub struct Engine {
     #[tabled(skip)]
     pub id: i32,
+    #[tabled(rename = "Path")]
     pub path: String,
+    #[tabled(rename = "Version")]
     pub version: String,
     #[tabled(rename = "Engine Type")]
     pub game_engine_type: doom_data::GameEngineType,
@@ -17,7 +19,36 @@ pub struct Engine {
 pub struct Iwad {
     #[tabled(skip)]
     pub id: i32,
+    #[tabled(rename = "Path")]
     pub path: String,
     #[tabled(rename = "Internal WAD Type")]
     pub internal_wad_type: doom_data::InternalWadType,
+}
+
+#[derive(Clone, Debug, FromRow, Tabled)]
+pub struct Settings {
+    #[tabled(skip)]
+    pub id: i32,
+    #[tabled(skip)]
+    pub active_profile_id: Option<i32>,
+    #[tabled(rename = "Exe Search Folder", display_with = "display_option_string")]
+    pub exe_search_folder: Option<String>,
+    #[tabled(rename = "Internal WAD Search Folder", display_with = "display_option_string")]
+    pub iwad_search_folder: Option<String>,
+    #[tabled(rename = "Patch WAD Search Folder", display_with = "display_option_string")]
+    pub pwad_search_folder: Option<String>,
+}
+
+// pub fn display_option_i32(value: &Option<i32>) -> String {
+//     match value {
+//         Some(i) => i.to_string(),
+//         None => "N/A".to_string(),
+//     }
+// }
+
+pub fn display_option_string(value: &Option<String>) -> String {
+    match value {
+        Some(s) => s.to_string(),
+        None => "N/A".to_string(),
+    }
 }

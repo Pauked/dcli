@@ -104,10 +104,10 @@ pub fn get_prboom_file_version(full_path: &str) -> Result<FileVersion, eyre::Rep
                     revision: 0,
                 })
             } else {
-                return Err(eyre::eyre!(format!(
+                Err(eyre::eyre!(format!(
                     "Unable find version in output from '{}",
                     input,
-                )));
+                )))
             }
 
         }

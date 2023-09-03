@@ -15,8 +15,7 @@ CREATE TABLE IF NOT EXISTS iwads (
 CREATE TABLE IF NOT EXISTS pwads (
     id INTEGER PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
-    path TEXT NOT NULL,
-    pwad_type TEXT NOT NULL
+    path TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS profiles (
@@ -32,8 +31,11 @@ CREATE TABLE IF NOT EXISTS profiles (
 
 CREATE TABLE IF NOT EXISTS settings (
     id INTEGER PRIMARY KEY NOT NULL,
-    exe_search_folder: TEXT NOT NULL,
-    iwad_search_folder: TEXT NOT NULL,
+    active_profile_id INTEGER NULL,
+    exe_search_folder TEXT NULL,
+    iwad_search_folder TEXT NULL,
+    pwad_search_folder TEXT NULL,
+    FOREIGN KEY (active_profile_id) REFERENCES profiles (id)
 );
 
 -- CREATE TABLE IF NOT EXISTS search_paths (

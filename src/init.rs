@@ -1,26 +1,33 @@
 use color_eyre::eyre;
 use dialoguer::{theme::ColorfulTheme, Input, MultiSelect};
-use eyre::Context;
 use log::info;
-use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{
     constants,
     data::{self},
-    db, doom_data, finder, paths,
+    db, doom_data, finder, paths, actions,
 };
 
 pub async fn init() -> Result<String, eyre::Report> {
+    // TODO: Block running if there is data. Or perhaps prompt to reset?
+
     info!("Weclome to {}.", constants::APP_NAME);
     info!("We'll ask you some questions, and then you'll be ready to go.");
 
-    init_engines().await?;
-    init_iwads().await?;
+    let exe_search_folder = init_engines().await?;
+    let iwad_search_folder = init_iwads(&exe_search_folder).await?;
+    let pwad_search_folder = init_pwads(&iwad_search_folder).await?;
 
-    // Search for PWADs
-    // Do we need to search? What about just picking a folder?
+    let settings = data::Settings {
+        id: 0,
+        active_profile_id: None,
+        exe_search_folder: Some(exe_search_folder),
+        iwad_search_folder: Some(iwad_search_folder),
+        pwad_search_folder: Some(pwad_search_folder),
+    };
+    db::add_settings(&settings).await?;
 
-    Ok("NOT IMPLEMENTED!".to_string())
+    Ok("Succesfully configured!".to_string())
 }
 
 async fn init_engines() -> Result<String, eyre::Report> {
@@ -80,23 +87,16 @@ async fn init_engines() -> Result<String, eyre::Report> {
             game_engine_type,
             id: 0,
         };
+        // TODO: Check engine doesn't already exist
         db::add_engine(&engine).await?;
     }
 
-    let saved_engines = db::get_engines()
-        .await
-        .wrap_err("Unable to generate engine listing".to_string())?;
+    info!("{}", actions::display_engines().await?);
 
-    let engine_table = tabled::Table::new(saved_engines)
-        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
-        .with(Style::modern())
-        .to_string();
-    println!("{}", engine_table);
-
-    Ok("NOT IMPLEMENTED!".to_string())
+    Ok(exe_search_folder)
 }
 
-async fn init_iwads() -> Result<String, eyre::Report> {
+async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     // Search for IWADs
     // Use the same folder as the engines, but given option to change
     // Save to IWADs table
@@ -111,7 +111,7 @@ async fn init_iwads() -> Result<String, eyre::Report> {
                 }
             }
         })
-        //.default(exe_search_folder.to_string())
+        .default(default_folder.to_string())
         .interact_text()
         .unwrap();
 
@@ -148,20 +148,32 @@ async fn init_iwads() -> Result<String, eyre::Report> {
             id: 0,
         };
 
+        // TODO: Check iwad doesn't exist
         db::add_iwad(&iwad).await?;
     }
 
-    let saved_iwads = db::get_iwads()
-        .await
-        .wrap_err("Unable to generate engine listing".to_string())?;
+    info!("{}", actions::display_iwads().await?);
 
-    let iwad_table = tabled::Table::new(saved_iwads)
-        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
-        .with(Style::modern())
-        .to_string();
-    println!("{}", iwad_table);
+    Ok(iwad_search_folder)
+}
 
-    Ok("NOT IMPLEMENTED!".to_string())
+async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
+    let pwad_search_folder: String = Input::with_theme(&ColorfulTheme::default())
+        .with_prompt("Folder to search for PWADs (Patch WAD files)")
+        .validate_with({
+            move |input: &String| -> Result<(), &str> {
+                if paths::folder_exists(input) {
+                    Ok(())
+                } else {
+                    Err("This is not a valid folder")
+                }
+            }
+        })
+        .default(default_folder.to_string())
+        .interact_text()
+        .unwrap();
+
+    Ok(pwad_search_folder)
 }
 
 fn get_version_from_exe_name(
@@ -169,7 +181,7 @@ fn get_version_from_exe_name(
     game_engine_type: doom_data::GameEngineType,
 ) -> Result<String, eyre::Report> {
     match game_engine_type {
-        doom_data::GameEngineType::Doom => Ok("NOT IMPLEMENTED!".to_string()),
+        doom_data::GameEngineType::Doom => todo!("Doom version not implemented yet!"),
         doom_data::GameEngineType::PrBoomPlus => {
             let file_version_result = finder::get_prboom_file_version(exe_name)?;
             Ok(format!(

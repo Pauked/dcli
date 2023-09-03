@@ -103,3 +103,29 @@ pub async fn get_iwads() -> Result<Vec<data::Iwad>, eyre::Report> {
         .await
         .wrap_err("Failed to get list of all internal wads")
 }
+
+pub async fn add_settings(settings: &data::Settings) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let db = SqlitePool::connect(DB_URL).await.unwrap();
+
+    sqlx::query(
+        "INSERT INTO settings (active_profile_id, exe_search_folder, iwad_search_folder, pwad_search_folder) VALUES (?,?,?,?)",
+    )
+    .bind(settings.active_profile_id)
+    .bind(&settings.exe_search_folder)
+    .bind(&settings.iwad_search_folder)
+    .bind(&settings.pwad_search_folder)
+    .execute(&db)
+    .await
+    .wrap_err(format!(
+        "Failed to add internal wad '{:?}", settings
+    ))
+}
+
+pub async fn get_settings() -> Result<data::Settings, eyre::Report> {
+    let db = SqlitePool::connect(DB_URL).await.unwrap();
+
+    sqlx::query_as::<_, data::Settings>("SELECT * FROM settings")
+        .fetch_one(&db)
+        .await
+        .wrap_err("Failed to get settings".to_string())
+}

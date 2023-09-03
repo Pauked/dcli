@@ -4,15 +4,16 @@ use color_eyre::eyre;
 use log::{debug, info};
 
 mod actions;
+mod app_settings;
 mod constants;
 mod data;
-mod doom_data;
 mod db;
+mod doom_data;
 mod finder;
 mod init;
 mod log_config;
 mod paths;
-mod settings;
+mod profiles;
 mod tui;
 
 #[tokio::main]
@@ -50,12 +51,12 @@ async fn run() -> eyre::Result<String> {
 
     // Wait for user input
     loop {
-        let input = tui::prompt();
-        if let constants::Command::Quit = input {
-            return Ok("Quitting...".to_string())
+        let menu_command = tui::main_menu_prompt();
+        if let constants::Command::Quit = menu_command {
+            return Ok("Quitting...".to_string());
         }
 
-        let result = actions::run_option(input).await?;
+        let result = actions::run_option(menu_command).await?;
         info!("{}", result)
     }
 }
