@@ -2,11 +2,12 @@
 name = "dcli"
 version = "0.1.0"
 edition = "2021"
-
+description = "Play Doom quickly and easily"
+authors = ["Paul"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-toml = "0.7.4"
+toml = "0.7"
 #subprocess = "0.2.9"
 tokio = { version = "1.32", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1.0", features = ["derive"] }
@@ -15,6 +16,12 @@ sqlx = { version = "0.7", features = [
     "sqlite",
     "chrono",
 ] }
+eyre = "0.6"
 color-eyre = { version = "0.6", default-features = false }
 log = "0.4"
 log4rs = "1"
+dialoguer = { version = "0.10", features = ["completion"] }
+colored = "2"
+# console = "0.15"
+strum = "0.25"
+strum_macros = "0.25"

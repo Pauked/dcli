@@ -15,10 +15,10 @@ pub fn get_current_exe() -> String {
     String::new()
 }
 
-pub fn folder_exists(folder_path: &str) -> bool {
-    let path = Path::new(folder_path);
-    path.is_dir()
-}
+// pub fn folder_exists(folder_path: &str) -> bool {
+//     let path = Path::new(folder_path);
+//     path.is_dir()
+// }
 
 pub fn file_exists(file_path: &str) -> bool {
     let path = Path::new(file_path);

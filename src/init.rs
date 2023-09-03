@@ -1,40 +1,19 @@
+use color_eyre::eyre;
+// use dialoguer::{Confirm, theme::ColorfulTheme};
 
-/*
+pub fn init() -> Result<String, eyre::Report> {
+    todo!("Init")
+    // Given a root path, search for known items.
+    // if  Confirm::with_theme(&ColorfulTheme::default())
+    // .with_prompt("Do you want to reset the database? All data will be deleted.")
+    // .interact()
+    // .unwrap() {
 
-
- */
-
-// use std::io::Write;
-
-// use crate::constants;
-
-pub fn init() {
-    todo!("Init");
-    // Wait for user input
-    // loop {
-    //     let input = prompt(constants::PROMPT_CONFIG);
-    //     // run_option(&input);
     // }
+
+    // Search for Doom engines
+    // Search for IWADs
+
+    // This is user configurable, like what is your PWAD root folder?
+    // Search for PWADs
 }
-
-
-
-// fn run_option(option: &str) {
-    /*
-    Config
-    - IWADs
-    - Engine paths?
-     */
-// }
-
-
-// fn prompt(prompt: &str) -> String {
-//     let mut line = String::new();
-//     print!("{}", prompt);
-//     std::io::stdout().flush().unwrap();
-//     std::io::stdin()
-//         .read_line(&mut line)
-//         .expect("Error: Could not read a line");
-
-//     return line.trim().to_string();
-// }

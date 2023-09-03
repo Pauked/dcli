@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS iwads (
     path TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS wads (
+CREATE TABLE IF NOT EXISTS pwads (
     id INTEGER PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
     path TEXT NOT NULL
@@ -23,10 +23,10 @@ CREATE TABLE IF NOT EXISTS profiles (
     name TEXT NOT NULL,
     engine_id INTEGER NULL,
     iwad_id INTEGER NULL,
-    wad_id INTEGER NULL,
+    pwad_id INTEGER NULL,
     FOREIGN KEY (engine_id) REFERENCES engines (id),
     FOREIGN KEY (iwad_id) REFERENCES iwads (id),
-    FOREIGN KEY (wad_id) REFERENCES wads (id)
+    FOREIGN KEY (pwad_id) REFERENCES pwads (id)
 );
 
 CREATE TABLE IF NOT EXISTS settings (

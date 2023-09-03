@@ -1,7 +1,11 @@
-use color_eyre::eyre::{Context, self};
-use log::debug;
-use sqlx::{Sqlite, migrate::{Migrator, MigrateDatabase}, SqlitePool};
+use std::{fs, io};
 
+use color_eyre::eyre::{self, Context};
+use log::debug;
+use sqlx::{
+    migrate::{MigrateDatabase, Migrator},
+    Sqlite, SqlitePool,
+};
 
 const DB_URL: &str = "sqlite://sqlite.db";
 const DB_FILE: &str = "sqlite.db";
@@ -31,3 +35,20 @@ pub async fn create_db() -> Result<bool, eyre::Report> {
     debug!("Migration success");
     Ok(true)
 }
+
+pub fn reset_db() -> Result<(), io::Error> {
+    fs::remove_file(DB_FILE)
+}
+
+// pub async fn is_empty_settings_table() -> Result<bool, eyre::Report> {
+//     let db = SqlitePool::connect(DB_URL).await.unwrap();
+
+//     // Execute a query to check if the table is empty
+//     let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM settings")
+//         .fetch_one(&db)
+//         .await
+//         .wrap_err("Failed to check is Settings tasble is empty")?;
+
+//     // Determine if the table is empty
+//     Ok(result.0 == 0)
+// }
