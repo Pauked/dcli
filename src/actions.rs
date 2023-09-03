@@ -1,4 +1,4 @@
-// use std::process::Command;
+use std::process::Command;
 
 use color_eyre::{
     eyre::{self, Context},
@@ -9,7 +9,7 @@ use dialoguer::{theme::ColorfulTheme, Confirm};
 use log::info;
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
-use crate::{constants, db, init, profiles};
+use crate::{constants::{self}, db, init, profiles};
 
 pub async fn run_option(command: constants::Command) -> Result<String, eyre::Report> {
     // let config_file_path = app_settings::get_config_filename(constants::CONFIG_FILE);
@@ -23,8 +23,8 @@ pub async fn run_option(command: constants::Command) -> Result<String, eyre::Rep
     }
 
     match command {
-        constants::Command::Play => play(),
-        constants::Command::Profiles => profiles::profiles(),
+        constants::Command::Play => play().await,
+        constants::Command::Profiles => profiles::profiles().await,
         constants::Command::ShowSettings => show_settings().await,
         // constants::Command::Play => play(settings),
         // constants::Command::NotepadConfig => notepad_config(config_file_path),
@@ -35,18 +35,48 @@ pub async fn run_option(command: constants::Command) -> Result<String, eyre::Rep
     }
 }
 
-pub fn play() -> Result<String, eyre::Report> {
+pub async fn play() -> Result<String, eyre::Report> {
+    let profiles = db::get_profiles().await?;
+
+    if profiles.is_empty() {
+        return Ok("No profiles found, please create one.".to_string());
+    }
+
+    // FIXME: Bit hacky!
+    let single_profile = profiles[0].clone();
+    let engine = db::get_engine_by_id(single_profile.engine_id.unwrap()).await?;
+    let iwad = db::get_iwad_by_id(single_profile.iwad_id.unwrap()).await?;
+    let pwad = db::get_pwad_by_id(single_profile.pwad_id.unwrap()).await?;
+
+    let mut cmd = Command::new(&engine.path);
+    cmd.arg("-iwad")
+        .arg(iwad.path)
+        .arg("-file")
+        .arg(&pwad.path);
+    // if let Some(save_game) = settings.save_game {
+    //     cmd.arg("-loadgame").arg(save_game);
+    // }
+
+    // cmd.status().wrap_err(format!("Failed to run Doom! - '{}'", settings.doom_exe))?;
+    cmd.spawn()
+        .wrap_err(format!("Failed to run Doom! - '{}'", engine.path))?;
+    Ok(format!(
+        "Opened the following file in Doom! - '{}' / '{}''",
+        engine.path, pwad.path
+    ))
+
     // Do we have an active profile?
     // No, pick one.
     // Do we have any profiles configured?
     // No, create one.
 
-    Ok("Opened Doom!".to_string())
+    //Ok("Opened Doom!".to_string())
 }
 
 pub async fn show_settings() -> Result<String, eyre::Report> {
     info!("{}", display_engines().await?);
     info!("{}", display_iwads().await?);
+    info!("{}", display_pwads().await?);
     info!("{}", display_settings().await?);
     Ok("".to_string())
 }
@@ -145,6 +175,20 @@ pub async fn display_iwads() -> Result<String, Report> {
         .to_string();
     Ok(table)
 }
+
+
+pub async fn display_pwads() -> Result<String, Report> {
+    let pwads = db::get_pwads()
+        .await
+        .wrap_err("Unable to iwad listing".to_string())?;
+
+    let table = tabled::Table::new(pwads)
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
+        .with(Style::modern())
+        .to_string();
+    Ok(table)
+}
+
 
 pub async fn display_settings() -> Result<String, Report> {
     let settings = db::get_settings()

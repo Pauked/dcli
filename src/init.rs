@@ -3,9 +3,9 @@ use dialoguer::{theme::ColorfulTheme, Input, MultiSelect};
 use log::info;
 
 use crate::{
-    constants,
+    actions, constants,
     data::{self},
-    db, doom_data, finder, paths, actions,
+    db, doom_data, finder, paths,
 };
 
 pub async fn init() -> Result<String, eyre::Report> {
@@ -172,6 +172,26 @@ async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
         .default(default_folder.to_string())
         .interact_text()
         .unwrap();
+
+    // TODO: Extend to go find PWADs. Need a wildcard search method for this. And to remove IWADS from list.
+    let pwads = paths::find_files_with_extension_in_folders(&pwad_search_folder, "wad");
+    if pwads.is_empty() {
+        return Err(eyre::eyre!(format!(
+            "No matches found using recursive search in folder '{}'",
+            &pwad_search_folder
+        )));
+    }
+
+    for pwad in pwads {
+        let pwad = data::Pwad {
+            name: paths::extract_file_name(&pwad),
+            path: pwad.clone(),
+            id: 0,
+        };
+        db::add_pwad(&pwad).await?;
+    }
+
+    info!("{}", actions::display_pwads().await?);
 
     Ok(pwad_search_folder)
 }

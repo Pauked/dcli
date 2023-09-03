@@ -1,8 +1,11 @@
-use std::{env, path::{Path, PathBuf}};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
-use log::{error, debug};
+use log::{debug, error};
 use walkdir::WalkDir;
 
 pub fn get_current_exe() -> String {
@@ -30,7 +33,8 @@ pub fn file_exists(file_path: &str) -> bool {
 
 pub fn extract_file_name(full_path: &str) -> String {
     let path = Path::new(full_path);
-    path.file_name().and_then(|file_name| file_name.to_str())
+    path.file_name()
+        .and_then(|file_name| file_name.to_str())
         .map(|s| s.to_string())
         .unwrap_or_else(String::new)
 }
@@ -64,6 +68,45 @@ pub fn find_file_in_folders(root_folder: &str, find_files: Vec<&str>) -> Vec<Str
             // Check if the file name matches
             for file in &find_files {
                 if entry.file_name().to_string_lossy().to_lowercase() == file.to_lowercase() {
+                    found_count += 1;
+                    results.push(entry.path().display().to_string());
+                }
+            }
+
+            // Set the message to the currently-searched directory
+            pb.set_message(format!(
+                "({}) Searching: '{}'",
+                get_matches_count(found_count),
+                truncate_middle(&entry.path().display().to_string(), 80)
+            ));
+        }
+
+        pb.inc(1); // Increase the spinner's step
+    }
+
+    debug!("Match files found - {:?}", results);
+    results
+}
+
+pub fn find_files_with_extension_in_folders(root_folder: &str, extension: &str) -> Vec<String> {
+    debug!(
+        "find_files_with_extension_in_folders: '{}' / '{}'",
+        root_folder, extension
+    );
+    let mut results: Vec<String> = Vec::new();
+
+    // Create a new progress bar
+    let pb = ProgressBar::new_spinner();
+    pb.set_style(
+        ProgressStyle::with_template("{spinner:.blue} [{elapsed_precise}] {msg}").unwrap(),
+    );
+
+    let mut found_count = 0;
+
+    for entry in WalkDir::new(root_folder) {
+        if let Ok(entry) = entry {
+            if let Some(ext) = entry.path().extension() {
+                if ext == extension {
                     found_count += 1;
                     results.push(entry.path().display().to_string());
                 }

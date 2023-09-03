@@ -1,3 +1,4 @@
+
 use sqlx::FromRow;
 use tabled::Tabled;
 
@@ -23,6 +24,25 @@ pub struct Iwad {
     pub path: String,
     #[tabled(rename = "Internal WAD Type")]
     pub internal_wad_type: doom_data::InternalWadType,
+}
+
+#[derive(Clone, Debug, FromRow, Tabled)]
+pub struct Pwad {
+    #[tabled(skip)]
+    pub id: i32,
+    #[tabled(rename = "Name")]
+    pub name: String,
+    #[tabled(rename = "Path")]
+    pub path: String,
+}
+
+#[derive(Clone, Debug, FromRow)]
+pub struct Profile {
+    pub id: i32,
+    pub name: String,
+    pub engine_id: Option<i32>,
+    pub iwad_id: Option<i32>,
+    pub pwad_id: Option<i32>,
 }
 
 #[derive(Clone, Debug, FromRow, Tabled)]

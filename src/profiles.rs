@@ -1,9 +1,9 @@
-// use dialoguer::{theme::ColorfulTheme, Input, Select};
+use dialoguer::{theme::ColorfulTheme, Input, Select};
 use log::info;
 
-use crate::{constants, tui};
+use crate::{constants, tui, db, data};
 
-pub fn profiles() -> Result<String, eyre::Report> {
+pub async fn profiles() -> Result<String, eyre::Report> {
     // Menu:
     loop {
         let menu_command = tui::profiles_menu_prompt();
@@ -14,7 +14,8 @@ pub fn profiles() -> Result<String, eyre::Report> {
                 // let profile = profiles::create_profile()?;
                 // // Save the profile
                 // profiles::save_profile(profile)?;
-                info!("Created a new profile")
+                // info!("Created a new profile")
+                new_profile().await?;
             }
             constants::ProfileCommand::Edit => {
                 // Edit a profile
@@ -45,35 +46,50 @@ pub fn profiles() -> Result<String, eyre::Report> {
     }
 }
 
-// async fn new_profile() -> Result<String, eyre::Report> {
-//     let profile_name: String = Input::with_theme(&ColorfulTheme::default())
-//         .with_prompt("Enter a name for your profile")
-//         .interact_text()
-//         .unwrap();
+async fn new_profile() -> Result<String, eyre::Report> {
+    let profile_name: String = Input::with_theme(&ColorfulTheme::default())
+        .with_prompt("Enter a name for your profile")
+        .interact_text()
+        .unwrap();
 
-//     let engines = db::get_engines().await?;
-//     let engine_list = engines
-//         .iter()
-//         .map(|e| e.path.as_str())
-//         .collect::<Vec<&str>>();
+    let engines = db::get_engines().await?;
+    let engine_list = engines
+        .iter()
+        .map(|e| e.path.as_str())
+        .collect::<Vec<&str>>();
 
-//     let engine_selection = Select::with_theme(&ColorfulTheme::default())
-//         .with_prompt("Pick the engine you want to use")
-//         .items(&engine_list[..])
-//         .interact()
-//         .unwrap();
+    let engine_selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Pick the engine you want to use")
+        .items(&engine_list[..])
+        .interact()
+        .unwrap();
 
-//     let iwads = db::get_iwads().await?;
-//     let iwad_list = iwads.iter().map(|i| i.path.as_str()).collect::<Vec<&str>>();
+    let iwads = db::get_iwads().await?;
+    let iwad_list = iwads.iter().map(|i| i.path.as_str()).collect::<Vec<&str>>();
 
-//     let iwad_selection = Select::with_theme(&ColorfulTheme::default())
-//         .with_prompt("Pick the iwad you want to use")
-//         .items(&iwad_list[..])
-//         .interact()
-//         .unwrap();
+    let iwad_selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Pick the iwad you want to use")
+        .items(&iwad_list[..])
+        .interact()
+        .unwrap();
 
+    let pwads = db::get_pwads().await?;
+    let pwad_list = pwads.iter().map(|i| i.path.as_str()).collect::<Vec<&str>>();
 
+    let pwad_selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Pick the pwad you want to use")
+        .items(&pwad_list[..])
+        .interact()
+        .unwrap();
 
-//     //let engine =
-//     todo!("Finish this")
-// }
+    let profile = data::Profile {
+        id: 0,
+        name: profile_name,
+        engine_id: Some(engines[engine_selection].id),
+        iwad_id: Some(iwads[iwad_selection].id),
+        pwad_id: Some(pwads[pwad_selection].id),
+    };
+    db::add_profile(&profile).await?;
+
+    Ok("Created a new profile".to_string())
+}
