@@ -1,6 +1,7 @@
+use eyre::Context;
 use log::info;
 
-use crate::{constants, data, db, tui};
+use crate::{constants, data, db, paths, tui};
 
 pub async fn profiles() -> Result<String, eyre::Report> {
     // Menu:
@@ -9,36 +10,18 @@ pub async fn profiles() -> Result<String, eyre::Report> {
 
         match menu_command {
             constants::ProfileCommand::New => {
-                // Create a new profile
-                // let profile = profiles::create_profile()?;
-                // // Save the profile
-                // profiles::save_profile(profile)?;
-                // info!("Created a new profile")
                 new_profile().await?;
             }
             constants::ProfileCommand::Edit => {
-                // Edit a profile
-                // let profile = profiles::edit_profile()?;
-                // // Save the profile
-                // profiles::save_profile(profile)?;
-                info!("Edited a profile")
+                edit_profile().await?;
             }
             constants::ProfileCommand::Delete => {
-                // Delete a profile
-                // let profile = profiles::delete_profile()?;
-                // // Save the profile
-                // profiles::save_profile(profile)?;
                 info!("Deleted a profile")
             }
             constants::ProfileCommand::Active => {
-                // Set the active profile
-                // let profile = profiles::set_active_profile()?;
-                // // Save the profile
-                // profiles::save_profile(profile)?;
-                info!("Set the active profile")
+                active_profile().await?;
             }
             constants::ProfileCommand::Back => {
-                // Back to main menu
                 return Ok("Back to main menu".to_string());
             }
             constants::ProfileCommand::UserInput => todo!(),
@@ -84,7 +67,51 @@ async fn new_profile() -> Result<String, eyre::Report> {
         iwad_id: Some(iwad_id),
         pwad_id: Some(pwad_id),
     };
-    db::add_profile(&profile).await?;
+    db::add_profile(profile)
+        .await
+        .wrap_err("Failed to add profile")?;
 
     Ok("Created a new profile".to_string())
+}
+
+async fn edit_profile() -> Result<String, eyre::Report> {
+    todo!("Edit a profile")
+}
+
+async fn active_profile() -> Result<String, eyre::Report> {
+    let profiles = db::get_profiles().await?;
+    let engines = db::get_engines().await?;
+    let iwads = db::get_iwads().await?;
+    let pwads = db::get_pwads().await?;
+
+    let mut profile_list = Vec::new();
+    for profile in profiles {
+        let engine = engines
+            .iter()
+            .find(|e| e.id == profile.engine_id.unwrap())
+            .unwrap();
+        let iwad = iwads
+            .iter()
+            .find(|i| i.id == profile.iwad_id.unwrap())
+            .unwrap();
+        let pwad = pwads
+            .iter()
+            .find(|p| p.id == profile.pwad_id.unwrap())
+            .unwrap();
+
+        profile_list.push(format!(
+            "{} - PWAD {} / Engine {} / IWAD {}",
+            profile.name,
+            paths::extract_file_name(&pwad.path),
+            paths::extract_file_name(&engine.path),
+            paths::extract_file_name(&iwad.path),
+        ));
+    }
+
+    // Generate a list of profiles showing the full details
+    let profile =
+        inquire::Select::new("Pick the profile to mark as active", profile_list).prompt()?;
+
+    // TODO: Update Settings table...
+    Ok(format!("Marked profile '{}' as active", profile))
 }

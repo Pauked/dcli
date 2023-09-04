@@ -184,7 +184,7 @@ pub async fn get_settings() -> Result<data::Settings, eyre::Report> {
         .wrap_err("Failed to get settings".to_string())
 }
 
-pub async fn add_profile(profile: &data::Profile) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+pub async fn add_profile(profile: data::Profile) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let db = SqlitePool::connect(DB_URL).await.unwrap();
 
     sqlx::query(

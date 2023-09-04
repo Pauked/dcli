@@ -1,6 +1,6 @@
 use std::{env, process};
 
-use color_eyre::eyre;
+use color_eyre::{eyre, owo_colors::OwoColorize};
 use log::{debug, info};
 
 mod actions;
@@ -29,7 +29,7 @@ async fn run() -> eyre::Result<String> {
         constants::CRATE_VERSION,
     );
 
-    //info!("Starting {}...", constants::APP_NAME);
+    info!("Welcome to {}", constants::APP_NAME.bright_yellow());
 
     // Attempt to run from arguments
     // We don't want the full exe path, just the args

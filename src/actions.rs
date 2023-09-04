@@ -78,6 +78,7 @@ pub async fn show_settings() -> Result<String, eyre::Report> {
     info!("{}", display_iwads().await?);
     info!("{}", display_pwads().await?);
     info!("{}", display_settings().await?);
+    info!("{}", display_profiles().await?);
     Ok("".to_string())
 }
 
@@ -194,6 +195,18 @@ pub async fn display_settings() -> Result<String, Report> {
         .wrap_err("Unable to settings listing".to_string())?;
 
     let table = tabled::Table::new(vec![settings])
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
+        .with(Style::modern())
+        .to_string();
+    Ok(table)
+}
+
+pub async fn display_profiles() -> Result<String, Report> {
+    let profiles = db::get_profiles()
+        .await
+        .wrap_err("Unable to profile listing".to_string())?;
+
+    let table = tabled::Table::new(profiles)
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
         .with(Style::modern())
         .to_string();

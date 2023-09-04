@@ -36,12 +36,16 @@ pub struct Pwad {
     pub path: String,
 }
 
-#[derive(Clone, Debug, FromRow)]
+#[derive(Clone, Debug, FromRow, Tabled)]
 pub struct Profile {
+    #[tabled(skip)]
     pub id: i32,
     pub name: String,
+    #[tabled(skip)]
     pub engine_id: Option<i32>,
+    #[tabled(skip)]
     pub iwad_id: Option<i32>,
+    #[tabled(skip)]
     pub pwad_id: Option<i32>,
 }
 
