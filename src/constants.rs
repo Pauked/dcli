@@ -50,4 +50,5 @@ pub enum ProfileCommand {
     Delete,
     Active,
     Back,
+    UserInput,
 }

@@ -1,5 +1,5 @@
 use color_eyre::eyre;
-use dialoguer::{theme::ColorfulTheme, Input, MultiSelect};
+use inquire::validator::Validation;
 use log::info;
 
 use crate::{
@@ -31,19 +31,15 @@ pub async fn init() -> Result<String, eyre::Report> {
 }
 
 async fn init_engines() -> Result<String, eyre::Report> {
-    let exe_search_folder: String = Input::with_theme(&ColorfulTheme::default())
-        .with_prompt("Folder to search for Doom engines")
-        .validate_with({
-            move |input: &String| -> Result<(), &str> {
-                if paths::folder_exists(input) {
-                    Ok(())
-                } else {
-                    Err("This is not a valid folder")
-                }
+    let exe_search_folder: String = inquire::Text::new("Folder to search for Doom engines")
+        .with_validator(|input: &str| {
+            if paths::folder_exists(input) {
+                Ok(Validation::Valid)
+            } else {
+                Ok(Validation::Invalid("This is not a valid folder".into()))
             }
         })
-        .interact_text()
-        .unwrap();
+        .prompt()?;
 
     // TODO: User filter for exists (what do you want to search for?)
     // TODO: List for Windows, list for Mac
@@ -61,29 +57,15 @@ async fn init_engines() -> Result<String, eyre::Report> {
         )));
     }
 
-    let selections = MultiSelect::with_theme(&ColorfulTheme::default())
-        .with_prompt("Pick the engines you want to use")
-        .items(&engines[..])
-        .interact()
-        .unwrap();
+    let selections =
+        inquire::MultiSelect::new("Pick the engines you want to use", engines).prompt()?;
 
-    // if selections.is_empty() {
-    //     println!("You did not select anything :(");
-    // } else {
-    //     println!("You selected these things:");
-    //     for selection in selections {
-    //         println!("  {}", engines[selection]);
-    //     }
-    // }
-
-    // Save engines to  engines table
     for selection in selections {
-        let game_engine_type =
-            get_game_engine_type_from_exe_name(engine_list.clone(), &engines[selection])?;
+        let game_engine_type = get_game_engine_type_from_exe_name(engine_list.clone(), &selection)?;
 
         let engine = data::Engine {
-            path: engines[selection].clone(),
-            version: get_version_from_exe_name(&engines[selection], game_engine_type.clone())?,
+            path: selection.clone(),
+            version: get_version_from_exe_name(&selection, game_engine_type.clone())?,
             game_engine_type,
             id: 0,
         };
@@ -100,20 +82,17 @@ async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     // Search for IWADs
     // Use the same folder as the engines, but given option to change
     // Save to IWADs table
-    let iwad_search_folder: String = Input::with_theme(&ColorfulTheme::default())
-        .with_prompt("Folder to search for IWADs (Internal WAD files)")
-        .validate_with({
-            move |input: &String| -> Result<(), &str> {
+    let iwad_search_folder: String =
+        inquire::Text::new("Folder to search for IWADs (Internal WAD files)")
+            .with_validator(|input: &str| {
                 if paths::folder_exists(input) {
-                    Ok(())
+                    Ok(Validation::Valid)
                 } else {
-                    Err("This is not a valid folder")
+                    Ok(Validation::Invalid("This is not a valid folder".into()))
                 }
-            }
-        })
-        .default(default_folder.to_string())
-        .interact_text()
-        .unwrap();
+            })
+            .with_default(default_folder)
+            .prompt()?;
 
     // TODO: User filter for exists (what do you want to search for?)
     // TODO: List for Windows, list for Mac
@@ -131,19 +110,15 @@ async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
         )));
     }
 
-    let selections = MultiSelect::with_theme(&ColorfulTheme::default())
-        .with_prompt("Pick the IWADs you want to use")
-        .items(&iwads[..])
-        .interact()
-        .unwrap();
+    let selections = inquire::MultiSelect::new("Pick the IWADs you want to use", iwads).prompt()?;
 
     // Save engines to  engines table
     for selection in selections {
         let internal_wad_type =
-            get_internal_wad_type_from_file_name(iwad_list.clone(), &iwads[selection])?;
+            get_internal_wad_type_from_file_name(iwad_list.clone(), &selection)?;
 
         let iwad = data::Iwad {
-            path: iwads[selection].clone(),
+            path: selection,
             internal_wad_type,
             id: 0,
         };
@@ -158,20 +133,17 @@ async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
 }
 
 async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
-    let pwad_search_folder: String = Input::with_theme(&ColorfulTheme::default())
-        .with_prompt("Folder to search for PWADs (Patch WAD files)")
-        .validate_with({
-            move |input: &String| -> Result<(), &str> {
+    let pwad_search_folder: String =
+        inquire::Text::new("Folder to search for PWADs (Patch WAD files)")
+            .with_validator(|input: &str| {
                 if paths::folder_exists(input) {
-                    Ok(())
+                    Ok(Validation::Valid)
                 } else {
-                    Err("This is not a valid folder")
+                    Ok(Validation::Invalid("This is not a valid folder".into()))
                 }
-            }
-        })
-        .default(default_folder.to_string())
-        .interact_text()
-        .unwrap();
+            })
+            .with_default(default_folder)
+            .prompt()?;
 
     // TODO: Extend to go find PWADs. Need a wildcard search method for this. And to remove IWADS from list.
     let pwads = paths::find_files_with_extension_in_folders(&pwad_search_folder, "wad");

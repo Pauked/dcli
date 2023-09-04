@@ -1,11 +1,9 @@
 use std::str::FromStr;
 
-use dialoguer::{theme::ColorfulTheme, Select};
-
 use crate::constants;
 
 pub fn main_menu_prompt() -> constants::Command {
-    let selections = &[
+    let selections = vec![
         constants::Command::Play.to_string(),
         constants::Command::Profiles.to_string(),
         constants::Command::ShowSettings.to_string(),
@@ -16,18 +14,14 @@ pub fn main_menu_prompt() -> constants::Command {
         constants::Command::Quit.to_string(),
     ];
 
-    let selection_index = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Select an option")
-        .default(0)
-        .items(&selections[..])
-        .interact()
+    let choice = inquire::Select::new("Select a Main Menu option", selections)
+        .prompt()
         .unwrap();
-
-    constants::Command::from_str(&selections[selection_index]).unwrap()
+    constants::Command::from_str(&choice).unwrap()
 }
 
 pub fn profiles_menu_prompt() -> constants::ProfileCommand {
-    let selections = &[
+    let selections = vec![
         constants::ProfileCommand::New.to_string(),
         constants::ProfileCommand::Edit.to_string(),
         constants::ProfileCommand::Delete.to_string(),
@@ -35,12 +29,8 @@ pub fn profiles_menu_prompt() -> constants::ProfileCommand {
         constants::ProfileCommand::Back.to_string(),
     ];
 
-    let selection_index = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Select a Profile option")
-        .default(0)
-        .items(&selections[..])
-        .interact()
+    let choice: String = inquire::Select::new("Select a Profile option", selections)
+        .prompt()
         .unwrap();
-
-    constants::ProfileCommand::from_str(&selections[selection_index]).unwrap()
+    constants::ProfileCommand::from_str(&choice).unwrap()
 }

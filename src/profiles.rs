@@ -1,7 +1,6 @@
-use dialoguer::{theme::ColorfulTheme, Input, Select};
 use log::info;
 
-use crate::{constants, tui, db, data};
+use crate::{constants, data, db, tui};
 
 pub async fn profiles() -> Result<String, eyre::Report> {
     // Menu:
@@ -42,52 +41,48 @@ pub async fn profiles() -> Result<String, eyre::Report> {
                 // Back to main menu
                 return Ok("Back to main menu".to_string());
             }
+            constants::ProfileCommand::UserInput => todo!(),
         }
     }
 }
 
 async fn new_profile() -> Result<String, eyre::Report> {
-    let profile_name: String = Input::with_theme(&ColorfulTheme::default())
-        .with_prompt("Enter a name for your profile")
-        .interact_text()
-        .unwrap();
+    let profile_name = inquire::Text::new("Enter a name for your profile")
+        .with_validator(inquire::min_length!(5))
+        .prompt()?;
 
     let engines = db::get_engines().await?;
     let engine_list = engines
         .iter()
         .map(|e| e.path.as_str())
         .collect::<Vec<&str>>();
-
-    let engine_selection = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Pick the engine you want to use")
-        .items(&engine_list[..])
-        .interact()
-        .unwrap();
+    let engine_selection =
+        inquire::Select::new("Pick the engine you want to use", engine_list).prompt()?;
 
     let iwads = db::get_iwads().await?;
     let iwad_list = iwads.iter().map(|i| i.path.as_str()).collect::<Vec<&str>>();
-
-    let iwad_selection = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Pick the iwad you want to use")
-        .items(&iwad_list[..])
-        .interact()
-        .unwrap();
+    let iwad_selection =
+        inquire::Select::new("Pick the IWAD you want to use", iwad_list).prompt()?;
 
     let pwads = db::get_pwads().await?;
     let pwad_list = pwads.iter().map(|i| i.path.as_str()).collect::<Vec<&str>>();
+    let pwad_selection =
+        inquire::Select::new("Pick the PWAD you want to use", pwad_list).prompt()?;
 
-    let pwad_selection = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Pick the pwad you want to use")
-        .items(&pwad_list[..])
-        .interact()
-        .unwrap();
+    let engine_id = engines
+        .iter()
+        .find(|e| e.path == engine_selection)
+        .unwrap()
+        .id;
+    let iwad_id = iwads.iter().find(|i| i.path == iwad_selection).unwrap().id;
+    let pwad_id = pwads.iter().find(|p| p.path == pwad_selection).unwrap().id;
 
     let profile = data::Profile {
         id: 0,
         name: profile_name,
-        engine_id: Some(engines[engine_selection].id),
-        iwad_id: Some(iwads[iwad_selection].id),
-        pwad_id: Some(pwads[pwad_selection].id),
+        engine_id: Some(engine_id),
+        iwad_id: Some(iwad_id),
+        pwad_id: Some(pwad_id),
     };
     db::add_profile(&profile).await?;
 
