@@ -1,3 +1,4 @@
+use core::fmt;
 
 use sqlx::FromRow;
 use tabled::Tabled;
@@ -49,6 +50,24 @@ pub struct Profile {
     pub pwad_id: Option<i32>,
 }
 
+pub struct ProfileDisplay {
+    pub id: i32,
+    pub name: String,
+    pub engine: String,
+    pub iwad: String,
+    pub pwad: String,
+}
+
+impl fmt::Display for ProfileDisplay {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{} <{} / {} / {}>",
+            self.name, self.pwad, self.engine, self.iwad
+        )
+    }
+}
+
 #[derive(Clone, Debug, FromRow, Tabled)]
 pub struct Settings {
     #[tabled(skip)]
@@ -57,9 +76,15 @@ pub struct Settings {
     pub active_profile_id: Option<i32>,
     #[tabled(rename = "Exe Search Folder", display_with = "display_option_string")]
     pub exe_search_folder: Option<String>,
-    #[tabled(rename = "Internal WAD Search Folder", display_with = "display_option_string")]
+    #[tabled(
+        rename = "Internal WAD Search Folder",
+        display_with = "display_option_string"
+    )]
     pub iwad_search_folder: Option<String>,
-    #[tabled(rename = "Patch WAD Search Folder", display_with = "display_option_string")]
+    #[tabled(
+        rename = "Patch WAD Search Folder",
+        display_with = "display_option_string"
+    )]
     pub pwad_search_folder: Option<String>,
 }
 

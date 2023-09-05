@@ -1,7 +1,7 @@
 use eyre::Context;
 use log::info;
 
-use crate::{constants, data, db, paths, tui};
+use crate::{constants, data, db, tui};
 
 pub async fn profiles() -> Result<String, eyre::Report> {
     // Menu:
@@ -79,39 +79,17 @@ async fn edit_profile() -> Result<String, eyre::Report> {
 }
 
 async fn active_profile() -> Result<String, eyre::Report> {
-    let profiles = db::get_profiles().await?;
-    let engines = db::get_engines().await?;
-    let iwads = db::get_iwads().await?;
-    let pwads = db::get_pwads().await?;
-
-    let mut profile_list = Vec::new();
-    for profile in profiles {
-        let engine = engines
-            .iter()
-            .find(|e| e.id == profile.engine_id.unwrap())
-            .unwrap();
-        let iwad = iwads
-            .iter()
-            .find(|i| i.id == profile.iwad_id.unwrap())
-            .unwrap();
-        let pwad = pwads
-            .iter()
-            .find(|p| p.id == profile.pwad_id.unwrap())
-            .unwrap();
-
-        profile_list.push(format!(
-            "{} - PWAD {} / Engine {} / IWAD {}",
-            profile.name,
-            paths::extract_file_name(&pwad.path),
-            paths::extract_file_name(&engine.path),
-            paths::extract_file_name(&iwad.path),
-        ));
-    }
-
+    let profile_list = db::get_profile_display_list().await?;
     // Generate a list of profiles showing the full details
     let profile =
         inquire::Select::new("Pick the profile to mark as active", profile_list).prompt()?;
 
     // TODO: Update Settings table...
+    let settings = db::get_settings().await?;
+    db::update_settings_active_profile(settings.id, profile.id)
+        .await
+        .wrap_err("Failed to update active profile")?;
+
     Ok(format!("Marked profile '{}' as active", profile))
 }
+

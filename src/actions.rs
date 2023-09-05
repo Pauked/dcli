@@ -38,14 +38,19 @@ pub async fn run_option(command: constants::Command) -> Result<String, eyre::Rep
 }
 
 pub async fn play() -> Result<String, eyre::Report> {
-    let profiles = db::get_profiles().await?;
+    // Do we have an active profile?
+    // No, pick one.
+    // Do we have any profiles configured?
+    // No, create one.
 
-    if profiles.is_empty() {
-        return Ok("No profiles found, please create one.".to_string());
-    }
+    let settings = db::get_settings().await?;
 
-    // FIXME: Bit hacky! Which profile do we use?
-    let single_profile = profiles[0].clone();
+    if settings.active_profile_id.is_none() {
+        return Ok("No active profile found, please set one.".red().to_string());
+        // FIXME: Call the "set active profile" function
+    };
+
+    let single_profile = db::get_profile_by_id(settings.active_profile_id.unwrap()).await?;
     let engine = db::get_engine_by_id(single_profile.engine_id.unwrap()).await?;
     let iwad = db::get_iwad_by_id(single_profile.iwad_id.unwrap()).await?;
     let pwad = db::get_pwad_by_id(single_profile.pwad_id.unwrap()).await?;
@@ -64,13 +69,6 @@ pub async fn play() -> Result<String, eyre::Report> {
         "Opened the following file in Doom! - '{}' / '{}''",
         engine.path, pwad.path
     ))
-
-    // Do we have an active profile?
-    // No, pick one.
-    // Do we have any profiles configured?
-    // No, create one.
-
-    //Ok("Opened Doom!".to_string())
 }
 
 pub async fn show_settings() -> Result<String, eyre::Report> {
