@@ -10,29 +10,23 @@ use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{
     constants::{self},
-    db, init, profiles,
+    db, init, profiles, tui,
 };
 
-pub async fn run_option(command: constants::Command) -> Result<String, eyre::Report> {
-    // let config_file_path = app_settings::get_config_filename(constants::CONFIG_FILE);
-    // let settings = app_settings::get(config_file_path.clone());
+pub async fn run_option(command: constants::MainCommand) -> Result<String, eyre::Report> {
+    db::create_db().await?;
+
+    // match command {
+    //     constants::MainCommand::Reset => {}
+    //     _ => {
+    //         db::create_db().await?;
+    //     }
+    // }
 
     match command {
-        constants::Command::Reset => {}
-        _ => {
-            db::create_db().await?;
-        }
-    }
-
-    match command {
-        constants::Command::Play => play().await,
-        constants::Command::Profiles => profiles::profiles().await,
-        constants::Command::ShowSettings => show_settings().await,
-        // constants::Command::Play => play(settings),
-        // constants::Command::NotepadConfig => notepad_config(config_file_path),
-        // constants::Command::Editor => editor(settings),
-        constants::Command::Init => init::init().await,
-        constants::Command::Reset => reset(false).await,
+        constants::MainCommand::Play => play().await,
+        constants::MainCommand::Profiles => profiles::profiles_menu().await,
+        constants::MainCommand::Config => config_menu().await,
         _ => Ok("".to_string()),
     }
 }
@@ -71,7 +65,20 @@ pub async fn play() -> Result<String, eyre::Report> {
     ))
 }
 
-pub async fn show_settings() -> Result<String, eyre::Report> {
+pub async fn config_menu() -> Result<String, eyre::Report> {
+    // Menu:
+    loop {
+        let menu_command = tui::config_menu_prompt();
+        match menu_command {
+            constants::ConfigCommand::List => list_settings().await?,
+            constants::ConfigCommand::Init => init::init().await?,
+            constants::ConfigCommand::Reset => reset(false).await?,
+            constants::ConfigCommand::Back => return Ok("Back to main menu".to_string()),
+        };
+    }
+}
+
+pub async fn list_settings() -> Result<String, eyre::Report> {
     info!("{}", display_engines().await?);
     info!("{}", display_iwads().await?);
     info!("{}", display_pwads().await?);

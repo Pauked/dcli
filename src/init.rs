@@ -11,7 +11,6 @@ use crate::{
 pub async fn init() -> Result<String, eyre::Report> {
     // TODO: Block running if there is data. Or perhaps prompt to reset?
 
-    info!("Weclome to {}.", constants::APP_NAME);
     info!("We'll ask you some questions, and then you'll be ready to go.");
 
     let exe_search_folder = init_engines().await?;

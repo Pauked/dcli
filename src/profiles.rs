@@ -3,7 +3,7 @@ use log::info;
 
 use crate::{constants, data, db, tui};
 
-pub async fn profiles() -> Result<String, eyre::Report> {
+pub async fn profiles_menu() -> Result<String, eyre::Report> {
     // Menu:
     loop {
         let menu_command = tui::profiles_menu_prompt();
@@ -24,7 +24,6 @@ pub async fn profiles() -> Result<String, eyre::Report> {
             constants::ProfileCommand::Back => {
                 return Ok("Back to main menu".to_string());
             }
-            constants::ProfileCommand::UserInput => todo!(),
         }
     }
 }

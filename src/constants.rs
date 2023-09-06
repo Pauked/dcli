@@ -19,29 +19,29 @@ pub const ARG_INIT: &str = "--init";
 pub const ARG_RESET: &str = "--reset";
 
 #[derive(Debug, PartialEq, EnumString, Display)]
-pub enum Command {
+pub enum MainCommand {
     Play,
     Profiles,
-    ShowSettings,
-    NotepadConfig,
-    Editor,
-    Init,
-    Reset,
+    // NotepadConfig,
+    // Editor,
+    // Init,
+    Config,
     Quit,
     UserInput,
 }
 
-pub fn convert_arg_to_cmd(arg: &str) -> Command {
-    match arg {
-        ARG_PLAY => Command::Play,
-        ARG_PROFILES => Command::Profiles,
-        ARG_EDITOR => Command::Editor,
-        ARG_CONFIG => Command::NotepadConfig,
-        ARG_INIT => Command::Init,
-        ARG_RESET => Command::Reset,
-        _ => Command::UserInput,
-    }
-}
+// pub fn convert_arg_to_cmd(arg: &str) -> MainCommand {
+//     match arg {
+//         ARG_PLAY => MainCommand::Play,
+//         ARG_PROFILES => MainCommand::Profiles,
+//         // ARG_EDITOR => MainCommand::Editor,
+//         // ARG_CONFIG => MainCommand::NotepadConfig,
+//         ARG_INIT => ConfigCommand::Init,
+//         ARG_RESET => ConfigCommand::Reset,
+//         _ => MainCommand::UserInput,
+//     }
+// }
+
 
 #[derive(Debug, PartialEq, EnumString, Display)]
 pub enum ProfileCommand {
@@ -50,5 +50,14 @@ pub enum ProfileCommand {
     Delete,
     Active,
     Back,
-    UserInput,
+    // UserInput,
+}
+
+#[derive(Debug, PartialEq, EnumString, Display)]
+pub enum ConfigCommand {
+    List,
+    Init,
+    Reset,
+    Back,
+    // UserInput,
 }
