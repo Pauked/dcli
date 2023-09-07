@@ -3,7 +3,7 @@ use inquire::validator::Validation;
 use log::info;
 
 use crate::{
-    actions, constants,
+    actions,
     data::{self},
     db, doom_data, finder, paths,
 };
@@ -155,7 +155,7 @@ async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
 
     for pwad in pwads {
         let pwad = data::Pwad {
-            name: paths::extract_file_name(&pwad),
+            name: get_map_name_from_readme(&pwad)?,
             path: pwad.clone(),
             id: 0,
         };
@@ -165,6 +165,18 @@ async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
     info!("{}", actions::display_pwads().await?);
 
     Ok(pwad_search_folder)
+}
+
+fn get_map_name_from_readme(pwad: &str) -> Result<String, eyre::Report> {
+    // TODO: Write method to get map name from associated map readme!
+    // let path = paths::extract_path(pwad);
+    let file_name = paths::extract_file_name(pwad);
+    // replace the wad extension with readme
+    // let readme = file_name.replace(".wad", ".txt");
+
+
+
+    Ok(file_name)
 }
 
 fn get_version_from_exe_name(

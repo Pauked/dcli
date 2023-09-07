@@ -31,6 +31,20 @@ pub async fn run_option(command: constants::MainCommand) -> Result<String, eyre:
     }
 }
 
+pub async fn get_active_profile_text() -> Result<String, eyre::Report> {
+    let settings = db::get_settings().await?;
+
+    if settings.active_profile_id.is_none() {
+        return Ok("No active profile found, please set one.".red().to_string());
+    }
+
+    let profile_display = db::get_profile_display_by_id(settings.active_profile_id.unwrap()).await?;
+    Ok(format!(
+        "Active profile: {}",
+        profile_display.to_string().bright_green().bold()
+    ))
+}
+
 pub async fn play() -> Result<String, eyre::Report> {
     // Do we have an active profile?
     // No, pick one.
@@ -83,7 +97,7 @@ pub async fn list_settings() -> Result<String, eyre::Report> {
     info!("{}", display_iwads().await?);
     info!("{}", display_pwads().await?);
     info!("{}", display_settings().await?);
-    info!("{}", display_profiles().await?);
+    //info!("{}", display_profiles().await?);
     Ok("".to_string())
 }
 
@@ -200,18 +214,6 @@ pub async fn display_settings() -> Result<String, Report> {
         .wrap_err("Unable to settings listing".to_string())?;
 
     let table = tabled::Table::new(vec![settings])
-        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
-        .with(Style::modern())
-        .to_string();
-    Ok(table)
-}
-
-pub async fn display_profiles() -> Result<String, Report> {
-    let profiles = db::get_profiles()
-        .await
-        .wrap_err("Unable to profile listing".to_string())?;
-
-    let table = tabled::Table::new(profiles)
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
         .with(Style::modern())
         .to_string();

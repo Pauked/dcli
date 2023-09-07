@@ -31,6 +31,16 @@ pub fn file_exists(file_path: &str) -> bool {
     path.is_file()
 }
 
+pub fn extract_path(full_path: &str) -> String {
+    let path = Path::new(full_path);
+
+    if let Some(parent_path) = path.parent() {
+        return parent_path.display().to_string();
+    }
+
+    String::new()
+}
+
 pub fn extract_file_name(full_path: &str) -> String {
     let path = Path::new(full_path);
     path.file_name()

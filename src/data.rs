@@ -50,20 +50,27 @@ pub struct Profile {
     pub pwad_id: Option<i32>,
 }
 
+// TODO: Split into paths
+#[derive(Clone, Debug, Tabled)]
 pub struct ProfileDisplay {
+    #[tabled(skip)]
     pub id: i32,
     pub name: String,
-    pub engine: String,
-    pub iwad: String,
-    pub pwad: String,
+    pub engine_path: String,
+    pub engine_file: String,
+    pub engine_version: String,
+    pub iwad_path: String,
+    pub iwad_file: String,
+    pub pwad_path: String,
+    pub pwad_file: String,
 }
 
 impl fmt::Display for ProfileDisplay {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{} <{} / {} / {}>",
-            self.name, self.pwad, self.engine, self.iwad
+            "{} <{} / {} [{}] / {}>",
+            self.name, self.pwad_file, self.engine_file, self.engine_version, self.iwad_file
         )
     }
 }

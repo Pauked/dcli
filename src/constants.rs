@@ -11,11 +11,12 @@ pub const OS_WINDOWS: &str = "windows";
 
 // pub const CONFIG_FILE: &str = "App.toml";
 
-pub const ARG_PLAY: &str = "--play";
-pub const ARG_PROFILES: &str = "--profiles";
-pub const ARG_CONFIG: &str = "--config";
-pub const ARG_EDITOR: &str = "--editor";
-pub const ARG_INIT: &str = "--init";
+// FIXME: Reinstate these args
+// pub const ARG_PLAY: &str = "--play";
+// pub const ARG_PROFILES: &str = "--profiles";
+// pub const ARG_CONFIG: &str = "--config";
+// pub const ARG_EDITOR: &str = "--editor";
+// pub const ARG_INIT: &str = "--init";
 pub const ARG_RESET: &str = "--reset";
 
 #[derive(Debug, PartialEq, EnumString, Display)]
@@ -49,6 +50,7 @@ pub enum ProfileCommand {
     Edit,
     Delete,
     Active,
+    List,
     Back,
     // UserInput,
 }

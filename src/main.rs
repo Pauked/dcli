@@ -47,11 +47,13 @@ async fn run() -> eyre::Result<String> {
     for arg in args {
         debug!("Running arg: {}", arg);
         todo!();
+        // FIXME: Arg input is broken
         //actions::run_option(constants::convert_arg_to_cmd(&arg)).await?;
     }
 
     // Wait for user input
     loop {
+        info!("{}", actions::get_active_profile_text().await?);
         let menu_command = tui::main_menu_prompt();
         if let constants::MainCommand::Quit = menu_command {
             return Ok("Quitting...".to_string());

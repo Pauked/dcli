@@ -19,6 +19,7 @@ pub fn main_menu_prompt() -> constants::MainCommand {
 pub fn profiles_menu_prompt() -> constants::ProfileCommand {
     let selections = vec![
         constants::ProfileCommand::Active.to_string(),
+        constants::ProfileCommand::List.to_string(),
         constants::ProfileCommand::New.to_string(),
         constants::ProfileCommand::Edit.to_string(),
         constants::ProfileCommand::Delete.to_string(),

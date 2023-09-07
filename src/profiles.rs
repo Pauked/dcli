@@ -1,5 +1,6 @@
 use eyre::Context;
 use log::info;
+use tabled::settings::{Modify, object::Rows, Width, Style};
 
 use crate::{constants, data, db, tui};
 
@@ -19,7 +20,11 @@ pub async fn profiles_menu() -> Result<String, eyre::Report> {
                 info!("Deleted a profile")
             }
             constants::ProfileCommand::Active => {
-                active_profile().await?;
+                set_active_profile().await?;
+            }
+            constants::ProfileCommand::List => {
+                let result = list_profiles().await?;
+                info!("{}", result)
             }
             constants::ProfileCommand::Back => {
                 return Ok("Back to main menu".to_string());
@@ -77,7 +82,9 @@ async fn edit_profile() -> Result<String, eyre::Report> {
     todo!("Edit a profile")
 }
 
-async fn active_profile() -> Result<String, eyre::Report> {
+async fn set_active_profile() -> Result<String, eyre::Report> {
+    // TODO Show the current active profile...
+
     let profile_list = db::get_profile_display_list().await?;
     // Generate a list of profiles showing the full details
     let profile =
@@ -92,3 +99,14 @@ async fn active_profile() -> Result<String, eyre::Report> {
     Ok(format!("Marked profile '{}' as active", profile))
 }
 
+pub async fn list_profiles() -> Result<String, eyre::Report> {
+    let profiles = db::get_profile_display_list()
+        .await
+        .wrap_err("Unable to profile listing".to_string())?;
+
+    let table = tabled::Table::new(profiles)
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
+        .with(Style::modern())
+        .to_string();
+    Ok(table)
+}

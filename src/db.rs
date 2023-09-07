@@ -7,7 +7,7 @@ use sqlx::{
     Sqlite, SqlitePool,
 };
 
-use crate::data;
+use crate::{data, paths};
 
 const DB_URL: &str = "sqlite://sqlite.db";
 const DB_FILE: &str = "sqlite.db";
@@ -231,6 +231,20 @@ pub async fn get_profile_by_id(id: i32) -> Result<data::Profile, eyre::Report> {
         .wrap_err(format!("Failed to get profile with id '{}'", id))
 }
 
+fn get_profile_display(profile: data::Profile, engine: data::Engine, iwad: data::Iwad, pwad: data::Pwad) -> data::ProfileDisplay {
+    data::ProfileDisplay {
+        id: profile.id,
+        name: profile.name,
+        engine_path: paths::extract_path(&engine.path),
+        engine_file: paths::extract_file_name(&engine.path),
+        engine_version: engine.version.clone(),
+        iwad_path: paths::extract_path(&iwad.path),
+        iwad_file: paths::extract_file_name(&iwad.path),
+        pwad_path: paths::extract_path(&pwad.path),
+        pwad_file: paths::extract_file_name(&pwad.path),
+    }
+}
+
 pub async fn get_profile_display_list() -> Result<Vec<data::ProfileDisplay>, eyre::Report> {
     let profiles = get_profiles().await?;
     let engines = get_engines().await?;
@@ -252,14 +266,18 @@ pub async fn get_profile_display_list() -> Result<Vec<data::ProfileDisplay>, eyr
             .find(|p| p.id == profile.pwad_id.unwrap())
             .unwrap();
 
-        profile_list.push(data::ProfileDisplay {
-            id: profile.id,
-            name: profile.name,
-            engine: engine.path.clone(),
-            iwad: iwad.path.clone(),
-            pwad: pwad.path.clone(),
-        });
+        profile_list.push(get_profile_display(profile.clone(), engine.clone(), iwad.clone(), pwad.clone()));
     }
 
     Ok(profile_list)
+}
+
+pub async fn get_profile_display_by_id(id: i32) -> Result<data::ProfileDisplay, eyre::Report> {
+    let profile = get_profile_by_id(id).await?;
+
+    let engine = get_engine_by_id(profile.engine_id.unwrap()).await?;
+    let iwad = get_iwad_by_id(profile.iwad_id.unwrap()).await?;
+    let pwad = get_pwad_by_id(profile.pwad_id.unwrap()).await?;
+
+    Ok(get_profile_display(profile, engine, iwad, pwad))
 }
