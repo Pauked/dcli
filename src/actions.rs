@@ -13,25 +13,22 @@ use crate::{
     db, init, profiles, tui,
 };
 
-pub async fn run_option(command: constants::MainCommand) -> Result<String, eyre::Report> {
+pub async fn run_main_menu_option(command: constants::MainCommand) -> Result<String, eyre::Report> {
     db::create_db().await?;
-
-    // match command {
-    //     constants::MainCommand::Reset => {}
-    //     _ => {
-    //         db::create_db().await?;
-    //     }
-    // }
 
     match command {
         constants::MainCommand::Play => play().await,
         constants::MainCommand::Profiles => profiles::profiles_menu().await,
         constants::MainCommand::Config => config_menu().await,
-        _ => Ok("".to_string()),
+        constants::MainCommand::Quit => Ok("Quitting".to_string()),
+        constants::MainCommand::Unknown => Ok("Unknown command".to_string()),
     }
 }
 
 pub async fn get_active_profile_text() -> Result<String, eyre::Report> {
+    if !db::database_exists().await {
+        return Ok("No database found, please run 'init'.".red().to_string());
+    }
     let settings = db::get_settings().await?;
 
     if settings.active_profile_id.is_none() {
@@ -83,12 +80,20 @@ pub async fn config_menu() -> Result<String, eyre::Report> {
     // Menu:
     loop {
         let menu_command = tui::config_menu_prompt();
-        match menu_command {
-            constants::ConfigCommand::List => list_settings().await?,
-            constants::ConfigCommand::Init => init::init().await?,
-            constants::ConfigCommand::Reset => reset(false).await?,
-            constants::ConfigCommand::Back => return Ok("Back to main menu".to_string()),
-        };
+        if let constants::ConfigCommand::Back = menu_command {
+            return Ok("Back to main menu".to_string());
+        }
+        run_config_menu_option(menu_command).await?;
+    }
+}
+
+pub async fn run_config_menu_option(menu_command: constants::ConfigCommand) -> Result<String, eyre::Report> {
+    match menu_command {
+        constants::ConfigCommand::List => list_settings().await,
+        constants::ConfigCommand::Init => init::init().await,
+        constants::ConfigCommand::Reset => reset(false).await,
+        constants::ConfigCommand::Back => Ok("Back to main menu".to_string()),
+        constants::ConfigCommand::Unknown => Ok("Unknown command".to_string()),
     }
 }
 

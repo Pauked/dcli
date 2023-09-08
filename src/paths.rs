@@ -1,9 +1,12 @@
 use std::{
     env,
+    fs::File,
+    io::{BufReader, BufRead},
     path::{Path, PathBuf},
 };
 
 use colored::Colorize;
+use eyre::Context;
 use indicatif::{ProgressBar, ProgressStyle};
 use log::{debug, error};
 use walkdir::WalkDir;
@@ -162,4 +165,22 @@ fn truncate_middle(input: &str, size_limit: usize) -> String {
     let mut output: String = input.to_string();
     output.replace_range(start_index..end_index, "..");
     output
+}
+
+pub fn lines_from_file(description: &str, filename: &str) -> Result<Vec<String>, eyre::Report> {
+    debug!("Attempting {} file read '{}'", description, filename);
+
+    // Build up file name
+    let mut file_path = PathBuf::new();
+    file_path.push(filename);
+
+    // Open the file...
+    let file_result = File::open(file_path.clone()).wrap_err(format!(
+        "Error opening {} file '{}'",
+        description,
+        file_path.display()
+    ))?;
+    let buf = BufReader::new(file_result);
+    debug!("  File successfully read");
+    Ok(buf.lines().map(|l| l.unwrap_or(String::new())).collect())
 }

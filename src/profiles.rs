@@ -1,6 +1,7 @@
+use colored::Colorize;
 use eyre::Context;
 use log::info;
-use tabled::settings::{Modify, object::Rows, Width, Style};
+use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{constants, data, db, tui};
 
@@ -71,9 +72,20 @@ async fn new_profile() -> Result<String, eyre::Report> {
         iwad_id: Some(iwad_id),
         pwad_id: Some(pwad_id),
     };
-    db::add_profile(profile)
+    let add_result = db::add_profile(profile)
         .await
         .wrap_err("Failed to add profile")?;
+
+    if inquire::Confirm::new("Would you like to set this as your active profile?")
+        .with_default(false)
+        .prompt()
+        .unwrap()
+    {
+        let settings = db::get_settings().await?;
+        db::update_settings_active_profile(settings.id, add_result.last_insert_rowid().try_into().unwrap())
+            .await
+            .wrap_err("Failed to update active profile")?;
+    }
 
     Ok("Created a new profile".to_string())
 }
@@ -86,11 +98,17 @@ async fn set_active_profile() -> Result<String, eyre::Report> {
     // TODO Show the current active profile...
 
     let profile_list = db::get_profile_display_list().await?;
+    if profile_list.is_empty() {
+        return Ok(
+            "Cannot set active profile, there are no profiles found. Please create one."
+                .red()
+                .to_string(),
+        );
+    }
     // Generate a list of profiles showing the full details
     let profile =
         inquire::Select::new("Pick the profile to mark as active", profile_list).prompt()?;
 
-    // TODO: Update Settings table...
     let settings = db::get_settings().await?;
     db::update_settings_active_profile(settings.id, profile.id)
         .await

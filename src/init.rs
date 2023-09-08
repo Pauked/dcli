@@ -9,6 +9,7 @@ use crate::{
 };
 
 pub async fn init() -> Result<String, eyre::Report> {
+    db::create_db().await?;
     // TODO: Block running if there is data. Or perhaps prompt to reset?
 
     info!("We'll ask you some questions, and then you'll be ready to go.");
@@ -169,12 +170,24 @@ async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
 
 fn get_map_name_from_readme(pwad: &str) -> Result<String, eyre::Report> {
     // TODO: Write method to get map name from associated map readme!
-    // let path = paths::extract_path(pwad);
+
+    //let path = paths::extract_path(pwad);
     let file_name = paths::extract_file_name(pwad);
     // replace the wad extension with readme
-    // let readme = file_name.replace(".wad", ".txt");
+    let readme = pwad.replace(".wad", ".txt");
+    if !paths::file_exists(&readme) {
+        return Ok(file_name);
+    }
 
-
+    let lines = paths::lines_from_file("readme", &readme)?;
+    for line in lines {
+        if line.starts_with("Title") {
+            let parts: Vec<&str> = line.split(':').collect();
+            if parts.len() > 1 {
+                return Ok(parts[1].trim().to_string());
+            }
+        }
+    }
 
     Ok(file_name)
 }

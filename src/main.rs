@@ -46,9 +46,18 @@ async fn run() -> eyre::Result<String> {
 
     for arg in args {
         debug!("Running arg: {}", arg);
-        todo!();
-        // FIXME: Arg input is broken
-        //actions::run_option(constants::convert_arg_to_cmd(&arg)).await?;
+        // TODO: Refactor to be less bad
+        let main_arg = constants::convert_arg_to_maincommand(&arg);
+        if main_arg != constants::MainCommand::Unknown {
+            actions::run_main_menu_option(main_arg).await?;
+        } else {
+            let config_arg = constants::convert_arg_to_configcommand(&arg);
+            if config_arg != constants::ConfigCommand::Unknown {
+                actions::run_config_menu_option(config_arg).await?;
+            } else {
+                info!("Unknown argument: {}", arg);
+            }
+        }
     }
 
     // Wait for user input
@@ -59,7 +68,7 @@ async fn run() -> eyre::Result<String> {
             return Ok("Quitting...".to_string());
         }
 
-        let result = actions::run_option(menu_command).await?;
+        let result = actions::run_main_menu_option(menu_command).await?;
         info!("{}", result)
     }
 }

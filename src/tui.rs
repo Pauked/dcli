@@ -32,7 +32,6 @@ pub fn profiles_menu_prompt() -> constants::ProfileCommand {
     constants::ProfileCommand::from_str(&choice).unwrap()
 }
 
-
 pub fn config_menu_prompt() -> constants::ConfigCommand {
     let selections = vec![
         constants::ConfigCommand::List.to_string(),
