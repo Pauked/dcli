@@ -35,7 +35,8 @@ pub async fn get_active_profile_text() -> Result<String, eyre::Report> {
         return Ok("No active profile found, please set one.".red().to_string());
     }
 
-    let profile_display = db::get_profile_display_by_id(settings.active_profile_id.unwrap()).await?;
+    let profile_display =
+        db::get_profile_display_by_id(settings.active_profile_id.unwrap()).await?;
     Ok(format!(
         "Active profile: {}",
         profile_display.to_string().bright_green().bold()
@@ -87,10 +88,24 @@ pub async fn config_menu() -> Result<String, eyre::Report> {
     }
 }
 
-pub async fn run_config_menu_option(menu_command: constants::ConfigCommand) -> Result<String, eyre::Report> {
+pub async fn run_config_menu_option(
+    menu_command: constants::ConfigCommand,
+) -> Result<String, eyre::Report> {
     match menu_command {
         constants::ConfigCommand::List => list_settings().await,
         constants::ConfigCommand::Init => init::init().await,
+        constants::ConfigCommand::UpdateEngines => {
+            let settings = db::get_settings().await?;
+            init::init_engines(&settings.exe_search_folder.unwrap_or("".to_string())).await
+        }
+        constants::ConfigCommand::UpdateIwads => {
+            let settings = db::get_settings().await?;
+            init::init_iwads(&settings.iwad_search_folder.unwrap_or("".to_string())).await
+        }
+        constants::ConfigCommand::UpdatePwads => {
+            let settings = db::get_settings().await?;
+            init::init_pwads(&settings.pwad_search_folder.unwrap_or("".to_string())).await
+        }
         constants::ConfigCommand::Reset => reset(false).await,
         constants::ConfigCommand::Back => Ok("Back to main menu".to_string()),
         constants::ConfigCommand::Unknown => Ok("Unknown command".to_string()),

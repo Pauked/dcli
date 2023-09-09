@@ -14,7 +14,7 @@ pub async fn init() -> Result<String, eyre::Report> {
 
     info!("We'll ask you some questions, and then you'll be ready to go.");
 
-    let exe_search_folder = init_engines().await?;
+    let exe_search_folder = init_engines("").await?;
     let iwad_search_folder = init_iwads(&exe_search_folder).await?;
     let pwad_search_folder = init_pwads(&iwad_search_folder).await?;
 
@@ -30,7 +30,7 @@ pub async fn init() -> Result<String, eyre::Report> {
     Ok("Succesfully configured!".to_string())
 }
 
-async fn init_engines() -> Result<String, eyre::Report> {
+pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> {
     let exe_search_folder: String = inquire::Text::new("Folder to search for Doom engines")
         .with_validator(|input: &str| {
             if paths::folder_exists(input) {
@@ -39,6 +39,7 @@ async fn init_engines() -> Result<String, eyre::Report> {
                 Ok(Validation::Invalid("This is not a valid folder".into()))
             }
         })
+        .with_default(default_folder)
         .prompt()?;
 
     // TODO: User filter for exists (what do you want to search for?)
@@ -57,6 +58,7 @@ async fn init_engines() -> Result<String, eyre::Report> {
         )));
     }
 
+    // TODO: Mark the Engines that have been picked previously
     let selections =
         inquire::MultiSelect::new("Pick the engines you want to use", engines).prompt()?;
 
@@ -78,7 +80,7 @@ async fn init_engines() -> Result<String, eyre::Report> {
     Ok(exe_search_folder)
 }
 
-async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
+pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     // Search for IWADs
     // Use the same folder as the engines, but given option to change
     // Save to IWADs table
@@ -96,6 +98,7 @@ async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
 
     // TODO: User filter for exists (what do you want to search for?)
     // TODO: List for Windows, list for Mac
+    // TODO: If editing (not init), then we can search but not overwrite existing IWADs
     let iwad_list = doom_data::get_internal_wad_list();
     let iwad_files = iwad_list
         .iter()
@@ -110,6 +113,7 @@ async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
         )));
     }
 
+    // TODO: Mark the IWADs that have been picked previously
     let selections = inquire::MultiSelect::new("Pick the IWADs you want to use", iwads).prompt()?;
 
     // Save engines to  engines table
@@ -132,7 +136,7 @@ async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     Ok(iwad_search_folder)
 }
 
-async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
+pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
     let pwad_search_folder: String =
         inquire::Text::new("Folder to search for PWADs (Patch WAD files)")
             .with_validator(|input: &str| {
@@ -154,12 +158,14 @@ async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
         )));
     }
 
+    // TODO: Loading existing PWADs up, see if the listing matches. Remove any that don't exist anymore. Add any new ones.
     for pwad in pwads {
         let pwad = data::Pwad {
             name: get_map_name_from_readme(&pwad)?,
             path: pwad.clone(),
             id: 0,
         };
+        // TODO: Check if PWAD already exists
         db::add_pwad(&pwad).await?;
     }
 

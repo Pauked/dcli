@@ -36,6 +36,9 @@ pub fn config_menu_prompt() -> constants::ConfigCommand {
     let selections = vec![
         constants::ConfigCommand::List.to_string(),
         constants::ConfigCommand::Init.to_string(),
+        constants::ConfigCommand::UpdateEngines.to_string(),
+        constants::ConfigCommand::UpdateIwads.to_string(),
+        constants::ConfigCommand::UpdatePwads.to_string(),
         constants::ConfigCommand::Reset.to_string(),
         constants::ConfigCommand::Back.to_string(),
     ];

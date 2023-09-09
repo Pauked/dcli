@@ -37,6 +37,8 @@ pub struct Pwad {
     pub path: String,
 }
 
+// TODO: Expand profiles to include: save games, complevels, episode, level, difficult, fast monsters,
+//       no monsters, respawn monsters, demo record, demo playback, DSDA specific options
 #[derive(Clone, Debug, FromRow, Tabled)]
 pub struct Profile {
     #[tabled(skip)]
@@ -69,7 +71,7 @@ impl fmt::Display for ProfileDisplay {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{} <{} / {} [{}] / {}>",
+            "{} ({}) / {} [{}] / {}",
             self.name, self.pwad_file, self.engine_file, self.engine_version, self.iwad_file
         )
     }

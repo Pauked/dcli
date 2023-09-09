@@ -51,6 +51,9 @@ pub enum ProfileCommand {
 pub enum ConfigCommand {
     List,
     Init,
+    UpdateEngines,
+    UpdateIwads,
+    UpdatePwads,
     Reset,
     Back,
     Unknown,
