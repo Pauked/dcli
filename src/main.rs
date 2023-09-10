@@ -59,7 +59,7 @@ async fn run() -> eyre::Result<String> {
         }
     }
 
-    // Wait for user input
+    // Main menu
     loop {
         info!("{}", menu_main::get_active_profile_text().await?);
         let menu_command = tui::main_menu_prompt();

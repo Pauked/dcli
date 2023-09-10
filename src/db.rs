@@ -72,6 +72,34 @@ pub async fn add_engine(
         .wrap_err(format!("Failed to add engine '{:?}", engine))
 }
 
+pub async fn delete_engine(path: &str) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let db = SqlitePool::connect(DB_URL).await.unwrap();
+
+    sqlx::query("DELETE FROM engines WHERE path=$1 COLLATE NOCASE")
+        .bind(path.to_lowercase())
+        .execute(&db)
+        .await
+        .wrap_err(format!("Failed to delete engine '{}'", path))
+}
+
+pub async fn update_engine_version(
+    id: i32,
+    version: &str,
+) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let db = SqlitePool::connect(DB_URL).await.unwrap();
+
+    sqlx::query("UPDATE engines SET version = $1 WHERE id=$3 COLLATE NOCASE")
+        .bind(version)
+        // .bind(Utc::now())
+        .bind(id)
+        .execute(&db)
+        .await
+        .wrap_err(format!(
+            "Failed to update version '{}' for engine with id '{}'",
+            version, id
+        ))
+}
+
 pub async fn get_engines() -> Result<Vec<data::Engine>, eyre::Report> {
     let db = get_db().await;
 

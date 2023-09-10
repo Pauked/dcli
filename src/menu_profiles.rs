@@ -38,6 +38,7 @@ pub async fn run_profiles_menu_option(
 }
 
 async fn new_profile() -> Result<String, eyre::Report> {
+    // TODO: Validate if profile_name already exists
     let profile_name = inquire::Text::new("Enter a name for your profile")
         .with_validator(inquire::min_length!(5))
         .prompt()?;

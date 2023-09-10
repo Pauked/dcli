@@ -2,7 +2,7 @@ use color_eyre::eyre;
 use colored::Colorize;
 use eyre::Context;
 use inquire::validator::Validation;
-use log::info;
+use log::{info, debug};
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{
@@ -11,7 +11,6 @@ use crate::{
 };
 
 pub async fn config_menu() -> Result<String, eyre::Report> {
-    // Menu:
     loop {
         let menu_command = tui::config_menu_prompt();
         if let tui::ConfigCommand::Back = menu_command {
@@ -81,13 +80,13 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
 
     // TODO: User filter for exists (what do you want to search for?)
     // TODO: List for Windows, list for Mac
-    let engine_list = doom_data::get_engine_list();
-    let engine_files = engine_list
+    let doom_engine_list = doom_data::get_engine_list();
+    let doom_engine_files = doom_engine_list
         .iter()
         .map(|e| e.exe_name.as_str())
         .collect::<Vec<&str>>();
 
-    let engines = paths::find_file_in_folders(&exe_search_folder, engine_files);
+    let engines = paths::find_file_in_folders(&exe_search_folder, doom_engine_files);
     if engines.is_empty() {
         return Err(eyre::eyre!(format!(
             "No matches found using recursive search in folder '{}'",
@@ -95,21 +94,51 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
         )));
     }
 
-    // TODO: Mark the Engines that have been picked previously
-    let selections =
-        inquire::MultiSelect::new("Pick the engines you want to use", engines).prompt()?;
+    // Work out the indexes of what is already selected
+    let db_engines = db::get_engines().await?;
+    let mut db_defaults = vec![];
+    for (index, engine) in engines.iter().enumerate() {
+        if db_engines.iter().any(|e| &e.path == engine) {
+            db_defaults.push(index);
+        }
+    }
 
+    // Multi-select prompt to user
+    let selections = inquire::MultiSelect::new("Pick the engines you want to use", engines)
+        .with_default(&db_defaults)
+        .prompt()?;
+
+    // Remove entries that were not selected but have entries in the database
+    for db_engine in &db_engines {
+        if !selections.contains(&db_engine.path) {
+            db::delete_engine(&db_engine.path).await?;
+            debug!("Deleted engine: {:?}", db_engine)
+        }
+    }
+
+    // Save engines to  engines table
     for selection in selections {
-        let game_engine_type = get_game_engine_type_from_exe_name(engine_list.clone(), &selection)?;
+        let game_engine_type =
+            get_game_engine_type_from_exe_name(doom_engine_list.clone(), &selection)?;
+        let selection_version = get_version_from_exe_name(&selection, game_engine_type.clone())?;
 
-        let engine = data::Engine {
-            path: selection.clone(),
-            version: get_version_from_exe_name(&selection, game_engine_type.clone())?,
-            game_engine_type,
-            id: 0,
-        };
-        // TODO: Check engine doesn't already exist
-        db::add_engine(&engine).await?;
+        let existing_engine = db_engines.iter().find(|e| e.path == selection);
+        if let Some(existing_engine) = existing_engine {
+            debug!("Engine already exists, no need to add: {}", selection);
+            if existing_engine.version != selection_version {
+                debug!("Updating engine version from '{}' to '{}'", existing_engine.version, selection_version);
+                db::update_engine_version(existing_engine.id, &selection_version).await?;
+            }
+        } else {
+            let engine = data::Engine {
+                path: selection.clone(),
+                version: selection_version,
+                game_engine_type,
+                id: 0,
+            };
+            db::add_engine(&engine).await?;
+            debug!("Added engine: {:?}", engine);
+        }
     }
 
     info!("{}", display_engines().await?);
