@@ -3,33 +3,36 @@ use eyre::Context;
 use log::info;
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
-use crate::{constants, data, db, tui};
+use crate::{data, db, tui};
 
 pub async fn profiles_menu() -> Result<String, eyre::Report> {
     // Menu:
     loop {
         let menu_command = tui::profiles_menu_prompt();
+        if let tui::ProfileCommand::Back = menu_command {
+            return Ok("Back to main menu".to_string());
+        }
+        run_profiles_menu_option(menu_command).await?;
+    }
+}
 
-        match menu_command {
-            constants::ProfileCommand::New => {
-                new_profile().await?;
-            }
-            constants::ProfileCommand::Edit => {
-                edit_profile().await?;
-            }
-            constants::ProfileCommand::Delete => {
-                info!("Deleted a profile")
-            }
-            constants::ProfileCommand::Active => {
-                set_active_profile().await?;
-            }
-            constants::ProfileCommand::List => {
-                let result = list_profiles().await?;
-                info!("{}", result)
-            }
-            constants::ProfileCommand::Back => {
-                return Ok("Back to main menu".to_string());
-            }
+pub async fn run_profiles_menu_option(
+    menu_command: tui::ProfileCommand,
+) -> Result<String, eyre::Report> {
+    match menu_command {
+        tui::ProfileCommand::New => new_profile().await,
+        tui::ProfileCommand::Edit => edit_profile().await,
+        tui::ProfileCommand::Delete => {
+            todo!("Deleted a profile")
+        }
+        tui::ProfileCommand::Active => set_active_profile().await,
+        tui::ProfileCommand::List => {
+            let result = list_profiles().await?;
+            info!("{}", result);
+            Ok("".to_string())
+        }
+        tui::ProfileCommand::Back => {
+            Ok("Back to main menu".to_string())
         }
     }
 }
@@ -82,9 +85,12 @@ async fn new_profile() -> Result<String, eyre::Report> {
         .unwrap()
     {
         let settings = db::get_settings().await?;
-        db::update_settings_active_profile(settings.id, add_result.last_insert_rowid().try_into().unwrap())
-            .await
-            .wrap_err("Failed to update active profile")?;
+        db::update_settings_active_profile(
+            settings.id,
+            add_result.last_insert_rowid().try_into().unwrap(),
+        )
+        .await
+        .wrap_err("Failed to update active profile")?;
     }
 
     Ok("Created a new profile".to_string())

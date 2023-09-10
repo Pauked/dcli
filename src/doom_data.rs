@@ -50,7 +50,6 @@ pub fn get_engine_list() -> Vec<GameEngine> {
     ]
 }
 
-
 #[derive(Clone, Debug, PartialEq, sqlx::Type, Display)]
 pub enum InternalWadType {
     Doom,
@@ -136,6 +135,6 @@ pub fn get_internal_wad_list() -> Vec<InternalWad> {
             file_name: "VOICES.WAD".to_string(),
             name: "Strife Voices".to_string(),
             internal_wad_type: InternalWadType::StrifeVoices,
-        }
+        },
     ]
 }

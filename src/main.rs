@@ -3,17 +3,16 @@ use std::{env, process};
 use color_eyre::{eyre, owo_colors::OwoColorize};
 use log::{debug, info};
 
-mod actions;
-mod app_settings;
 mod constants;
 mod data;
 mod db;
 mod doom_data;
 mod finder;
-mod init;
 mod log_config;
+mod menu_config;
+mod menu_main;
+mod menu_profiles;
 mod paths;
-mod profiles;
 mod tui;
 
 #[tokio::main]
@@ -35,25 +34,25 @@ async fn run() -> eyre::Result<String> {
     // We don't want the full exe path, just the args
     let args: Vec<String> = env::args().skip(1).collect();
 
-    let reset_mode = args.contains(&constants::ARG_RESET.to_string());
+    let reset_mode = args.contains(&tui::ARG_RESET.to_string());
     if !reset_mode {
         db::create_db().await?;
         if db::is_empty_settings_table().await? {
             info!("No settings found, running init...");
-            init::init().await?;
+            menu_config::init().await?;
         }
     }
 
     for arg in args {
         debug!("Running arg: {}", arg);
         // TODO: Refactor to be less bad
-        let main_arg = constants::convert_arg_to_maincommand(&arg);
-        if main_arg != constants::MainCommand::Unknown {
-            actions::run_main_menu_option(main_arg).await?;
+        let main_arg: tui::MainCommand = tui::convert_arg_to_maincommand(&arg);
+        if main_arg != tui::MainCommand::Unknown {
+            menu_main::run_main_menu_option(main_arg).await?;
         } else {
-            let config_arg = constants::convert_arg_to_configcommand(&arg);
-            if config_arg != constants::ConfigCommand::Unknown {
-                actions::run_config_menu_option(config_arg).await?;
+            let config_arg = tui::convert_arg_to_configcommand(&arg);
+            if config_arg != tui::ConfigCommand::Unknown {
+                menu_config::run_config_menu_option(config_arg).await?;
             } else {
                 info!("Unknown argument: {}", arg);
             }
@@ -62,13 +61,13 @@ async fn run() -> eyre::Result<String> {
 
     // Wait for user input
     loop {
-        info!("{}", actions::get_active_profile_text().await?);
+        info!("{}", menu_main::get_active_profile_text().await?);
         let menu_command = tui::main_menu_prompt();
-        if let constants::MainCommand::Quit = menu_command {
+        if let tui::MainCommand::Quit = menu_command {
             return Ok("Quitting...".to_string());
         }
 
-        let result = actions::run_main_menu_option(menu_command).await?;
+        let result = menu_main::run_main_menu_option(menu_command).await?;
         info!("{}", result)
     }
 }

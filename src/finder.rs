@@ -109,7 +109,6 @@ pub fn get_prboom_file_version(full_path: &str) -> Result<FileVersion, eyre::Rep
                     input,
                 )))
             }
-
         }
         Err(e) => Err(e),
     }

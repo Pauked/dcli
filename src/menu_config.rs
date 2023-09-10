@@ -1,12 +1,49 @@
 use color_eyre::eyre;
+use colored::Colorize;
+use eyre::Context;
 use inquire::validator::Validation;
 use log::info;
+use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{
-    actions,
     data::{self},
-    db, doom_data, finder, paths,
+    db, doom_data, finder, paths, tui,
 };
+
+pub async fn config_menu() -> Result<String, eyre::Report> {
+    // Menu:
+    loop {
+        let menu_command = tui::config_menu_prompt();
+        if let tui::ConfigCommand::Back = menu_command {
+            return Ok("Back to main menu".to_string());
+        }
+        run_config_menu_option(menu_command).await?;
+    }
+}
+
+pub async fn run_config_menu_option(
+    menu_command: tui::ConfigCommand,
+) -> Result<String, eyre::Report> {
+    match menu_command {
+        tui::ConfigCommand::List => list_settings().await,
+        tui::ConfigCommand::Init => init().await,
+        tui::ConfigCommand::UpdateEngines => {
+            let settings = db::get_settings().await?;
+            init_engines(&settings.exe_search_folder.unwrap_or("".to_string())).await
+        }
+        tui::ConfigCommand::UpdateIwads => {
+            let settings = db::get_settings().await?;
+            init_iwads(&settings.iwad_search_folder.unwrap_or("".to_string())).await
+        }
+        tui::ConfigCommand::UpdatePwads => {
+            let settings = db::get_settings().await?;
+            init_pwads(&settings.pwad_search_folder.unwrap_or("".to_string())).await
+        }
+        tui::ConfigCommand::Reset => reset(false).await,
+        tui::ConfigCommand::Back => Ok("Back to main menu".to_string()),
+        tui::ConfigCommand::Unknown => Ok("Unknown command".to_string()),
+    }
+}
 
 pub async fn init() -> Result<String, eyre::Report> {
     db::create_db().await?;
@@ -75,7 +112,7 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
         db::add_engine(&engine).await?;
     }
 
-    info!("{}", actions::display_engines().await?);
+    info!("{}", display_engines().await?);
 
     Ok(exe_search_folder)
 }
@@ -131,7 +168,7 @@ pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
         db::add_iwad(&iwad).await?;
     }
 
-    info!("{}", actions::display_iwads().await?);
+    info!("{}", display_iwads().await?);
 
     Ok(iwad_search_folder)
 }
@@ -169,7 +206,7 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
         db::add_pwad(&pwad).await?;
     }
 
-    info!("{}", actions::display_pwads().await?);
+    info!("{}", display_pwads().await?);
 
     Ok(pwad_search_folder)
 }
@@ -265,4 +302,80 @@ fn get_internal_wad_type_from_file_name(
         "Unable to find internal wad type for file name '{}'",
         file_name
     )))
+}
+
+pub async fn list_settings() -> Result<String, eyre::Report> {
+    info!("{}", display_engines().await?);
+    info!("{}", display_iwads().await?);
+    info!("{}", display_pwads().await?);
+    info!("{}", display_settings().await?);
+    // info!("{}", display_profiles().await?);
+    Ok("".to_string())
+}
+
+pub async fn display_engines() -> Result<String, eyre::Report> {
+    let engines = db::get_engines()
+        .await
+        .wrap_err("Unable to generate engine listing".to_string())?;
+
+    let table = tabled::Table::new(engines)
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
+        .with(Style::modern())
+        .to_string();
+    Ok(table)
+}
+
+pub async fn display_iwads() -> Result<String, eyre::Report> {
+    let iwads = db::get_iwads()
+        .await
+        .wrap_err("Unable to iwad listing".to_string())?;
+
+    let table = tabled::Table::new(iwads)
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
+        .with(Style::modern())
+        .to_string();
+    Ok(table)
+}
+
+pub async fn display_pwads() -> Result<String, eyre::Report> {
+    let pwads = db::get_pwads()
+        .await
+        .wrap_err("Unable to iwad listing".to_string())?;
+
+    let table = tabled::Table::new(pwads)
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
+        .with(Style::modern())
+        .to_string();
+    Ok(table)
+}
+
+pub async fn display_settings() -> Result<String, eyre::Report> {
+    let settings = db::get_settings()
+        .await
+        .wrap_err("Unable to settings listing".to_string())?;
+
+    let table = tabled::Table::new(vec![settings])
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
+        .with(Style::modern())
+        .to_string();
+    Ok(table)
+}
+
+async fn reset(force: bool) -> Result<String, eyre::Report> {
+    if !db::database_exists().await {
+        return Ok("Database does not exist, nothing to reset.".to_string());
+    }
+
+    // Prompt the user for confirmation to delete the file
+    if force
+        || inquire::Confirm::new("Do you want to reset the database? All data will be deleted.")
+            .with_default(false)
+            .prompt()
+            .unwrap()
+    {
+        db::reset_db().wrap_err("Failed to reset database.")?;
+        Ok("Successfully reset database.".green().to_string())
+    } else {
+        Ok("Database reset not confirmed.".to_string())
+    }
 }

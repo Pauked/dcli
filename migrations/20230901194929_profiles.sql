@@ -1,23 +1,19 @@
-
 CREATE TABLE IF NOT EXISTS engines (
     id INTEGER PRIMARY KEY NOT NULL,
     path TEXT NOT NULL UNIQUE,
     version TEXT NOT NULL,
     game_engine_type TEXT NOT NULL
 );
-
 CREATE TABLE IF NOT EXISTS iwads (
     id INTEGER PRIMARY KEY NOT NULL,
     path TEXT NOT NULL UNIQUE,
     internal_wad_type TEXT NOT NULL
 );
-
 CREATE TABLE IF NOT EXISTS pwads (
     id INTEGER PRIMARY KEY NOT NULL,
     name TEXT NOT NULL UNIQUE,
     path TEXT NOT NULL
 );
-
 CREATE TABLE IF NOT EXISTS profiles (
     id INTEGER PRIMARY KEY NOT NULL,
     name TEXT NOT NULL UNIQUE,
@@ -28,7 +24,6 @@ CREATE TABLE IF NOT EXISTS profiles (
     FOREIGN KEY (iwad_id) REFERENCES iwads (id),
     FOREIGN KEY (pwad_id) REFERENCES pwads (id)
 );
-
 CREATE TABLE IF NOT EXISTS settings (
     id INTEGER PRIMARY KEY NOT NULL,
     active_profile_id INTEGER NULL,
@@ -39,7 +34,6 @@ CREATE TABLE IF NOT EXISTS settings (
     FOREIGN KEY (active_profile_id) REFERENCES profiles (id),
     FOREIGN KEY (last_profile_id) REFERENCES profiles (id)
 );
-
 -- CREATE TABLE IF NOT EXISTS search_paths (
 --     id INTEGER PRIMARY KEY NOT NULL,
 --     path TEXT NOT NULL,

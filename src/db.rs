@@ -231,7 +231,12 @@ pub async fn get_profile_by_id(id: i32) -> Result<data::Profile, eyre::Report> {
         .wrap_err(format!("Failed to get profile with id '{}'", id))
 }
 
-fn get_profile_display(profile: data::Profile, engine: data::Engine, iwad: data::Iwad, pwad: data::Pwad) -> data::ProfileDisplay {
+fn get_profile_display(
+    profile: data::Profile,
+    engine: data::Engine,
+    iwad: data::Iwad,
+    pwad: data::Pwad,
+) -> data::ProfileDisplay {
     data::ProfileDisplay {
         id: profile.id,
         name: profile.name,
@@ -266,7 +271,12 @@ pub async fn get_profile_display_list() -> Result<Vec<data::ProfileDisplay>, eyr
             .find(|p| p.id == profile.pwad_id.unwrap())
             .unwrap();
 
-        profile_list.push(get_profile_display(profile.clone(), engine.clone(), iwad.clone(), pwad.clone()));
+        profile_list.push(get_profile_display(
+            profile.clone(),
+            engine.clone(),
+            iwad.clone(),
+            pwad.clone(),
+        ));
     }
 
     Ok(profile_list)
