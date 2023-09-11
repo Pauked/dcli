@@ -2,7 +2,7 @@ use color_eyre::eyre;
 use colored::Colorize;
 use eyre::Context;
 use inquire::validator::Validation;
-use log::{info, debug};
+use log::{debug, info};
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{
@@ -123,21 +123,27 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
         let selection_version = get_version_from_exe_name(&selection, game_engine_type.clone())?;
 
         let existing_engine = db_engines.iter().find(|e| e.path == selection);
-        if let Some(existing_engine) = existing_engine {
-            debug!("Engine already exists, no need to add: {}", selection);
-            if existing_engine.version != selection_version {
-                debug!("Updating engine version from '{}' to '{}'", existing_engine.version, selection_version);
-                db::update_engine_version(existing_engine.id, &selection_version).await?;
+        match existing_engine {
+            Some(existing_engine) => {
+                debug!("Engine already exists, no need to add: {}", selection);
+                if existing_engine.version != selection_version {
+                    debug!(
+                        "Updating engine version from '{}' to '{}'",
+                        existing_engine.version, selection_version
+                    );
+                    db::update_engine_version(existing_engine.id, &selection_version).await?;
+                }
             }
-        } else {
-            let engine = data::Engine {
-                path: selection.clone(),
-                version: selection_version,
-                game_engine_type,
-                id: 0,
-            };
-            db::add_engine(&engine).await?;
-            debug!("Added engine: {:?}", engine);
+            None => {
+                let engine = data::Engine {
+                    path: selection.clone(),
+                    version: selection_version,
+                    game_engine_type,
+                    id: 0,
+                };
+                db::add_engine(&engine).await?;
+                debug!("Added engine: {:?}", engine);
+            }
         }
     }
 
@@ -179,22 +185,51 @@ pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
         )));
     }
 
+    // Work out the indexes of what is already selected
+    let db_iwads = db::get_iwads().await?;
+    let mut db_defaults = vec![];
+    for (index, iwad) in iwads.iter().enumerate() {
+        if db_iwads.iter().any(|e| &e.path == iwad) {
+            db_defaults.push(index);
+        }
+    }
+
     // TODO: Mark the IWADs that have been picked previously
-    let selections = inquire::MultiSelect::new("Pick the IWADs you want to use", iwads).prompt()?;
+    let selections = inquire::MultiSelect::new("Pick the IWADs you want to use", iwads)
+        .with_default(&db_defaults)
+        .prompt()?;
+
+    // Remove entries that were not selected but have entries in the database
+    for db_iwad in &db_iwads {
+        if !selections.contains(&db_iwad.path) {
+            db::delete_iwad(&db_iwad.path).await?;
+            debug!("Deleted iwad: {:?}", db_iwad)
+        }
+    }
 
     // Save engines to  engines table
     for selection in selections {
         let internal_wad_type =
             get_internal_wad_type_from_file_name(iwad_list.clone(), &selection)?;
 
-        let iwad = data::Iwad {
-            path: selection,
-            internal_wad_type,
-            id: 0,
-        };
+        let existing_iwad = db_iwads.iter().find(|e| e.path == selection);
 
-        // TODO: Check iwad doesn't exist
-        db::add_iwad(&iwad).await?;
+        match existing_iwad {
+            Some(_) => {
+                debug!("IWAD already exists, no need to add: {}", selection);
+            }
+            None => {
+                let iwad = data::Iwad {
+                    path: selection,
+                    internal_wad_type,
+                    id: 0,
+                };
+
+                // TODO: Check iwad doesn't exist
+                db::add_iwad(&iwad).await?;
+                debug!("Added iwad: {:?}", iwad);
+            }
+        }
     }
 
     info!("{}", display_iwads().await?);
@@ -224,15 +259,34 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
         )));
     }
 
-    // TODO: Loading existing PWADs up, see if the listing matches. Remove any that don't exist anymore. Add any new ones.
+    let db_pwads = db::get_pwads().await?;
+
+    // Remove entries that were not selected but have entries in the database
+    for db_pwad in &db_pwads {
+        if !pwads.contains(&db_pwad.path) {
+            db::delete_pwad(&db_pwad.path).await?;
+            debug!("Deleted pwad: {:?}", db_pwad)
+        }
+    }
+
     for pwad in pwads {
-        let pwad = data::Pwad {
-            name: get_map_name_from_readme(&pwad)?,
-            path: pwad.clone(),
-            id: 0,
-        };
-        // TODO: Check if PWAD already exists
-        db::add_pwad(&pwad).await?;
+        let existing_pwad = db_pwads.iter().find(|e| e.path == pwad);
+
+        match existing_pwad {
+            Some(_) => {
+                debug!("PWAD already exists, no need to add: {}", pwad);
+            }
+            None => {
+                let pwad = data::Pwad {
+                    name: get_map_name_from_readme(&pwad)?,
+                    path: pwad.clone(),
+                    id: 0,
+                };
+
+                db::add_pwad(&pwad).await?;
+                debug!("Added pwad: {:?}", pwad);
+            }
+        }
     }
 
     info!("{}", display_pwads().await?);

@@ -130,6 +130,16 @@ pub async fn add_iwad(iwad: &data::Iwad) -> Result<sqlx::sqlite::SqliteQueryResu
         .wrap_err(format!("Failed to add internal wad '{:?}", iwad))
 }
 
+pub async fn delete_iwad(path: &str) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let db = SqlitePool::connect(DB_URL).await.unwrap();
+
+    sqlx::query("DELETE FROM iwads WHERE path=$1 COLLATE NOCASE")
+        .bind(path.to_lowercase())
+        .execute(&db)
+        .await
+        .wrap_err(format!("Failed to delete iwad '{}'", path))
+}
+
 pub async fn get_iwads() -> Result<Vec<data::Iwad>, eyre::Report> {
     let db = get_db().await;
 
@@ -167,6 +177,16 @@ pub async fn add_pwad(pwad: &data::Pwad) -> Result<sqlx::sqlite::SqliteQueryResu
         .execute(&db)
         .await
         .wrap_err(format!("Failed to add patch wad '{:?}", pwad))
+}
+
+pub async fn delete_pwad(path: &str) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let db = SqlitePool::connect(DB_URL).await.unwrap();
+
+    sqlx::query("DELETE FROM pwads WHERE path=$1 COLLATE NOCASE")
+        .bind(path.to_lowercase())
+        .execute(&db)
+        .await
+        .wrap_err(format!("Failed to delete pwad '{}'", path))
 }
 
 pub async fn get_pwad_by_id(id: i32) -> Result<data::Pwad, eyre::Report> {

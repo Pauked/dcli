@@ -37,6 +37,16 @@ pub struct Pwad {
     pub path: String,
 }
 
+impl fmt::Display for Pwad {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{} ({})",
+            self.name, self.path
+        )
+    }
+}
+
 // TODO: Expand profiles to include: save games, complevels, episode, level, difficult, fast monsters,
 //       no monsters, respawn monsters, demo record, demo playback, DSDA specific options
 #[derive(Clone, Debug, FromRow, Tabled)]

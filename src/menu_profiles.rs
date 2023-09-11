@@ -31,9 +31,7 @@ pub async fn run_profiles_menu_option(
             info!("{}", result);
             Ok("".to_string())
         }
-        tui::ProfileCommand::Back => {
-            Ok("Back to main menu".to_string())
-        }
+        tui::ProfileCommand::Back => Ok("Back to main menu".to_string()),
     }
 }
 
@@ -57,9 +55,8 @@ async fn new_profile() -> Result<String, eyre::Report> {
         inquire::Select::new("Pick the IWAD you want to use", iwad_list).prompt()?;
 
     let pwads = db::get_pwads().await?;
-    let pwad_list = pwads.iter().map(|i| i.path.as_str()).collect::<Vec<&str>>();
     let pwad_selection =
-        inquire::Select::new("Pick the PWAD you want to use", pwad_list).prompt()?;
+        inquire::Select::new("Pick the PWAD you want to use", pwads.clone()).prompt()?;
 
     let engine_id = engines
         .iter()
@@ -67,7 +64,11 @@ async fn new_profile() -> Result<String, eyre::Report> {
         .unwrap()
         .id;
     let iwad_id = iwads.iter().find(|i| i.path == iwad_selection).unwrap().id;
-    let pwad_id = pwads.iter().find(|p| p.path == pwad_selection).unwrap().id;
+    let pwad_id = pwads
+        .iter()
+        .find(|p| p.path == pwad_selection.path)
+        .unwrap()
+        .id;
 
     let profile = data::Profile {
         id: 0,
