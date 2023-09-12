@@ -103,7 +103,7 @@ async fn edit_profile() -> Result<String, eyre::Report> {
 }
 
 async fn set_active_profile() -> Result<String, eyre::Report> {
-    // TODO Show the current active profile...
+    // TODO Show the current active profile...?
 
     let profile_list = db::get_profile_display_list().await?;
     if profile_list.is_empty() {
@@ -115,7 +115,7 @@ async fn set_active_profile() -> Result<String, eyre::Report> {
     }
     // Generate a list of profiles showing the full details
     let profile =
-        inquire::Select::new("Pick the profile to mark as active", profile_list).prompt()?;
+        inquire::Select::new("Pick the Profile to mark as Active", profile_list).prompt()?;
 
     let settings = db::get_settings().await?;
     db::update_settings_active_profile(settings.id, profile.id)

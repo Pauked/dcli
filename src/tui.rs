@@ -12,7 +12,10 @@ pub const ARG_RESET: &str = "--reset";
 
 #[derive(Debug, PartialEq, EnumString, Display)]
 pub enum MainCommand {
-    Play,
+    #[strum(serialize = "Play Active Profile")]
+    PlayActiveProfile,
+    #[strum(serialize = "Pick and Play Profile")]
+    PickAndPlayProfile,
     Profiles,
     Config,
     Quit,
@@ -21,7 +24,7 @@ pub enum MainCommand {
 
 pub fn convert_arg_to_maincommand(arg: &str) -> MainCommand {
     match arg {
-        ARG_PLAY => MainCommand::Play,
+        ARG_PLAY => MainCommand::PlayActiveProfile,
         ARG_PROFILES => MainCommand::Profiles,
         ARG_CONFIG => MainCommand::Config,
         _ => MainCommand::Unknown,
@@ -64,7 +67,8 @@ pub fn convert_arg_to_configcommand(arg: &str) -> ConfigCommand {
 
 pub fn main_menu_prompt() -> MainCommand {
     let selections = vec![
-        MainCommand::Play.to_string(),
+        MainCommand::PlayActiveProfile.to_string(),
+        MainCommand::PickAndPlayProfile.to_string(),
         MainCommand::Profiles.to_string(),
         MainCommand::Config.to_string(),
         MainCommand::Quit.to_string(),

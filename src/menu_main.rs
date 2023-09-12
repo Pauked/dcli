@@ -12,7 +12,8 @@ pub async fn run_main_menu_option(command: tui::MainCommand) -> Result<String, e
     db::create_db().await?;
 
     match command {
-        tui::MainCommand::Play => play().await,
+        tui::MainCommand::PlayActiveProfile => play_active_profile().await,
+        tui::MainCommand::PickAndPlayProfile => pick_and_play_profile().await,
         tui::MainCommand::Profiles => menu_profiles::profiles_menu().await,
         tui::MainCommand::Config => menu_config::config_menu().await,
         tui::MainCommand::Quit => Ok("Quitting".to_string()),
@@ -38,7 +39,7 @@ pub async fn get_active_profile_text() -> Result<String, eyre::Report> {
     ))
 }
 
-pub async fn play() -> Result<String, eyre::Report> {
+pub async fn play_active_profile() -> Result<String, eyre::Report> {
     // Do we have an active profile?
     // No, pick one.
     // Do we have any profiles configured?
@@ -51,13 +52,37 @@ pub async fn play() -> Result<String, eyre::Report> {
         // FIXME: Call the "set active profile" function
     };
 
-    let single_profile = db::get_profile_by_id(settings.active_profile_id.unwrap()).await?;
+    play(settings.active_profile_id.unwrap()).await
+}
+
+pub async fn pick_and_play_profile() -> Result<String, eyre::Report> {
+    let profile_list = db::get_profile_display_list().await?;
+    if profile_list.is_empty() {
+        return Ok(
+            "Cannot set active profile, there are no profiles found. Please create one."
+                .red()
+                .to_string(),
+        );
+    }
+    // Generate a list of profiles showing the full details
+    let profile =
+        inquire::Select::new("Pick the Profile you want to Play", profile_list).prompt()?;
+
+    play(profile.id).await
+}
+
+pub async fn play(profile_id: i32) -> Result<String, eyre::Report> {
+
+    let single_profile = db::get_profile_by_id(profile_id).await?;
     let engine = db::get_engine_by_id(single_profile.engine_id.unwrap()).await?;
     let iwad = db::get_iwad_by_id(single_profile.iwad_id.unwrap()).await?;
     let pwad = db::get_pwad_by_id(single_profile.pwad_id.unwrap()).await?;
 
+    // TODO: Refactor to be based off selected Doom Engine config
     let mut cmd = Command::new(&engine.path);
     cmd.arg("-iwad").arg(iwad.path).arg("-file").arg(&pwad.path);
+    // dsda-doom - save files are .dsg. subfolder of app, dsda-doom\IWAD name\PWAD name
+    // GzDoom - save files are .zds. Zip file containing JSON files. info.json is what I need! Folders - C:\Users\user\Saved Games\GZDoom\doom.id.doom2.tnt\
     // if let Some(save_game) = settings.save_game {
     //     cmd.arg("-loadgame").arg(save_game);
     // }

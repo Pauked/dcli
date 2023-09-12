@@ -250,7 +250,8 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
             .with_default(default_folder)
             .prompt()?;
 
-    // TODO: Extend to go find PWADs. Need a wildcard search method for this. And to remove IWADS from list.
+    // TODO: Remove IWADS from search. Could check 4 byte file header?
+    // TODO: Needs to be a list of extensions. Missing PK3 (see RAMP project!)
     let pwads = paths::find_files_with_extension_in_folders(&pwad_search_folder, "wad");
     if pwads.is_empty() {
         return Err(eyre::eyre!(format!(
