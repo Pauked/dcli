@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS engines (
     id INTEGER PRIMARY KEY NOT NULL,
+    app_name TEXT NOT NULL,
     path TEXT NOT NULL UNIQUE,
     version TEXT NOT NULL,
     game_engine_type TEXT NOT NULL
@@ -32,6 +33,7 @@ CREATE TABLE IF NOT EXISTS settings (
     exe_search_folder TEXT NULL,
     iwad_search_folder TEXT NULL,
     pwad_search_folder TEXT NULL,
+    game_settings TEXT NULL,
     FOREIGN KEY (active_profile_id) REFERENCES profiles (id),
     FOREIGN KEY (last_profile_id) REFERENCES profiles (id)
 );

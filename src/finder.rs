@@ -4,16 +4,7 @@ use eyre::Context;
 use powershell_script::PsScriptBuilder;
 use regex::Regex;
 
-use crate::constants;
-
-#[derive(Debug)]
-pub struct FileVersion {
-    pub app: String,
-    pub major: u32,
-    pub minor: u32,
-    pub build: u32,
-    pub revision: u32,
-}
+use crate::{constants, data};
 
 fn run_powershell_cmd(powershell_cmd: &str) -> Result<Vec<String>, eyre::Report> {
     if env::consts::OS != constants::OS_WINDOWS {
@@ -56,8 +47,8 @@ fn get_property_from_stdout(stdout_strings: Vec<String>, property_name: &str) ->
     property_value.to_string()
 }
 
-// FIXME: Refactor error handling in get_file_version
-pub fn get_file_version(full_path: &str) -> Result<FileVersion, eyre::Report> {
+
+pub fn get_file_version_information(full_path: &str) -> Result<(String, String, String, String), eyre::Report> {
     let stdout_result = run_powershell_cmd(&format!(
         r#"(Get-Item "{}").VersionInfo.FileVersionRaw | Format-List -Property Major, Minor, Build, Revision"#,
         full_path
@@ -70,19 +61,44 @@ pub fn get_file_version(full_path: &str) -> Result<FileVersion, eyre::Report> {
             let build = get_property_from_stdout(stdout_strings.clone(), "Build    : ");
             let revision = get_property_from_stdout(stdout_strings, "Revision : ");
 
-            Ok(FileVersion {
-                app: full_path.to_string(),
-                major: major.parse::<u32>().unwrap_or(0),
-                minor: minor.parse::<u32>().unwrap_or(0),
-                build: build.parse::<u32>().unwrap_or(0),
-                revision: revision.parse::<u32>().unwrap_or(0),
-            })
+            Ok((major, minor, build, revision))
         }
         Err(e) => Err(e),
     }
 }
 
-pub fn get_prboom_file_version(full_path: &str) -> Result<FileVersion, eyre::Report> {
+pub fn get_file_description_information(full_path: &str) -> Result<String, eyre::Report> {
+    let stdout_result = run_powershell_cmd(&format!(
+        r#"(Get-Item "{}").VersionInfo | Format-List -Property FileDescription"#,
+        full_path
+    ));
+
+    match stdout_result {
+        Ok(stdout_strings) => {
+            let app_name = get_property_from_stdout(stdout_strings.clone(), "FileDescription :");
+            Ok(app_name)
+        }
+        Err(e) => Err(e),
+    }
+}
+
+// FIXME: Refactor error handling in get_file_version
+pub fn get_file_version(full_path: &str) -> Result<data::FileVersion, eyre::Report> {
+
+    let (major, minor, build, revision) = get_file_version_information(full_path)?;
+    let app_name = get_file_description_information(full_path)?;
+
+    Ok(data::FileVersion {
+        app_name: app_name.to_string(),
+        path: full_path.to_string(),
+        major: major.parse::<u32>().unwrap_or(0),
+        minor: minor.parse::<u32>().unwrap_or(0),
+        build: build.parse::<u32>().unwrap_or(0),
+        revision: revision.parse::<u32>().unwrap_or(0),
+    })
+}
+
+pub fn get_prboom_file_version(full_path: &str) -> Result<data::FileVersion, eyre::Report> {
     let stdout_result = run_powershell_cmd(&format!(r#"{} -v"#, full_path));
     match stdout_result {
         Ok(stdout_strings) => {
@@ -96,8 +112,13 @@ pub fn get_prboom_file_version(full_path: &str) -> Result<FileVersion, eyre::Rep
                 let major = captures[1].parse::<u32>().unwrap_or(0);
                 let minor = captures[2].parse::<u32>().unwrap_or(0);
                 let build = captures[3].parse::<u32>().unwrap_or(0);
-                Ok(FileVersion {
-                    app: full_path.to_string(),
+
+                // Extract the app name (assuming it's the part before " v")
+                let app_name = input.split(" v").next().unwrap();
+
+                Ok(data::FileVersion {
+                    app_name: app_name.to_string(),
+                    path: full_path.to_string(),
                     major,
                     minor,
                     build,

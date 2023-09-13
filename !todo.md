@@ -22,6 +22,7 @@ What do I want in the config?
  - To track time played at a WAD and Engine level
  - Have last played based on machine name
  - Play queues, different queues to play wads. One based on my ordering, one based on random, one based on DoomWorld scores.
+ - Be able to find and download wads from DoomWorld, etc.
 
 Orginal thoughts:
 - Windows support
@@ -41,3 +42,9 @@ Orginal thoughts:
 - Short cmd options in CLI
 - Built in mini-WIKI of Doom help.
     - Weapon stats, monster stats
+
+
+Useful links:
+https://dsdarchive.com/guides/dsda_doom
+https://www.doomworld.com/forum/topic/116534-dsda-doom-guide-usage-recording-demos-and-some-extra-info/
+https://zdoom.org/wiki/Command_line_parameters

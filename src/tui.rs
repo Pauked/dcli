@@ -42,8 +42,9 @@ pub enum ProfileCommand {
     Back,
 }
 
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, Clone, PartialEq, EnumString, Display)]
 pub enum ConfigCommand {
+    List,
     #[strum(serialize = "List Engines")]
     ListEngines,
     #[strum(serialize = "List Internal WADs")]
@@ -53,6 +54,7 @@ pub enum ConfigCommand {
     #[strum(serialize = "List Settings")]
     ListSettings,
     Init,
+    Update,
     #[strum(serialize = "Update Engines")]
     UpdateEngines,
     #[strum(serialize = "Update Internal WADs")]
@@ -107,20 +109,44 @@ pub fn profiles_menu_prompt() -> ProfileCommand {
 
 pub fn config_menu_prompt() -> ConfigCommand {
     let selections = vec![
-        ConfigCommand::ListEngines.to_string(),
-        ConfigCommand::ListIwads.to_string(),
-        ConfigCommand::ListPwads.to_string(),
-        ConfigCommand::ListSettings.to_string(),
+        ConfigCommand::List.to_string(),
         ConfigCommand::Init.to_string(),
-        ConfigCommand::UpdateEngines.to_string(),
-        ConfigCommand::UpdateIwads.to_string(),
-        ConfigCommand::UpdatePwads.to_string(),
+        ConfigCommand::Update.to_string(),
         ConfigCommand::Reset.to_string(),
         ConfigCommand::Back.to_string(),
     ];
 
     // clearscreen::clear().unwrap();
     let choice: String = inquire::Select::new("Select a Config option", selections)
+        .prompt()
+        .unwrap();
+    ConfigCommand::from_str(&choice).unwrap()
+}
+
+pub fn config_list_menu_prompt() -> ConfigCommand {
+    let selections = vec![
+        ConfigCommand::ListEngines.to_string(),
+        ConfigCommand::ListIwads.to_string(),
+        ConfigCommand::ListPwads.to_string(),
+        ConfigCommand::ListSettings.to_string(),
+        ConfigCommand::Back.to_string(),
+    ];
+
+    let choice: String = inquire::Select::new("Select a Config / List option", selections)
+        .prompt()
+        .unwrap();
+    ConfigCommand::from_str(&choice).unwrap()
+}
+
+pub fn config_update_menu_prompt() -> ConfigCommand {
+    let selections = vec![
+        ConfigCommand::UpdateEngines.to_string(),
+        ConfigCommand::UpdateIwads.to_string(),
+        ConfigCommand::UpdatePwads.to_string(),
+        ConfigCommand::Back.to_string(),
+    ];
+
+    let choice: String = inquire::Select::new("Select an Config / Update option", selections)
         .prompt()
         .unwrap();
     ConfigCommand::from_str(&choice).unwrap()

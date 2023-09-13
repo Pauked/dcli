@@ -13,6 +13,7 @@ pub async fn main_menu() -> Result<String, eyre::Report> {
     clearscreen::clear().unwrap();
     loop {
         info!("{}", get_active_profile_text().await?);
+
         let menu_command = tui::main_menu_prompt();
         if let tui::MainCommand::Quit = menu_command {
             return Ok("Quitting...".to_string());
@@ -112,15 +113,20 @@ pub async fn play(profile_id: i32) -> Result<String, eyre::Report> {
     // if let Some(save_game) = settings.save_game {
     //     cmd.arg("-loadgame").arg(save_game);
     // }
+    // TODO: Profile additional args
+    // ...
 
     // cmd.status().wrap_err(format!("Failed to run Doom! - '{}'", settings.doom_exe))?;
     cmd.stdout(Stdio::null())
         .spawn()
         .wrap_err(format!("Failed to run Doom! - '{}'", engine.path))?;
-    Ok(format!(
-        "Opened the following file in Doom! - '{}' / '{}''",
-        engine.path, pwad.path
-    ))
+
+    info!(
+        "Successfully opened Profile - '{}'",
+        single_profile.name.green()
+    );
+    inquire::Text::new("Press any key to continue...").prompt_skippable()?;
+    Ok(format!("Successfully open Profile - '{}'", single_profile.name))
 }
 
 // pub fn notepad_config(config_file_path: PathBuf) -> Result<String, eyre::Report> {

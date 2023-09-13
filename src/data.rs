@@ -1,14 +1,34 @@
 use core::fmt;
 
+use serde::{Serialize, Deserialize};
 use sqlx::FromRow;
+use strum_macros::{EnumString, Display};
 use tabled::Tabled;
 
 use crate::doom_data;
+
+#[derive(Clone, Debug)]
+pub struct FileVersion {
+    pub app_name: String,
+    pub path: String,
+    pub major: u32,
+    pub minor: u32,
+    pub build: u32,
+    pub revision: u32,
+}
+
+impl FileVersion {
+    pub fn display_version(&self) -> String {
+        format!("{}.{}.{}.{}", self.major, self.minor, self.build, self.revision)
+    }
+}
 
 #[derive(Clone, Debug, FromRow, Tabled)]
 pub struct Engine {
     #[tabled(skip)]
     pub id: i32,
+    #[tabled(rename = "App Name")]
+    pub app_name: String,
     #[tabled(rename = "Path")]
     pub path: String,
     #[tabled(rename = "Version")]
@@ -21,8 +41,8 @@ impl fmt::Display for Engine {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{} ({} [{}])",
-            self.game_engine_type, self.path, self.version
+            "{} ({} [{}], {})",
+            self.app_name, self.path, self.version, self.game_engine_type
         )
     }
 }
@@ -149,4 +169,52 @@ pub fn display_option_string(value: &Option<String>) -> String {
         Some(s) => s.to_string(),
         None => "N/A".to_string(),
     }
+}
+
+#[derive(Clone, Debug, FromRow, Tabled)]
+pub struct GameSettings {
+    #[tabled(skip)]
+    pub id: i32,
+    pub comp_level: CompLevel,
+    pub fast_monsters: bool,
+    pub no_monsters: bool,
+    pub respawn_monsters: bool,
+    #[tabled(
+        rename = "Episode and Level or Map",
+        display_with = "display_option_string"
+    )]
+    pub map: Option<String>,
+    pub skill: Skill,
+    pub turbo: i8,
+    pub timer: i32,
+    #[tabled(
+        rename = "Screen Resolution",
+        display_with = "display_option_string"
+    )]
+    pub resolution: Option<String>,
+    pub full_screen: bool,
+}
+
+#[derive(
+    Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type,
+)]
+pub enum CompLevel {
+    Default = 0,
+    DoomAndDoom2 = 2,
+    UltimateDoom = 3,
+    FinalDoom = 4,
+    Boom = 9,
+    Mbf = 11,
+    Mbf21 = 21,
+}
+
+#[derive(
+    Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type,
+)]
+pub enum Skill {
+    One = 1,
+    Two = 2,
+    Three = 3,
+    Four = 4,
+    Five = 5,
 }

@@ -1,5 +1,8 @@
 use strum_macros::Display;
 
+pub const EXT_WAD: &str = "wad";
+pub const EXT_PK3: &str = "pk3";
+
 #[derive(Clone, Debug, PartialEq, sqlx::Type, Display)]
 pub enum GameEngineType {
     Doom,

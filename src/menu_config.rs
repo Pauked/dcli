@@ -14,6 +14,40 @@ pub async fn config_menu() -> Result<String, eyre::Report> {
     clearscreen::clear().unwrap();
     loop {
         let menu_command = tui::config_menu_prompt();
+        match menu_command {
+            tui::ConfigCommand::List => {
+                config_list_menu().await?;
+            },
+            tui::ConfigCommand::Update => {
+                config_update_menu().await?;
+            },
+            tui::ConfigCommand::Back => {
+                return Ok("".to_string());
+            },
+            _ => {}
+        }
+
+        let result = run_config_menu_option(menu_command).await?;
+        clearscreen::clear().unwrap();
+        info!("{}", result)
+    }
+}
+
+pub async fn config_list_menu() -> Result<String, eyre::Report> {
+    loop {
+        let menu_command = tui::config_list_menu_prompt();
+        if let tui::ConfigCommand::Back = menu_command {
+            return Ok("".to_string());
+        }
+        let result = run_config_menu_option(menu_command).await?;
+        clearscreen::clear().unwrap();
+        info!("{}", result)
+    }
+}
+
+pub async fn config_update_menu() -> Result<String, eyre::Report> {
+    loop {
+        let menu_command = tui::config_update_menu_prompt();
         if let tui::ConfigCommand::Back = menu_command {
             return Ok("".to_string());
         }
@@ -27,11 +61,13 @@ pub async fn run_config_menu_option(
     menu_command: tui::ConfigCommand,
 ) -> Result<String, eyre::Report> {
     match menu_command {
+        tui::ConfigCommand::List => Ok("".to_string()),
         tui::ConfigCommand::ListEngines => display_engines().await,
         tui::ConfigCommand::ListIwads => display_iwads().await,
         tui::ConfigCommand::ListPwads => display_pwads().await,
         tui::ConfigCommand::ListSettings => display_settings().await,
         tui::ConfigCommand::Init => init().await,
+        tui::ConfigCommand::Update => Ok("".to_string()),
         tui::ConfigCommand::UpdateEngines => {
             let settings = db::get_settings().await?;
             init_engines(&settings.exe_search_folder.unwrap_or("".to_string())).await
@@ -68,6 +104,8 @@ pub async fn init() -> Result<String, eyre::Report> {
         pwad_search_folder: Some(pwad_search_folder),
     };
     db::add_settings(&settings).await?;
+    info!("{}", "Successfully configured!".green());
+    inquire::Text::new("Press any key to continue...").prompt_skippable()?;
 
     Ok("Succesfully configured!".to_string())
 }
@@ -109,50 +147,60 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
         }
     }
 
+    // Create a new list with version details
+    let mut engines_extended: Vec<data::Engine> = Vec::new();
+    for engine in engines {
+        info!("Getting version information for Engine: '{}'", engine);
+        let game_engine_type =
+            get_game_engine_type_from_exe_name(doom_engine_list.clone(), &engine)?;
+        let file_version = get_version_from_exe_name(&engine, game_engine_type.clone())?;
+        engines_extended.push(data::Engine {
+            id: 0,
+            app_name: file_version.app_name.clone(),
+            path: engine,
+            version: file_version.display_version(),
+            game_engine_type,
+        });
+        info!("Done - {}", engines_extended.last().unwrap().to_string());
+    }
+    //info!("Found engines: {:?}", engines_extended);
+
     // Multi-select prompt to user
-    let selections = inquire::MultiSelect::new("Pick the engines you want to use", engines)
-        .with_default(&db_defaults)
-        .prompt()?;
+    let selections =
+        inquire::MultiSelect::new("Pick the engines you want to use", engines_extended)
+            .with_default(&db_defaults)
+            .prompt()?;
 
     // Remove entries that were not selected but have entries in the database
     for db_engine in &db_engines {
-        if !selections.contains(&db_engine.path) {
+        if !selections.iter().any(|e| e.path == db_engine.path) {
             db::delete_engine(&db_engine.path).await?;
-            debug!("Deleted engine: {:?}", db_engine)
+            debug!("Deleted engine: {:?}", db_engine);
         }
     }
 
     // Save engines to  engines table
     for selection in selections {
-        let game_engine_type =
-            get_game_engine_type_from_exe_name(doom_engine_list.clone(), &selection)?;
-        let selection_version = get_version_from_exe_name(&selection, game_engine_type.clone())?;
-
-        let existing_engine = db_engines.iter().find(|e| e.path == selection);
+        let existing_engine = db_engines.iter().find(|e| e.path == selection.path);
         match existing_engine {
             Some(existing_engine) => {
                 debug!("Engine already exists, no need to add: {}", selection);
-                if existing_engine.version != selection_version {
+                if existing_engine.version != selection.version {
                     debug!(
                         "Updating engine version from '{}' to '{}'",
-                        existing_engine.version, selection_version
+                        existing_engine.version, selection.version
                     );
-                    db::update_engine_version(existing_engine.id, &selection_version).await?;
+                    db::update_engine_version(existing_engine.id, &selection.version).await?;
                 }
             }
             None => {
-                let engine = data::Engine {
-                    path: selection.clone(),
-                    version: selection_version,
-                    game_engine_type,
-                    id: 0,
-                };
-                db::add_engine(&engine).await?;
-                debug!("Added engine: {:?}", engine);
+                db::add_engine(&selection).await?;
+                debug!("Added engine: {:?}", selection);
             }
         }
     }
 
+    // FIXME: This is getting blanked by menu display...
     info!("{}", display_engines().await?);
 
     Ok(exe_search_folder)
@@ -238,6 +286,7 @@ pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
         }
     }
 
+    // FIXME: This is getting blanked by menu display...
     info!("{}", display_iwads().await?);
 
     Ok(iwad_search_folder)
@@ -258,7 +307,10 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
 
     // TODO: Remove IWADS from search. Could check 4 byte file header?
     // TODO: Needs to be a list of extensions. Missing PK3 (see RAMP project!)
-    let pwads = paths::find_files_with_extension_in_folders(&pwad_search_folder, "wad");
+    let pwads = paths::find_files_with_extensions_in_folders(
+        &pwad_search_folder,
+        vec![doom_data::EXT_WAD, doom_data::EXT_PK3],
+    );
     if pwads.is_empty() {
         return Err(eyre::eyre!(format!(
             "No matches found using recursive search in folder '{}'",
@@ -277,6 +329,7 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
     }
 
     for pwad in pwads {
+
         let existing_pwad = db_pwads.iter().find(|e| e.path == pwad);
 
         match existing_pwad {
@@ -284,6 +337,7 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
                 debug!("PWAD already exists, no need to add: {}", pwad);
             }
             None => {
+                info!("Getting map name for PWAD: '{}'", pwad);
                 let pwad = data::Pwad {
                     name: get_map_name_from_readme(&pwad)?,
                     path: pwad.clone(),
@@ -292,10 +346,12 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
 
                 db::add_pwad(&pwad).await?;
                 debug!("Added pwad: {:?}", pwad);
+                info!("Done - {}", pwad.name);
             }
         }
     }
 
+    // FIXME: This is getting blanked by menu display...
     info!("{}", display_pwads().await?);
 
     Ok(pwad_search_folder)
@@ -328,29 +384,11 @@ fn get_map_name_from_readme(pwad: &str) -> Result<String, eyre::Report> {
 fn get_version_from_exe_name(
     exe_name: &str,
     game_engine_type: doom_data::GameEngineType,
-) -> Result<String, eyre::Report> {
+) -> Result<data::FileVersion, eyre::Report> {
     match game_engine_type {
         doom_data::GameEngineType::Doom => todo!("Doom version not implemented yet!"),
-        doom_data::GameEngineType::PrBoomPlus => {
-            let file_version_result = finder::get_prboom_file_version(exe_name)?;
-            Ok(format!(
-                "{}.{}.{}.{}",
-                file_version_result.major,
-                file_version_result.minor,
-                file_version_result.build,
-                file_version_result.revision
-            ))
-        }
-        doom_data::GameEngineType::GzDoom => {
-            let file_version_result = finder::get_file_version(exe_name)?;
-            Ok(format!(
-                "{}.{}.{}.{}",
-                file_version_result.major,
-                file_version_result.minor,
-                file_version_result.build,
-                file_version_result.revision
-            ))
-        }
+        doom_data::GameEngineType::PrBoomPlus => Ok(finder::get_prboom_file_version(exe_name)?),
+        doom_data::GameEngineType::GzDoom => Ok(finder::get_file_version(exe_name)?),
     }
 }
 
@@ -412,7 +450,7 @@ pub async fn display_iwads() -> Result<String, eyre::Report> {
         .wrap_err("Unable to iwad listing".to_string())?;
 
     let table = tabled::Table::new(iwads)
-        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
         .with(Style::modern())
         .to_string();
     Ok(table)
@@ -424,7 +462,7 @@ pub async fn display_pwads() -> Result<String, eyre::Report> {
         .wrap_err("Unable to iwad listing".to_string())?;
 
     let table = tabled::Table::new(pwads)
-        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
         .with(Style::modern())
         .to_string();
     Ok(table)
@@ -436,7 +474,7 @@ pub async fn display_settings() -> Result<String, eyre::Report> {
         .wrap_err("Unable to settings listing".to_string())?;
 
     let table = tabled::Table::new(vec![settings])
-        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
         .with(Style::modern())
         .to_string();
     Ok(table)

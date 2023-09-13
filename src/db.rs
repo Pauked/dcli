@@ -63,7 +63,8 @@ pub async fn add_engine(
 ) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let db = get_db().await;
 
-    sqlx::query("INSERT INTO engines (path, version, game_engine_type) VALUES (?,?,?)")
+    sqlx::query("INSERT INTO engines (app_name, path, version, game_engine_type) VALUES (?,?,?,?)")
+        .bind(&engine.app_name)
         .bind(&engine.path)
         .bind(&engine.version)
         .bind(&engine.game_engine_type)

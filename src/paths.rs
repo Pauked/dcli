@@ -101,10 +101,13 @@ pub fn find_file_in_folders(root_folder: &str, find_files: Vec<&str>) -> Vec<Str
     results
 }
 
-pub fn find_files_with_extension_in_folders(root_folder: &str, extension: &str) -> Vec<String> {
+pub fn find_files_with_extensions_in_folders(
+    root_folder: &str,
+    extensions: Vec<&str>,
+) -> Vec<String> {
     debug!(
-        "find_files_with_extension_in_folders: '{}' / '{}'",
-        root_folder, extension
+        "find_files_with_extensions_in_folders: '{}' / '{:?}'",
+        root_folder, extensions
     );
     let mut results: Vec<String> = Vec::new();
 
@@ -119,9 +122,11 @@ pub fn find_files_with_extension_in_folders(root_folder: &str, extension: &str) 
     for entry in WalkDir::new(root_folder) {
         if let Ok(entry) = entry {
             if let Some(ext) = entry.path().extension() {
-                if ext == extension {
-                    found_count += 1;
-                    results.push(entry.path().display().to_string());
+                for extension in extensions.clone() {
+                    if ext.to_string_lossy() == extension {
+                        found_count += 1;
+                        results.push(entry.path().display().to_string());
+                    }
                 }
             }
 

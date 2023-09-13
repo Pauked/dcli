@@ -1,6 +1,7 @@
 use std::{env, process};
 
-use color_eyre::{eyre, owo_colors::OwoColorize};
+use color_eyre::eyre;
+use colored::Colorize;
 use log::{debug, info};
 
 mod constants;
@@ -52,7 +53,10 @@ async fn run() -> eyre::Result<String> {
         } else {
             let config_arg = tui::convert_arg_to_configcommand(&arg);
             if config_arg != tui::ConfigCommand::Unknown {
-                menu_config::run_config_menu_option(config_arg).await?;
+                menu_config::run_config_menu_option(config_arg.clone()).await?;
+                if config_arg == tui::ConfigCommand::Reset {
+                    menu_config::init().await?;
+                }
             } else {
                 info!("Unknown argument: {}", arg);
             }
