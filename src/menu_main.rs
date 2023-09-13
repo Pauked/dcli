@@ -5,8 +5,26 @@ use color_eyre::{
     Result,
 };
 use colored::Colorize;
+use log::info;
 
 use crate::{db, menu_config, menu_profiles, tui};
+
+pub async fn main_menu() -> Result<String, eyre::Report> {
+    clearscreen::clear().unwrap();
+    loop {
+        info!("{}", get_active_profile_text().await?);
+        let menu_command = tui::main_menu_prompt();
+        if let tui::MainCommand::Quit = menu_command {
+            return Ok("Quitting...".to_string());
+        }
+
+        let result = run_main_menu_option(menu_command).await?;
+        clearscreen::clear().unwrap();
+        if !result.is_empty() {
+            info!("{}", result)
+        }
+    }
+}
 
 pub async fn run_main_menu_option(command: tui::MainCommand) -> Result<String, eyre::Report> {
     db::create_db().await?;
@@ -23,12 +41,21 @@ pub async fn run_main_menu_option(command: tui::MainCommand) -> Result<String, e
 
 pub async fn get_active_profile_text() -> Result<String, eyre::Report> {
     if !db::database_exists().await {
-        return Ok("No database found, please run 'init'.".red().to_string());
+        return Ok("No database found. Please run 'init'.".red().to_string());
     }
+
+    if db::is_empty_settings_table().await? {
+        return Ok("No settings configured. Please run 'init'."
+            .red()
+            .to_string());
+    }
+
     let settings = db::get_settings().await?;
 
     if settings.active_profile_id.is_none() {
-        return Ok("No active profile found, please set one.".red().to_string());
+        return Ok("No active profile found. Please set one."
+            .yellow()
+            .to_string());
     }
 
     let profile_display =
@@ -72,7 +99,6 @@ pub async fn pick_and_play_profile() -> Result<String, eyre::Report> {
 }
 
 pub async fn play(profile_id: i32) -> Result<String, eyre::Report> {
-
     let single_profile = db::get_profile_by_id(profile_id).await?;
     let engine = db::get_engine_by_id(single_profile.engine_id.unwrap()).await?;
     let iwad = db::get_iwad_by_id(single_profile.iwad_id.unwrap()).await?;

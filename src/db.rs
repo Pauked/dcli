@@ -52,7 +52,7 @@ pub async fn is_empty_settings_table() -> Result<bool, eyre::Report> {
     let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM settings")
         .fetch_one(&db)
         .await
-        .wrap_err("Failed to check is Settings tasble is empty")?;
+        .wrap_err("Failed to check is Settings table is empty")?;
 
     // Determine if the table is empty
     Ok(result.0 == 0)
@@ -221,10 +221,28 @@ pub async fn add_settings(
 pub async fn get_settings() -> Result<data::Settings, eyre::Report> {
     let db = get_db().await;
 
-    sqlx::query_as::<_, data::Settings>("SELECT * FROM settings")
+    // sqlx::query_as::<_, data::Settings>("SELECT * FROM settings")
+    //     .fetch_one(&db)
+    //     .await
+    //     .wrap_err("Failed to get settings".to_string())
+
+    let result = sqlx::query_as::<_, data::Settings>("SELECT * FROM settings")
         .fetch_one(&db)
         .await
-        .wrap_err("Failed to get settings".to_string())
+        .wrap_err("Failed to get settings".to_string());
+
+    match result {
+        Ok(settings) => Ok(settings),
+        Err(_) => {
+            Ok(data::Settings {
+                id: 0,
+                active_profile_id: None,
+                exe_search_folder: None,
+                iwad_search_folder: None,
+                pwad_search_folder: None,
+            })
+        }
+    }
 }
 
 pub async fn update_settings_active_profile(

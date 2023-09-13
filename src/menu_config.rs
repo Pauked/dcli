@@ -11,12 +11,15 @@ use crate::{
 };
 
 pub async fn config_menu() -> Result<String, eyre::Report> {
+    clearscreen::clear().unwrap();
     loop {
         let menu_command = tui::config_menu_prompt();
         if let tui::ConfigCommand::Back = menu_command {
-            return Ok("Back to main menu".to_string());
+            return Ok("".to_string());
         }
-        run_config_menu_option(menu_command).await?;
+        let result = run_config_menu_option(menu_command).await?;
+        clearscreen::clear().unwrap();
+        info!("{}", result)
     }
 }
 
@@ -24,7 +27,10 @@ pub async fn run_config_menu_option(
     menu_command: tui::ConfigCommand,
 ) -> Result<String, eyre::Report> {
     match menu_command {
-        tui::ConfigCommand::List => list_settings().await,
+        tui::ConfigCommand::ListEngines => display_engines().await,
+        tui::ConfigCommand::ListIwads => display_iwads().await,
+        tui::ConfigCommand::ListPwads => display_pwads().await,
+        tui::ConfigCommand::ListSettings => display_settings().await,
         tui::ConfigCommand::Init => init().await,
         tui::ConfigCommand::UpdateEngines => {
             let settings = db::get_settings().await?;
@@ -39,7 +45,7 @@ pub async fn run_config_menu_option(
             init_pwads(&settings.pwad_search_folder.unwrap_or("".to_string())).await
         }
         tui::ConfigCommand::Reset => reset(false).await,
-        tui::ConfigCommand::Back => Ok("Back to main menu".to_string()),
+        tui::ConfigCommand::Back => Ok("".to_string()),
         tui::ConfigCommand::Unknown => Ok("Unknown command".to_string()),
     }
 }
@@ -386,15 +392,6 @@ fn get_internal_wad_type_from_file_name(
         "Unable to find internal wad type for file name '{}'",
         file_name
     )))
-}
-
-pub async fn list_settings() -> Result<String, eyre::Report> {
-    info!("{}", display_engines().await?);
-    info!("{}", display_iwads().await?);
-    info!("{}", display_pwads().await?);
-    info!("{}", display_settings().await?);
-    // info!("{}", display_profiles().await?);
-    Ok("".to_string())
 }
 
 pub async fn display_engines() -> Result<String, eyre::Report> {

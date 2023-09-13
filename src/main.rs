@@ -59,17 +59,7 @@ async fn run() -> eyre::Result<String> {
         }
     }
 
-    // Main menu
-    loop {
-        info!("{}", menu_main::get_active_profile_text().await?);
-        let menu_command = tui::main_menu_prompt();
-        if let tui::MainCommand::Quit = menu_command {
-            return Ok("Quitting...".to_string());
-        }
-
-        let result = menu_main::run_main_menu_option(menu_command).await?;
-        info!("{}", result)
-    }
+    menu_main::main_menu().await
 }
 
 fn main() {

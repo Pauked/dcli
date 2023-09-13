@@ -44,7 +44,14 @@ pub enum ProfileCommand {
 
 #[derive(Debug, PartialEq, EnumString, Display)]
 pub enum ConfigCommand {
-    List,
+    #[strum(serialize = "List Engines")]
+    ListEngines,
+    #[strum(serialize = "List Internal WADs")]
+    ListIwads,
+    #[strum(serialize = "List Patch WADs")]
+    ListPwads,
+    #[strum(serialize = "List Settings")]
+    ListSettings,
     Init,
     #[strum(serialize = "Update Engines")]
     UpdateEngines,
@@ -74,6 +81,7 @@ pub fn main_menu_prompt() -> MainCommand {
         MainCommand::Quit.to_string(),
     ];
 
+    // clearscreen::clear().unwrap();
     let choice = inquire::Select::new("Select a Main Menu option", selections)
         .prompt()
         .unwrap();
@@ -90,6 +98,7 @@ pub fn profiles_menu_prompt() -> ProfileCommand {
         ProfileCommand::Back.to_string(),
     ];
 
+    // clearscreen::clear().unwrap();
     let choice: String = inquire::Select::new("Select a Profile option", selections)
         .prompt()
         .unwrap();
@@ -98,7 +107,10 @@ pub fn profiles_menu_prompt() -> ProfileCommand {
 
 pub fn config_menu_prompt() -> ConfigCommand {
     let selections = vec![
-        ConfigCommand::List.to_string(),
+        ConfigCommand::ListEngines.to_string(),
+        ConfigCommand::ListIwads.to_string(),
+        ConfigCommand::ListPwads.to_string(),
+        ConfigCommand::ListSettings.to_string(),
         ConfigCommand::Init.to_string(),
         ConfigCommand::UpdateEngines.to_string(),
         ConfigCommand::UpdateIwads.to_string(),
@@ -107,6 +119,7 @@ pub fn config_menu_prompt() -> ConfigCommand {
         ConfigCommand::Back.to_string(),
     ];
 
+    // clearscreen::clear().unwrap();
     let choice: String = inquire::Select::new("Select a Config option", selections)
         .prompt()
         .unwrap();

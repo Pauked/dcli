@@ -6,13 +6,15 @@ use tabled::settings::{object::Rows, Modify, Style, Width};
 use crate::{data, db, tui};
 
 pub async fn profiles_menu() -> Result<String, eyre::Report> {
-    // Menu:
+    clearscreen::clear().unwrap();
     loop {
         let menu_command = tui::profiles_menu_prompt();
         if let tui::ProfileCommand::Back = menu_command {
-            return Ok("Back to main menu".to_string());
+            return Ok("".to_string());
         }
-        run_profiles_menu_option(menu_command).await?;
+        let result = run_profiles_menu_option(menu_command).await?;
+        clearscreen::clear().unwrap();
+        info!("{}", result)
     }
 }
 
@@ -29,55 +31,47 @@ pub async fn run_profiles_menu_option(
             info!("{}", result);
             Ok("".to_string())
         }
-        tui::ProfileCommand::Back => Ok("Back to main menu".to_string()),
+        tui::ProfileCommand::Back => Ok("".to_string()),
     }
 }
 
 async fn new_profile() -> Result<String, eyre::Report> {
+    let engines = db::get_engines().await?;
+    if engines.is_empty() {
+        return Ok("There are no Engines to select. Please run 'init'.".red().to_string());
+    }
+    let iwads = db::get_iwads().await?;
+    if engines.is_empty() {
+        return Ok("There are no IWADs to select. Please run 'init.".red().to_string());
+    }
+    let pwads = db::get_pwads().await?;
+    if engines.is_empty() {
+        return Ok("There are no PWADs to select. Please run 'init'.".red().to_string());
+    }
+
     // TODO: Validate if profile_name already exists
     let profile_name = inquire::Text::new("Enter a name for your Profile")
         .with_validator(inquire::min_length!(5))
         .prompt()?;
 
-    let engines = db::get_engines().await?;
-    let engine_list = engines
-        .iter()
-        .map(|e| e.path.as_str())
-        .collect::<Vec<&str>>();
     let engine_selection =
-        inquire::Select::new("Pick the Engine you want to use", engine_list).prompt()?;
+        inquire::Select::new("Pick the Engine you want to use", engines).prompt()?;
 
-    let iwads = db::get_iwads().await?;
-    let iwad_list = iwads.iter().map(|i| i.path.as_str()).collect::<Vec<&str>>();
     let iwad_selection =
-        inquire::Select::new("Pick the IWAD you want to use", iwad_list).prompt()?;
+        inquire::Select::new("Pick the IWAD you want to use", iwads).prompt()?;
 
-    let pwads = db::get_pwads().await?;
     let pwad_selection =
         inquire::Select::new("Pick the PWAD you want to use", pwads.clone()).prompt()?;
 
-    let engine_id = engines
-        .iter()
-        .find(|e| e.path == engine_selection)
-        .unwrap()
-        .id;
-    let iwad_id = iwads.iter().find(|i| i.path == iwad_selection).unwrap().id;
-    let pwad_id = pwads
-        .iter()
-        .find(|p| p.path == pwad_selection.path)
-        .unwrap()
-        .id;
-
     let additional_arguments = inquire::Text::new("Enter any additional arguments")
-        // .with_validator(inquire::min_length!(5))
         .prompt_skippable()?;
 
     let profile = data::Profile {
         id: 0,
         name: profile_name,
-        engine_id: Some(engine_id),
-        iwad_id: Some(iwad_id),
-        pwad_id: Some(pwad_id),
+        engine_id: Some(engine_selection.id),
+        iwad_id: Some(iwad_selection.id),
+        pwad_id: Some(pwad_selection.id),
         additional_arguments,
     };
     let add_result = db::add_profile(profile)

@@ -17,6 +17,16 @@ pub struct Engine {
     pub game_engine_type: doom_data::GameEngineType,
 }
 
+impl fmt::Display for Engine {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{} ({} [{}])",
+            self.game_engine_type, self.path, self.version
+        )
+    }
+}
+
 #[derive(Clone, Debug, FromRow, Tabled)]
 pub struct Iwad {
     #[tabled(skip)]
@@ -25,6 +35,16 @@ pub struct Iwad {
     pub path: String,
     #[tabled(rename = "Internal WAD Type")]
     pub internal_wad_type: doom_data::InternalWadType,
+}
+
+impl fmt::Display for Iwad {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{} ({})",
+            self.internal_wad_type, self.path
+        )
+    }
 }
 
 #[derive(Clone, Debug, FromRow, Tabled)]
