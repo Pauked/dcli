@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     engine_id INTEGER NULL,
     iwad_id INTEGER NULL,
     pwad_id INTEGER NULL,
+    additional_arguments TEXT NULL,
     FOREIGN KEY (engine_id) REFERENCES engines (id),
     FOREIGN KEY (iwad_id) REFERENCES iwads (id),
     FOREIGN KEY (pwad_id) REFERENCES pwads (id)
@@ -34,9 +35,3 @@ CREATE TABLE IF NOT EXISTS settings (
     FOREIGN KEY (active_profile_id) REFERENCES profiles (id),
     FOREIGN KEY (last_profile_id) REFERENCES profiles (id)
 );
--- CREATE TABLE IF NOT EXISTS search_paths (
---     id INTEGER PRIMARY KEY NOT NULL,
---     path TEXT NOT NULL,
---     path_type TEXT NOT NULL
--- );
--- Map Editors???

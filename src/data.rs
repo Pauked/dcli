@@ -47,22 +47,31 @@ impl fmt::Display for Pwad {
     }
 }
 
-// TODO: Expand profiles to include: save games, complevels, episode, level, difficult, fast monsters,
-//       no monsters, respawn monsters, demo record, demo playback, DSDA specific options
-#[derive(Clone, Debug, FromRow, Tabled)]
+/*
+    TODO: Expand profiles to include additional args.
+    - save games
+    - complevels
+    - episode
+    - level
+    - difficult
+    - fast monsters
+    - no monsters
+    - respawn monsters
+    - demo record,
+    - demo playback
+    - GzDoom specific options
+    - DSDA specific options
+*/
+#[derive(Clone, Debug, FromRow)]
 pub struct Profile {
-    #[tabled(skip)]
     pub id: i32,
     pub name: String,
-    #[tabled(skip)]
     pub engine_id: Option<i32>,
-    #[tabled(skip)]
     pub iwad_id: Option<i32>,
-    #[tabled(skip)]
     pub pwad_id: Option<i32>,
+    pub additional_arguments: Option<String>,
 }
 
-// TODO: Split into paths
 #[derive(Clone, Debug, Tabled)]
 pub struct ProfileDisplay {
     #[tabled(skip)]
@@ -75,6 +84,7 @@ pub struct ProfileDisplay {
     pub iwad_file: String,
     pub pwad_path: String,
     pub pwad_file: String,
+    pub additional_arguments: String,
 }
 
 impl fmt::Display for ProfileDisplay {

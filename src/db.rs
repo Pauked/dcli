@@ -260,6 +260,16 @@ pub async fn add_profile(
         .wrap_err(format!("Failed to add profile '{:?}", profile))
 }
 
+pub async fn delete_profile(id: i32) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let db = SqlitePool::connect(DB_URL).await.unwrap();
+
+    sqlx::query("DELETE FROM profiles WHERE id=$1")
+        .bind(id)
+        .execute(&db)
+        .await
+        .wrap_err(format!("Failed to delete profile '{}'", id))
+}
+
 pub async fn get_profiles() -> Result<Vec<data::Profile>, eyre::Report> {
     let db = SqlitePool::connect(DB_URL).await.unwrap();
 
@@ -295,6 +305,7 @@ fn get_profile_display(
         iwad_file: paths::extract_file_name(&iwad.path),
         pwad_path: paths::extract_path(&pwad.path),
         pwad_file: paths::extract_file_name(&pwad.path),
+        additional_arguments: profile.additional_arguments.unwrap_or_default(),
     }
 }
 
