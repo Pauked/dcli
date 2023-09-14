@@ -38,15 +38,21 @@ pub async fn run_profiles_menu_option(
 async fn new_profile() -> Result<String, eyre::Report> {
     let engines = db::get_engines().await?;
     if engines.is_empty() {
-        return Ok("There are no Engines to select. Please run 'init'.".red().to_string());
+        return Ok("There are no Engines to select. Please run 'init'."
+            .red()
+            .to_string());
     }
     let iwads = db::get_iwads().await?;
-    if engines.is_empty() {
-        return Ok("There are no IWADs to select. Please run 'init.".red().to_string());
+    if iwads.is_empty() {
+        return Ok("There are no IWADs to select. Please run 'init."
+            .red()
+            .to_string());
     }
     let pwads = db::get_pwads().await?;
-    if engines.is_empty() {
-        return Ok("There are no PWADs to select. Please run 'init'.".red().to_string());
+    if pwads.is_empty() {
+        return Ok("There are no PWADs to select. Please run 'init'."
+            .red()
+            .to_string());
     }
 
     // TODO: Validate if profile_name already exists
@@ -57,14 +63,13 @@ async fn new_profile() -> Result<String, eyre::Report> {
     let engine_selection =
         inquire::Select::new("Pick the Engine you want to use", engines).prompt()?;
 
-    let iwad_selection =
-        inquire::Select::new("Pick the IWAD you want to use", iwads).prompt()?;
+    let iwad_selection = inquire::Select::new("Pick the IWAD you want to use", iwads).prompt()?;
 
     let pwad_selection =
         inquire::Select::new("Pick the PWAD you want to use", pwads.clone()).prompt()?;
 
-    let additional_arguments = inquire::Text::new("Enter any additional arguments")
-        .prompt_skippable()?;
+    let additional_arguments =
+        inquire::Text::new("Enter any additional arguments").prompt_skippable()?;
 
     let profile = data::Profile {
         id: 0,
@@ -74,24 +79,24 @@ async fn new_profile() -> Result<String, eyre::Report> {
         pwad_id: Some(pwad_selection.id),
         additional_arguments,
     };
-    let add_result = db::add_profile(profile)
-        .await?;
+    let add_result = db::add_profile(profile).await?;
+    let new_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
+    set_profile_as_active(new_profile_id).await?;
 
+    Ok("Successfully created a new Profile".to_string())
+}
+
+async fn set_profile_as_active(profile_id: i32) {
     if inquire::Confirm::new("Would you like to set this as your Active Profile?")
         .with_default(false)
         .prompt()
         .unwrap()
     {
         let settings = db::get_settings().await?;
-        db::update_settings_active_profile(
-            settings.id,
-            add_result.last_insert_rowid().try_into().unwrap(),
-        )
-        .await
-        .wrap_err("Failed to set Active profile")?;
+        db::update_settings_active_profile(settings.id, profile_id)
+            .await
+            .wrap_err("Failed to set Active profile")?;
     }
-
-    Ok("Successfully created a new Profile".to_string())
 }
 
 async fn edit_profile() -> Result<String, eyre::Report> {
@@ -99,8 +104,73 @@ async fn edit_profile() -> Result<String, eyre::Report> {
     if profile_list.is_empty() {
         return Ok("There are no profiles to edit.".red().to_string());
     }
-    // Generate a list of profiles showing the full details
-    //let profile = inquire::Select::new("Pick the Profile to Edit", profile_list).prompt()?;
+    let engines = db::get_engines().await?;
+    if engines.is_empty() {
+        return Ok("There are no Engines to select. Please run 'init'."
+            .red()
+            .to_string());
+    }
+    let iwads = db::get_iwads().await?;
+    if iwads.is_empty() {
+        return Ok("There are no IWADs to select. Please run 'init."
+            .red()
+            .to_string());
+    }
+    let pwads = db::get_pwads().await?;
+    if pwads.is_empty() {
+        return Ok("There are no PWADs to select. Please run 'init'."
+            .red()
+            .to_string());
+    }
+
+    let profile = inquire::Select::new("Pick the Profile to Edit", profile_list).prompt()?;
+
+    let engine_starting_cursor = engines
+        .iter()
+        .position(|engine| profile.engine_id == engine.id)
+        .unwrap_or(0);
+
+    let iwad_starting_cursor = iwads
+        .iter()
+        .position(|iwad| profile.iwad_id == iwad.id)
+        .unwrap_or(0);
+
+    let pwad_starting_cursor = pwads
+        .iter()
+        .position(|pwad| profile.pwad_id == pwad.id)
+        .unwrap_or(0);
+
+    // TODO: Validate if profile_name already exists
+    let profile_name = inquire::Text::new("Enter a name for your Profile")
+        .with_validator(inquire::min_length!(5))
+        .with_default(&profile.name)
+        .prompt()?;
+
+    let engine_selection = inquire::Select::new("Pick the Engine you want to use", engines)
+        .with_starting_cursor(engine_starting_cursor)
+        .prompt()?;
+
+    let iwad_selection = inquire::Select::new("Pick the IWAD you want to use", iwads)
+        .with_starting_cursor(iwad_starting_cursor)
+        .prompt()?;
+
+    let pwad_selection = inquire::Select::new("Pick the PWAD you want to use", pwads.clone())
+        .with_starting_cursor(pwad_starting_cursor)
+        .prompt()?;
+
+    let additional_arguments = inquire::Text::new("Enter any additional arguments")
+        .with_default(&profile.additional_arguments)
+        .prompt_skippable()?;
+
+    let profile = data::Profile {
+        id: profile.id,
+        name: profile_name,
+        engine_id: Some(engine_selection.id),
+        iwad_id: Some(iwad_selection.id),
+        pwad_id: Some(pwad_selection.id),
+        additional_arguments,
+    };
+    db::update_profile(profile).await?;
 
     todo!("Edit profile")
 }
