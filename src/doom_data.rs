@@ -1,4 +1,8 @@
+use std::env;
+
 use strum_macros::Display;
+
+use crate::constants;
 
 pub const EXT_WAD: &str = "wad";
 pub const EXT_PK3: &str = "pk3";
@@ -10,13 +14,31 @@ pub enum GameEngineType {
     PrBoomPlus,
 }
 
+#[derive(Clone, Debug, PartialEq, sqlx::Type, Display)]
+pub enum OperationSystem {
+    Windows,
+    Linux,
+    Mac,
+}
+
+pub fn get_operating_system() -> OperationSystem {
+    match env::consts::OS {
+        constants::OS_WINDOWS => OperationSystem::Windows,
+        constants::OS_LINUX => OperationSystem::Linux,
+        constants::OS_MACOS => OperationSystem::Mac,
+        _ => panic!("Unsupported OS: {}", env::consts::OS),
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct GameEngine {
     pub exe_name: String,
+    pub internal_path: Option<String>,
     pub game_engine_type: GameEngineType,
+    pub operating_system: OperationSystem,
 }
 
-pub fn get_engine_list() -> Vec<GameEngine> {
+pub fn get_engine_list(operating_system: OperationSystem) -> Vec<GameEngine> {
     // https://github.com/coelckers/prboom-plus/blob/master/prboom2/doc/README.command-line
     // https://zdoom.org/wiki/Command_line_parameters
     // https://doomwiki.org/wiki/Comparison_of_source_ports
@@ -28,29 +50,44 @@ pub fn get_engine_list() -> Vec<GameEngine> {
     //     "prboom-plus.exe",
     //     "glboom-plus.exe",
     // ];
-
-    vec![
+    let result = vec![
         GameEngine {
             exe_name: "doom.exe".to_string(),
+            internal_path: None,
             game_engine_type: GameEngineType::Doom,
+            operating_system: OperationSystem::Windows,
         },
         GameEngine {
             exe_name: "gzdoom.exe".to_string(),
+            internal_path: None,
             game_engine_type: GameEngineType::GzDoom,
+            operating_system: OperationSystem::Windows,
         },
         GameEngine {
             exe_name: "dsda-doom.exe".to_string(),
+            internal_path: None,
             game_engine_type: GameEngineType::PrBoomPlus,
+            operating_system: OperationSystem::Windows,
         },
-        // GameEngine {
-        //     exe_name: "prboom-plus.exe".to_string(),
-        //     game_engine_type: GameEngineType::PrBoom,
-        // },
-        // GameEngine {
-        //     exe_name: "glboom-plus.exe".to_string(),
-        //     game_engine_type: GameEngineType::PrBoom,
-        // },
-    ]
+        GameEngine {
+            exe_name: "gzdoom.app".to_string(),
+            internal_path: Some("Contents/MacOS/gzdoom".to_string()),
+            game_engine_type: GameEngineType::GzDoom,
+            operating_system: OperationSystem::Mac,
+        }, // GameEngine {
+           //     exe_name: "prboom-plus.exe".to_string(),
+           //     game_engine_type: GameEngineType::PrBoom,
+           // },
+           // GameEngine {
+           //     exe_name: "glboom-plus.exe".to_string(),
+           //     game_engine_type: GameEngineType::PrBoom,
+           // },
+    ];
+
+    result
+        .into_iter()
+        .filter(|engine| engine.operating_system == operating_system)
+        .collect()
 }
 
 #[derive(Clone, Debug, PartialEq, sqlx::Type, Display)]

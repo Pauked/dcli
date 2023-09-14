@@ -104,7 +104,7 @@ pub async fn update_engine_version(
 pub async fn get_engines() -> Result<Vec<data::Engine>, eyre::Report> {
     let db = get_db().await;
 
-    sqlx::query_as::<_, data::Engine>("SELECT * FROM engines")
+    sqlx::query_as::<_, data::Engine>("SELECT * FROM engines ORDER BY app_name")
         .fetch_all(&db)
         .await
         .wrap_err("Failed to get list of all engines")
@@ -144,7 +144,7 @@ pub async fn delete_iwad(path: &str) -> Result<sqlx::sqlite::SqliteQueryResult, 
 pub async fn get_iwads() -> Result<Vec<data::Iwad>, eyre::Report> {
     let db = get_db().await;
 
-    sqlx::query_as::<_, data::Iwad>("SELECT * FROM iwads")
+    sqlx::query_as::<_, data::Iwad>("SELECT * FROM iwads ORDER BY internal_wad_type")
         .fetch_all(&db)
         .await
         .wrap_err("Failed to get list of all internal wads")
@@ -163,7 +163,7 @@ pub async fn get_iwad_by_id(id: i32) -> Result<data::Iwad, eyre::Report> {
 pub async fn get_pwads() -> Result<Vec<data::Pwad>, eyre::Report> {
     let db = get_db().await;
 
-    sqlx::query_as::<_, data::Pwad>("SELECT * FROM pwads")
+    sqlx::query_as::<_, data::Pwad>("SELECT * FROM pwads ORDER BY name")
         .fetch_all(&db)
         .await
         .wrap_err("Failed to get list of all patch wads")
@@ -234,15 +234,13 @@ pub async fn get_settings() -> Result<data::Settings, eyre::Report> {
 
     match result {
         Ok(settings) => Ok(settings),
-        Err(_) => {
-            Ok(data::Settings {
-                id: 0,
-                active_profile_id: None,
-                exe_search_folder: None,
-                iwad_search_folder: None,
-                pwad_search_folder: None,
-            })
-        }
+        Err(_) => Ok(data::Settings {
+            id: 0,
+            active_profile_id: None,
+            exe_search_folder: None,
+            iwad_search_folder: None,
+            pwad_search_folder: None,
+        }),
     }
 }
 
@@ -279,6 +277,25 @@ pub async fn add_profile(
         .wrap_err(format!("Failed to add profile '{:?}", profile))
 }
 
+pub async fn update_profile(
+    profile: data::Profile,
+) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let db = SqlitePool::connect(DB_URL).await.unwrap();
+
+    sqlx::query("UPDATE profiles SET name = $1, engine_id = $2, iwad_id = $3, pwad_id = $4, WHERE id=$5 COLLATE NOCASE")
+        .bind(&profile.name)
+        .bind(profile.engine_id)
+        .bind(profile.iwad_id)
+        .bind(profile.pwad_id)
+        .bind(profile.id)
+        .execute(&db)
+        .await
+        .wrap_err(format!(
+            "Failed to update profile '{}', id '{}'",
+            profile.name, profile.id
+        ))
+}
+
 pub async fn delete_profile(id: i32) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let db = SqlitePool::connect(DB_URL).await.unwrap();
 
@@ -286,7 +303,7 @@ pub async fn delete_profile(id: i32) -> Result<sqlx::sqlite::SqliteQueryResult, 
         .bind(id)
         .execute(&db)
         .await
-        .wrap_err(format!("Failed to delete profile '{}'", id))
+        .wrap_err(format!("Failed to delete profile with id '{}'", id))
 }
 
 pub async fn get_profiles() -> Result<Vec<data::Profile>, eyre::Report> {
@@ -317,11 +334,14 @@ fn get_profile_display(
     data::ProfileDisplay {
         id: profile.id,
         name: profile.name,
+        engine_id: profile.engine_id.unwrap(),
         engine_path: paths::extract_path(&engine.path),
         engine_file: paths::extract_file_name(&engine.path),
         engine_version: engine.version.clone(),
+        iwad_id: profile.iwad_id.unwrap(),
         iwad_path: paths::extract_path(&iwad.path),
         iwad_file: paths::extract_file_name(&iwad.path),
+        pwad_id: profile.pwad_id.unwrap(),
         pwad_path: paths::extract_path(&pwad.path),
         pwad_file: paths::extract_file_name(&pwad.path),
         additional_arguments: profile.additional_arguments.unwrap_or_default(),

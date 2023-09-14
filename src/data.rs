@@ -1,8 +1,8 @@
 use core::fmt;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use strum_macros::{EnumString, Display};
+use strum_macros::{Display, EnumString};
 use tabled::Tabled;
 
 use crate::doom_data;
@@ -19,7 +19,10 @@ pub struct FileVersion {
 
 impl FileVersion {
     pub fn display_version(&self) -> String {
-        format!("{}.{}.{}.{}", self.major, self.minor, self.build, self.revision)
+        format!(
+            "{}.{}.{}.{}",
+            self.major, self.minor, self.build, self.revision
+        )
     }
 }
 
@@ -59,11 +62,7 @@ pub struct Iwad {
 
 impl fmt::Display for Iwad {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} ({})",
-            self.internal_wad_type, self.path
-        )
+        write!(f, "{} ({})", self.internal_wad_type, self.path)
     }
 }
 
@@ -79,11 +78,7 @@ pub struct Pwad {
 
 impl fmt::Display for Pwad {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} ({})",
-            self.name, self.path
-        )
+        write!(f, "{} ({})", self.name, self.path)
     }
 }
 
@@ -117,16 +112,27 @@ pub struct ProfileDisplay {
     #[tabled(skip)]
     pub id: i32,
     pub name: String,
+    #[tabled(skip)]
     pub engine_id: i32,
+    #[tabled(rename = "Engine Path")]
     pub engine_path: String,
+    #[tabled(rename = "Engine File")]
     pub engine_file: String,
+    #[tabled(rename = "Engine Version")]
     pub engine_version: String,
+    #[tabled(skip)]
     pub iwad_id: i32,
+    #[tabled(rename = "IWAD Path")]
     pub iwad_path: String,
+    #[tabled(rename = "IWAD Path")]
     pub iwad_file: String,
+    #[tabled(skip)]
     pub pwad_id: i32,
+    #[tabled(rename = "PWAD Path")]
     pub pwad_path: String,
+    #[tabled(rename = "PWAD File")]
     pub pwad_file: String,
+    #[tabled(rename = "Additionl Args")]
     pub additional_arguments: String,
 }
 
@@ -190,17 +196,12 @@ pub struct GameSettings {
     pub skill: Skill,
     pub turbo: i8,
     pub timer: i32,
-    #[tabled(
-        rename = "Screen Resolution",
-        display_with = "display_option_string"
-    )]
+    #[tabled(rename = "Screen Resolution", display_with = "display_option_string")]
     pub resolution: Option<String>,
     pub full_screen: bool,
 }
 
-#[derive(
-    Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type,
-)]
+#[derive(Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type)]
 pub enum CompLevel {
     Default = 0,
     DoomAndDoom2 = 2,
@@ -211,9 +212,7 @@ pub enum CompLevel {
     Mbf21 = 21,
 }
 
-#[derive(
-    Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type,
-)]
+#[derive(Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type)]
 pub enum Skill {
     One = 1,
     Two = 2,

@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use color_eyre::eyre;
 use colored::Colorize;
 use eyre::Context;
@@ -17,13 +19,13 @@ pub async fn config_menu() -> Result<String, eyre::Report> {
         match menu_command {
             tui::ConfigCommand::List => {
                 config_list_menu().await?;
-            },
+            }
             tui::ConfigCommand::Update => {
                 config_update_menu().await?;
-            },
+            }
             tui::ConfigCommand::Back => {
                 return Ok("".to_string());
-            },
+            }
             _ => {}
         }
 
@@ -124,7 +126,7 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
 
     // TODO: User filter for exists (what do you want to search for?)
     // TODO: List for Windows, list for Mac
-    let doom_engine_list = doom_data::get_engine_list();
+    let doom_engine_list = doom_data::get_engine_list(doom_data::get_operating_system());
     let doom_engine_files = doom_engine_list
         .iter()
         .map(|e| e.exe_name.as_str())
@@ -151,15 +153,27 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
     let mut engines_extended: Vec<data::Engine> = Vec::new();
     for engine in engines {
         info!("Getting version information for Engine: '{}'", engine);
-        let game_engine_type =
-            get_game_engine_type_from_exe_name(doom_engine_list.clone(), &engine)?;
-        let file_version = get_version_from_exe_name(&engine, game_engine_type.clone())?;
+        let game_engine = get_game_engine_from_exe_name(doom_engine_list.clone(), &engine)?;
+        let file_version =
+            get_version_from_exe_name(&engine, game_engine.game_engine_type.clone())?;
+
+        let final_engine_path: String = {
+            match game_engine.internal_path {
+                Some(internal_path) => Path::new(&engine)
+                    .join(internal_path)
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
+                None => engine,
+            }
+        };
+
         engines_extended.push(data::Engine {
             id: 0,
             app_name: file_version.app_name.clone(),
-            path: engine,
+            path: final_engine_path,
             version: file_version.display_version(),
-            game_engine_type,
+            game_engine_type: game_engine.game_engine_type,
         });
         info!("Done - {}", engines_extended.last().unwrap().to_string());
     }
@@ -329,7 +343,6 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
     }
 
     for pwad in pwads {
-
         let existing_pwad = db_pwads.iter().find(|e| e.path == pwad);
 
         match existing_pwad {
@@ -392,17 +405,17 @@ fn get_version_from_exe_name(
     }
 }
 
-fn get_game_engine_type_from_exe_name(
+fn get_game_engine_from_exe_name(
     engine_list: Vec<doom_data::GameEngine>,
     exe_name: &str,
-) -> Result<doom_data::GameEngineType, eyre::Report> {
+) -> Result<doom_data::GameEngine, eyre::Report> {
     // Get the exe name from the path
     let exe_name = paths::extract_file_name(exe_name);
 
     // Search the engine list for the exe name
     for engine in engine_list {
         if engine.exe_name.to_lowercase() == exe_name.to_lowercase() {
-            return Ok(engine.game_engine_type);
+            return Ok(engine);
         }
     }
 

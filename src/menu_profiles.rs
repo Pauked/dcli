@@ -26,11 +26,7 @@ pub async fn run_profiles_menu_option(
         tui::ProfileCommand::Edit => edit_profile().await,
         tui::ProfileCommand::Delete => delete_profile().await,
         tui::ProfileCommand::Active => set_active_profile().await,
-        tui::ProfileCommand::List => {
-            let result = list_profiles().await?;
-            info!("{}", result);
-            Ok("".to_string())
-        }
+        tui::ProfileCommand::List => display_profiles().await,
         tui::ProfileCommand::Back => Ok("".to_string()),
     }
 }
@@ -86,7 +82,7 @@ async fn new_profile() -> Result<String, eyre::Report> {
     Ok("Successfully created a new Profile".to_string())
 }
 
-async fn set_profile_as_active(profile_id: i32) {
+async fn set_profile_as_active(profile_id: i32) -> Result<String, eyre::Report> {
     if inquire::Confirm::new("Would you like to set this as your Active Profile?")
         .with_default(false)
         .prompt()
@@ -96,7 +92,10 @@ async fn set_profile_as_active(profile_id: i32) {
         db::update_settings_active_profile(settings.id, profile_id)
             .await
             .wrap_err("Failed to set Active profile")?;
+        return Ok("Successfully set profile as active".to_string());
     }
+
+    Ok("No changes made to setting profile as active".to_string())
 }
 
 async fn edit_profile() -> Result<String, eyre::Report> {
@@ -223,7 +222,7 @@ async fn set_active_profile() -> Result<String, eyre::Report> {
     Ok(format!("Marked profile '{}' as active", profile))
 }
 
-pub async fn list_profiles() -> Result<String, eyre::Report> {
+pub async fn display_profiles() -> Result<String, eyre::Report> {
     let profiles = db::get_profile_display_list()
         .await
         .wrap_err("Unable to profile listing".to_string())?;

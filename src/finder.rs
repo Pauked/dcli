@@ -1,6 +1,7 @@
-use std::env;
+use std::{env, fs::File, path::Path};
 
 use eyre::Context;
+use plist::Value;
 use powershell_script::PsScriptBuilder;
 use regex::Regex;
 
@@ -47,8 +48,9 @@ fn get_property_from_stdout(stdout_strings: Vec<String>, property_name: &str) ->
     property_value.to_string()
 }
 
-
-pub fn get_file_version_information(full_path: &str) -> Result<(String, String, String, String), eyre::Report> {
+fn get_windows_file_version_information(
+    full_path: &str,
+) -> Result<(String, String, String, String), eyre::Report> {
     let stdout_result = run_powershell_cmd(&format!(
         r#"(Get-Item "{}").VersionInfo.FileVersionRaw | Format-List -Property Major, Minor, Build, Revision"#,
         full_path
@@ -67,7 +69,7 @@ pub fn get_file_version_information(full_path: &str) -> Result<(String, String, 
     }
 }
 
-pub fn get_file_description_information(full_path: &str) -> Result<String, eyre::Report> {
+fn get_windows_file_description_information(full_path: &str) -> Result<String, eyre::Report> {
     let stdout_result = run_powershell_cmd(&format!(
         r#"(Get-Item "{}").VersionInfo | Format-List -Property FileDescription"#,
         full_path
@@ -82,23 +84,94 @@ pub fn get_file_description_information(full_path: &str) -> Result<String, eyre:
     }
 }
 
+fn macos_parse_version(version: &str) -> Option<(u32, u32, u32, u32)> {
+    let parts: Vec<_> = version
+        .split('.')
+        .map(|part| part.parse::<u32>())
+        .collect::<Result<Vec<_>, _>>()
+        .ok()?;
+
+    match parts.len() {
+        3 => Some((parts[0], parts[1], parts[2], 0)),
+        4 => Some((parts[0], parts[1], parts[2], parts[3])),
+        _ => None,
+    }
+}
+
 // FIXME: Refactor error handling in get_file_version
 pub fn get_file_version(full_path: &str) -> Result<data::FileVersion, eyre::Report> {
+    if env::consts::OS == constants::OS_WINDOWS {
+        let (major, minor, build, revision) = get_windows_file_version_information(full_path)?;
+        let app_name = get_windows_file_description_information(full_path)?;
 
-    let (major, minor, build, revision) = get_file_version_information(full_path)?;
-    let app_name = get_file_description_information(full_path)?;
+        return Ok(data::FileVersion {
+            app_name: app_name.to_string(),
+            path: full_path.to_string(),
+            major: major.parse::<u32>().unwrap_or(0),
+            minor: minor.parse::<u32>().unwrap_or(0),
+            build: build.parse::<u32>().unwrap_or(0),
+            revision: revision.parse::<u32>().unwrap_or(0),
+        });
+    }
 
-    Ok(data::FileVersion {
-        app_name: app_name.to_string(),
-        path: full_path.to_string(),
-        major: major.parse::<u32>().unwrap_or(0),
-        minor: minor.parse::<u32>().unwrap_or(0),
-        build: build.parse::<u32>().unwrap_or(0),
-        revision: revision.parse::<u32>().unwrap_or(0),
-    })
+    if env::consts::OS == constants::OS_MACOS {
+        // Construct path to Info.plist
+        let plist_path = Path::new(full_path).join("Contents").join("Info.plist");
+
+        // Open the plist file
+        let file = File::open(plist_path)?;
+
+        // Parse the plist file
+        let value: Value = plist::from_reader(file)?;
+
+        // Extract the version information from the plist
+        let version = value
+            .as_dictionary()
+            .and_then(|dict| dict.get("CFBundleShortVersionString"))
+            .and_then(|title| title.as_string());
+
+        let version_str = version.unwrap_or("");
+
+        let app_name = value
+            .as_dictionary()
+            .and_then(|dict| dict.get("CFBundleName"))
+            .and_then(|title| title.as_string());
+
+        let app_name_str = app_name.unwrap_or("");
+
+        // TODO: Improve error handling...
+
+        match macos_parse_version(version_str) {
+            Some((major, minor, build, revision)) => {
+                return Ok(data::FileVersion {
+                    app_name: app_name_str.to_string(),
+                    path: full_path.to_string(),
+                    major,
+                    minor,
+                    build,
+                    revision,
+                });
+            }
+            None => {
+                println!("Failed to parse the version string.");
+            }
+        }
+    }
+
+    Err(eyre::eyre!(format!(
+        "get_file_version is only supported on Windows, not on '{}'",
+        env::consts::OS
+    )))
 }
 
 pub fn get_prboom_file_version(full_path: &str) -> Result<data::FileVersion, eyre::Report> {
+    if env::consts::OS != constants::OS_WINDOWS {
+        return Err(eyre::eyre!(format!(
+            "prboom_file_version is only supported on Windows, not on '{}'",
+            env::consts::OS
+        )));
+    }
+
     let stdout_result = run_powershell_cmd(&format!(r#"{} -v"#, full_path));
     match stdout_result {
         Ok(stdout_strings) => {
