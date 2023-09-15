@@ -4,8 +4,16 @@
 [ ] Support for additional arguments
 [ ] Support for running a map editor
 [ ] Make the selection of a PWAD optional!
+[ ] Open PWAD readme in local text editor
+[ ] Add "game settings" menu to be able to config -fastmonster, -nomonsters, etc, switched use for all runs
+[ ] Add game settings automatically to play
+[ ] Have a profile switch of "include game settings?"
 [ ] Add a `--version` option to the CLI.
 [ ] Add a `--help` option to the CLI.
+
+# Savegame notes:
+ - dsda-doom - save files are .dsg. subfolder of app, dsda-doom\IWAD name\PWAD name
+ - GzDoom - save files are .zds. Zip file containing JSON files. info.json is what I need! Folders - C:\Users\user\Saved Games\GZDoom\doom.id.doom2.tnt\
 
 Flow on first use:
  - Find/pick engines

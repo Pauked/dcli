@@ -108,18 +108,20 @@ pub async fn play(profile_id: i32) -> Result<String, eyre::Report> {
     // TODO: Refactor to be based off selected Doom Engine config
     let mut cmd = Command::new(&engine.path);
     cmd.arg("-iwad").arg(iwad.path).arg("-file").arg(&pwad.path);
-    // dsda-doom - save files are .dsg. subfolder of app, dsda-doom\IWAD name\PWAD name
-    // GzDoom - save files are .zds. Zip file containing JSON files. info.json is what I need! Folders - C:\Users\user\Saved Games\GZDoom\doom.id.doom2.tnt\
+
+    if single_profile.additional_arguments.is_some() {
+        let args: Vec<String> = shlex::split(&single_profile.additional_arguments.unwrap()).unwrap_or_default();
+        for arg in args {
+            cmd.arg(arg);
+        }
+    }
     // if let Some(save_game) = settings.save_game {
     //     cmd.arg("-loadgame").arg(save_game);
     // }
-    // TODO: Profile additional args
-    // ...
 
-    // cmd.status().wrap_err(format!("Failed to run Doom! - '{}'", settings.doom_exe))?;
     cmd.stdout(Stdio::null())
         .spawn()
-        .wrap_err(format!("Failed to run Doom! - '{}'", engine.path))?;
+        .wrap_err(format!("Failed to run Engine - '{}'", engine.path))?;
 
     info!(
         "Successfully opened Profile - '{}'",
