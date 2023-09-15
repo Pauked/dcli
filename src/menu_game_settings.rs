@@ -113,24 +113,24 @@ async fn update_warp_to_level() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
     game_settings.warp = inquire::Text::new("Enter Warp value")
         .with_default(&game_settings.warp.unwrap_or("".to_string()))
-        .with_help_message("Typically in the format of 'E1M1' or 'MAP01'")
+        .with_help_message("Typically in the format of m (1-32) or e m (1-4, 1-9)")
         .prompt_skippable()?;
     db::save_game_settings(game_settings).await?;
 
-    Ok("Successfully updated Warp"
-        .green()
-        .to_string())
+    Ok("Successfully updated Warp".green().to_string())
 }
 
 async fn update_skill() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
-    game_settings.skill = inquire::CustomType::<u8>::new("Set Turbo? [1-5]")
+    game_settings.skill = inquire::CustomType::<u8>::new("Set Skill? [1-5]")
         .with_validator(|input: &u8| {
             if (&1..=&5).contains(&input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid("Turbo is not within the range [1-5].".into()))
+                Ok(Validation::Invalid(
+                    "Skill is not within the range [1-5].".into(),
+                ))
             }
         })
         .with_default(game_settings.skill.unwrap_or(4))
@@ -149,10 +149,12 @@ async fn update_turbo() -> Result<String, eyre::Error> {
             if (&50..=&255).contains(&input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid("Turbo is not within the range [10-255].".into()))
+                Ok(Validation::Invalid(
+                    "Turbo is not within the range [10-255].".into(),
+                ))
             }
         })
-        .with_default(game_settings.turbo.unwrap_or(50))
+        .with_default(game_settings.turbo.unwrap_or(255))
         .prompt_skippable()
         .unwrap();
 
@@ -168,7 +170,9 @@ async fn update_timer() -> Result<String, eyre::Error> {
             if (&1..=&43800).contains(&input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid("Timer is not within the range [1-43800].".into()))
+                Ok(Validation::Invalid(
+                    "Timer is not within the range [1-43800].".into(),
+                ))
             }
         })
         .with_default(game_settings.timer.unwrap_or(10))
@@ -187,7 +191,9 @@ async fn update_height() -> Result<String, eyre::Error> {
             if (&1..=&10240).contains(&input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid("Height is not within the range [1-10240].".into()))
+                Ok(Validation::Invalid(
+                    "Height is not within the range [1-10240].".into(),
+                ))
             }
         })
         .with_default(game_settings.height.unwrap_or(768))
@@ -206,7 +212,9 @@ async fn update_width() -> Result<String, eyre::Error> {
             if (&1..=&2880).contains(&input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid("Width is not within the range [1-2880].".into()))
+                Ok(Validation::Invalid(
+                    "Width is not within the range [1-2880].".into(),
+                ))
             }
         })
         .with_default(game_settings.width.unwrap_or(1024))

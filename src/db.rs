@@ -7,7 +7,7 @@ use sqlx::{
     Sqlite, SqlitePool,
 };
 
-use crate::{data, doom_data, paths};
+use crate::{data, paths};
 
 const DB_URL: &str = "sqlite://sqlite.db";
 const DB_FILE: &str = "sqlite.db";
@@ -270,13 +270,7 @@ pub async fn get_app_settings() -> Result<data::AppSettings, eyre::Report> {
 
     match result {
         Ok(app_settings) => Ok(app_settings),
-        Err(_) => Ok(data::AppSettings {
-            id: 0,
-            active_profile_id: None,
-            exe_search_folder: None,
-            iwad_search_folder: None,
-            pwad_search_folder: None,
-        }),
+        Err(_) => Ok(data::AppSettings::default()),
     }
 }
 
@@ -373,27 +367,11 @@ pub async fn get_profile_display_list() -> Result<Vec<data::ProfileDisplay>, eyr
     let iwads = get_iwads().await?;
     let pwads = get_pwads().await?;
 
+    let default_engine = data::Engine::default();
+    let default_iwad = data::Iwad::default();
+    let default_pwad = data::Pwad::default();
+
     let mut profile_list: Vec<data::ProfileDisplay> = Vec::new();
-    let default_engine = data::Engine {
-        id: 0,
-        app_name: "Not Set".to_string(),
-        path: "Not Set".to_string(),
-        version: "-".to_string(),
-        game_engine_type: doom_data::GameEngineType::Unknown,
-    };
-
-    let default_iwad = data::Iwad {
-        id: 0,
-        path: "Not Set".to_string(),
-        internal_wad_type: doom_data::InternalWadType::Unknown,
-    };
-
-    let default_pwad = data::Pwad {
-        id: 0,
-        name: "Not Set".to_string(),
-        path: "Not Set".to_string(),
-    };
-
     for profile in profiles {
         let engine = engines
             .iter()
@@ -422,9 +400,18 @@ pub async fn get_profile_display_list() -> Result<Vec<data::ProfileDisplay>, eyr
 pub async fn get_profile_display_by_id(id: i32) -> Result<data::ProfileDisplay, eyre::Report> {
     let profile = get_profile_by_id(id).await?;
 
-    let engine = get_engine_by_id(profile.engine_id.unwrap()).await?;
-    let iwad = get_iwad_by_id(profile.iwad_id.unwrap()).await?;
-    let pwad = get_pwad_by_id(profile.pwad_id.unwrap()).await?;
+    let engine = match profile.engine_id {
+        Some(id) => get_engine_by_id(id).await?,
+        None => data::Engine::default(),
+    };
+    let iwad = match profile.iwad_id {
+        Some(id) => get_iwad_by_id(id).await?,
+        None => data::Iwad::default(),
+    };
+    let pwad = match profile.pwad_id {
+        Some(id) => get_pwad_by_id(id).await?,
+        None => data::Pwad::default(),
+    };
 
     Ok(get_profile_display(profile, engine, iwad, pwad))
 }
@@ -510,21 +497,6 @@ pub async fn get_game_settings() -> Result<data::GameSettings, eyre::Report> {
 
     match result {
         Ok(game_settings) => Ok(game_settings),
-        Err(_) => Ok(data::GameSettings {
-            id: 0,
-            comp_level: None,
-            fast_monsters: false,
-            no_monsters: false,
-            respawn_monsters: false,
-            warp: None,
-            skill: None,
-            turbo: None,
-            timer: None,
-            width: None,
-            height: None,
-            full_screen: false,
-            windowed: false,
-            additional_arguments: None,
-        }),
+        Err(_) => Ok(data::GameSettings::default()),
     }
 }

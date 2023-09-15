@@ -1,4 +1,7 @@
-use std::process::{Command, Stdio};
+use std::{
+    ffi::OsStr,
+    process::{Command, Stdio},
+};
 
 use color_eyre::{
     eyre::{self, Context},
@@ -7,7 +10,7 @@ use color_eyre::{
 use colored::Colorize;
 use log::info;
 
-use crate::{db, menu_config, menu_profiles, tui, menu_game_settings};
+use crate::{db, menu_config, menu_game_settings, menu_profiles, tui};
 
 pub async fn main_menu() -> Result<String, eyre::Report> {
     clearscreen::clear().unwrap();
@@ -106,6 +109,8 @@ pub async fn play(profile_id: i32) -> Result<String, eyre::Report> {
     let iwad = db::get_iwad_by_id(single_profile.iwad_id.unwrap()).await?;
 
     // TODO: Refactor to be based off selected Doom Engine config (each engine may have different arguments for the same thing)
+
+    // Build up Command based on Profile settings
     let mut cmd = Command::new(&engine.path);
     cmd.arg("-iwad").arg(iwad.path);
 
@@ -115,25 +120,90 @@ pub async fn play(profile_id: i32) -> Result<String, eyre::Report> {
     }
 
     if single_profile.additional_arguments.is_some() {
-        let args: Vec<String> = shlex::split(&single_profile.additional_arguments.unwrap()).unwrap_or_default();
+        let args: Vec<String> =
+            shlex::split(&single_profile.additional_arguments.unwrap()).unwrap_or_default();
         for arg in args {
             cmd.arg(arg);
         }
     }
-    // if let Some(save_game) = settings.save_game {
-    //     cmd.arg("-loadgame").arg(save_game);
-    // }
+
+    // Add in shared Game settings
+    let game_settings = db::get_game_settings().await?;
+    if game_settings.comp_level.is_some() {
+        cmd.arg("-complevel")
+            .arg(game_settings.comp_level.unwrap().to_string());
+    }
+    if game_settings.fast_monsters {
+        cmd.arg("-fast");
+    }
+    if game_settings.no_monsters {
+        cmd.arg("-nomonsters");
+    }
+    if game_settings.respawn_monsters {
+        cmd.arg("-respawn");
+    }
+    if game_settings.warp.is_some() {
+        cmd.arg("-warp").arg(game_settings.warp.unwrap());
+    }
+    if game_settings.skill.is_some() {
+        cmd.arg("-skill")
+            .arg(game_settings.skill.unwrap().to_string());
+    }
+    if game_settings.turbo.is_some() {
+        cmd.arg("-turbo")
+            .arg(game_settings.turbo.unwrap().to_string());
+    }
+    if game_settings.timer.is_some() {
+        cmd.arg("-timer")
+            .arg(game_settings.timer.unwrap().to_string());
+    }
+    if game_settings.width.is_some() {
+        cmd.arg("-width")
+            .arg(game_settings.width.unwrap().to_string());
+    }
+    if game_settings.height.is_some() {
+        cmd.arg("-height")
+            .arg(game_settings.height.unwrap().to_string());
+    }
+    if game_settings.full_screen {
+        cmd.arg("-fullscreen");
+    }
+    if game_settings.windowed {
+        cmd.arg("-window");
+    }
+    if game_settings.additional_arguments.is_some() {
+        let args: Vec<String> =
+            shlex::split(&game_settings.additional_arguments.unwrap()).unwrap_or_default();
+        for arg in args {
+            cmd.arg(arg);
+        }
+    }
+
+    let display_args = get_display_args(&cmd);
+    let run_message = format!(
+        "Profile '{}', Engine '{}', Args '{}'",
+        single_profile.name.green(),
+        engine.path.magenta(),
+        display_args.blue()
+    );
 
     cmd.stdout(Stdio::null())
         .spawn()
-        .wrap_err(format!("Failed to run Engine - '{}'", engine.path))?;
+        .wrap_err(format!("Failed to run {}", run_message))?;
 
-    info!(
-        "Successfully opened Profile - '{}'",
-        single_profile.name.green()
-    );
+    info!("Successfully opened {}", run_message);
     inquire::Text::new("Press any key to continue...").prompt_skippable()?;
-    Ok(format!("Successfully open Profile - '{}'", single_profile.name))
+    Ok(format!("Successfully opened {}", run_message))
+}
+
+fn get_display_args(cmd: &Command) -> String {
+    let cmd_args: Vec<&OsStr> = cmd.get_args().collect();
+    let result: String = cmd_args
+        .iter()
+        .filter_map(|s| s.to_str()) // Convert each &OsStr to Option<&str>
+        .collect::<Vec<_>>() // Collect to Vec<&str>
+        .join(" ");
+    result
 }
 
 // pub fn notepad_config(config_file_path: PathBuf) -> Result<String, eyre::Report> {

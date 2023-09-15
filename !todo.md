@@ -1,12 +1,12 @@
 # Doom CLI v0.1
 
 ## TODO
-[ ] Support for additional arguments
+[x] Support for additional arguments
 [ ] Support for running a map editor
-[ ] Make the selection of a PWAD optional!
+[x] Make the selection of a PWAD optional!
 [ ] Open PWAD readme in local text editor
-[ ] Add "game settings" menu to be able to config -fastmonster, -nomonsters, etc, switched use for all runs
-[ ] Add game settings automatically to play
+[x] Add "game settings" menu to be able to config -fastmonster, -nomonsters, etc, switched use for all runs
+[x] Add game settings automatically to play
 [ ] Have a profile switch of "include game settings?"
 [ ] Add a `--version` option to the CLI.
 [ ] Add a `--help` option to the CLI.

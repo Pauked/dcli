@@ -5,7 +5,7 @@ use sqlx::FromRow;
 use strum_macros::{Display, EnumString};
 use tabled::Tabled;
 
-use crate::{doom_data, constants};
+use crate::{constants, doom_data};
 
 #[derive(Clone, Debug)]
 pub struct FileVersion {
@@ -50,6 +50,18 @@ impl fmt::Display for Engine {
     }
 }
 
+impl Default for Engine {
+    fn default() -> Self {
+        Engine {
+            id: 0,
+            app_name: "Not Set".to_string(),
+            path: "Not Set".to_string(),
+            version: "-".to_string(),
+            game_engine_type: doom_data::GameEngineType::Unknown,
+        }
+    }
+}
+
 #[derive(Clone, Debug, FromRow, Tabled)]
 pub struct Iwad {
     #[tabled(skip)]
@@ -66,6 +78,16 @@ impl fmt::Display for Iwad {
     }
 }
 
+impl Default for Iwad {
+    fn default() -> Self {
+        Iwad {
+            id: 0,
+            path: "Not Set".to_string(),
+            internal_wad_type: doom_data::InternalWadType::Unknown,
+        }
+    }
+}
+
 #[derive(Clone, Debug, FromRow, Tabled)]
 pub struct Pwad {
     #[tabled(skip)]
@@ -79,6 +101,16 @@ pub struct Pwad {
 impl fmt::Display for Pwad {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} ({})", self.name, self.path)
+    }
+}
+
+impl Default for Pwad {
+    fn default() -> Self {
+        Pwad {
+            id: 0,
+            name: "Not Set".to_string(),
+            path: "Not Set".to_string(),
+        }
     }
 }
 
@@ -131,7 +163,7 @@ impl fmt::Display for ProfileDisplay {
     }
 }
 
-#[derive(Clone, Debug, FromRow, Tabled)]
+#[derive(Clone, Debug, FromRow, Tabled, Default)]
 pub struct AppSettings {
     #[tabled(skip)]
     pub id: i32,
@@ -179,6 +211,21 @@ pub fn display_option_comp_level(value: &Option<CompLevel>) -> String {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type)]
+pub enum CompLevel {
+    Default = 0,
+    #[strum(serialize = "Doom and Doom 2")]
+    DoomAndDoom2 = 2,
+    #[strum(serialize = "Ultimate Doom")]
+    UltimateDoom = 3,
+    #[strum(serialize = "Final Doom")]
+    FinalDoom = 4,
+    Boom = 9,
+    #[strum(serialize = "MBF")]
+    Mbf = 11,
+    #[strum(serialize = "MBF 21")]
+    Mbf21 = 21,
+}
 
 /*
     TODO: Expand game settings to include additional args.
@@ -196,7 +243,7 @@ pub fn display_option_comp_level(value: &Option<CompLevel>) -> String {
     - DSDA specific options
 */
 
-#[derive(Clone, Debug, FromRow, Tabled)]
+#[derive(Clone, Debug, FromRow, Tabled, Default)]
 pub struct GameSettings {
     #[tabled(skip)]
     pub id: i32,
@@ -224,20 +271,4 @@ pub struct GameSettings {
     pub windowed: bool,
     #[tabled(display_with = "display_option_string")]
     pub additional_arguments: Option<String>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type)]
-pub enum CompLevel {
-    Default = 0,
-    #[strum(serialize = "Doom and Doom 2")]
-    DoomAndDoom2 = 2,
-    #[strum(serialize = "Ultimate Doom")]
-    UltimateDoom = 3,
-    #[strum(serialize = "Final Doom")]
-    FinalDoom = 4,
-    Boom = 9,
-    #[strum(serialize = "MBF")]
-    Mbf = 11,
-    #[strum(serialize = "MBF 21")]
-    Mbf21 = 21,
 }
