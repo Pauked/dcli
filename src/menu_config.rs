@@ -67,20 +67,32 @@ pub async fn run_config_menu_option(
         tui::ConfigCommand::ListEngines => display_engines().await,
         tui::ConfigCommand::ListIwads => display_iwads().await,
         tui::ConfigCommand::ListPwads => display_pwads().await,
-        tui::ConfigCommand::ListSettings => display_settings().await,
+        tui::ConfigCommand::ListAppSettings => display_app_settings().await,
         tui::ConfigCommand::Init => init().await,
         tui::ConfigCommand::Update => Ok("".to_string()),
         tui::ConfigCommand::UpdateEngines => {
-            let settings = db::get_settings().await?;
-            init_engines(&settings.exe_search_folder.unwrap_or("".to_string())).await
+            let mut app_settings = db::get_app_settings().await?;
+            let folder =
+                init_engines(&app_settings.exe_search_folder.unwrap_or("".to_string())).await?;
+            app_settings.exe_search_folder = Some(folder);
+            db::save_app_settings(app_settings).await?;
+            Ok("Successfully updated Engines".to_string())
         }
         tui::ConfigCommand::UpdateIwads => {
-            let settings = db::get_settings().await?;
-            init_iwads(&settings.iwad_search_folder.unwrap_or("".to_string())).await
+            let mut app_settings = db::get_app_settings().await?;
+            let folder =
+                init_iwads(&app_settings.iwad_search_folder.unwrap_or("".to_string())).await?;
+            app_settings.iwad_search_folder = Some(folder);
+            db::save_app_settings(app_settings).await?;
+            Ok("Successfully updated IWADs".to_string())
         }
         tui::ConfigCommand::UpdatePwads => {
-            let settings = db::get_settings().await?;
-            init_pwads(&settings.pwad_search_folder.unwrap_or("".to_string())).await
+            let mut app_settings = db::get_app_settings().await?;
+            let folder =
+                init_pwads(&app_settings.pwad_search_folder.unwrap_or("".to_string())).await?;
+            app_settings.pwad_search_folder = Some(folder);
+            db::save_app_settings(app_settings).await?;
+            Ok("Successfully updated PWADs".to_string())
         }
         tui::ConfigCommand::Reset => reset(false).await,
         tui::ConfigCommand::Back => Ok("".to_string()),
@@ -90,22 +102,33 @@ pub async fn run_config_menu_option(
 
 pub async fn init() -> Result<String, eyre::Report> {
     db::create_db().await?;
-    // TODO: Block running if there is data. Or perhaps prompt to reset?
+
+    let mut app_settings = db::get_app_settings().await?;
 
     info!("We'll ask you some questions, and then you'll be ready to go.");
 
-    let exe_search_folder = init_engines("").await?;
-    let iwad_search_folder = init_iwads(&exe_search_folder).await?;
-    let pwad_search_folder = init_pwads(&iwad_search_folder).await?;
+    let exe_search_folder =
+        init_engines(&app_settings.exe_search_folder.unwrap_or("".to_string())).await?;
 
-    let settings = data::Settings {
-        id: 0,
-        active_profile_id: None,
-        exe_search_folder: Some(exe_search_folder),
-        iwad_search_folder: Some(iwad_search_folder),
-        pwad_search_folder: Some(pwad_search_folder),
+    let iwad_search_folder = match app_settings.iwad_search_folder {
+        Some(iwad_search_folder) => iwad_search_folder,
+        None => exe_search_folder.clone(),
     };
-    db::add_settings(&settings).await?;
+    let iwad_search_folder = init_iwads(&iwad_search_folder).await?;
+
+    let pwad_search_folder = match app_settings.pwad_search_folder {
+        Some(pwad_search_folder) => pwad_search_folder,
+        None => iwad_search_folder.clone(),
+    };
+    let pwad_search_folder = init_pwads(&pwad_search_folder).await?;
+
+    // Update app_settings
+    app_settings.exe_search_folder = Some(exe_search_folder);
+    app_settings.iwad_search_folder = Some(iwad_search_folder);
+    app_settings.pwad_search_folder = Some(pwad_search_folder);
+    db::save_app_settings(app_settings).await?;
+
+    // Completed init!
     info!("{}", "Successfully configured!".green());
     inquire::Text::new("Press any key to continue...").prompt_skippable()?;
 
@@ -402,6 +425,7 @@ fn get_version_from_exe_name(
         doom_data::GameEngineType::Doom => todo!("Doom version not implemented yet!"),
         doom_data::GameEngineType::PrBoomPlus => Ok(finder::get_prboom_file_version(exe_name)?),
         doom_data::GameEngineType::GzDoom => Ok(finder::get_file_version(exe_name)?),
+        doom_data::GameEngineType::Unknown => Err(eyre::eyre!("Unknown game engine type")),
     }
 }
 
@@ -481,12 +505,12 @@ pub async fn display_pwads() -> Result<String, eyre::Report> {
     Ok(table)
 }
 
-pub async fn display_settings() -> Result<String, eyre::Report> {
-    let settings = db::get_settings()
+pub async fn display_app_settings() -> Result<String, eyre::Report> {
+    let app_settings = db::get_app_settings()
         .await
         .wrap_err("Unable to settings listing".to_string())?;
 
-    let table = tabled::Table::new(vec![settings])
+    let table = tabled::Table::new(vec![app_settings])
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
         .with(Style::modern())
         .to_string();

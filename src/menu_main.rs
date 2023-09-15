@@ -7,7 +7,7 @@ use color_eyre::{
 use colored::Colorize;
 use log::info;
 
-use crate::{db, menu_config, menu_profiles, tui};
+use crate::{db, menu_config, menu_profiles, tui, menu_game_settings};
 
 pub async fn main_menu() -> Result<String, eyre::Report> {
     clearscreen::clear().unwrap();
@@ -34,6 +34,7 @@ pub async fn run_main_menu_option(command: tui::MainCommand) -> Result<String, e
         tui::MainCommand::PlayActiveProfile => play_active_profile().await,
         tui::MainCommand::PickAndPlayProfile => pick_and_play_profile().await,
         tui::MainCommand::Profiles => menu_profiles::profiles_menu().await,
+        tui::MainCommand::GameSettings => menu_game_settings::game_settings_menu().await,
         tui::MainCommand::Config => menu_config::config_menu().await,
         tui::MainCommand::Quit => Ok("Quitting".to_string()),
         tui::MainCommand::Unknown => Ok("Unknown command".to_string()),
@@ -45,22 +46,22 @@ pub async fn get_active_profile_text() -> Result<String, eyre::Report> {
         return Ok("No database found. Please run 'init'.".red().to_string());
     }
 
-    if db::is_empty_settings_table().await? {
+    if db::is_empty_app_settings_table().await? {
         return Ok("No settings configured. Please run 'init'."
             .red()
             .to_string());
     }
 
-    let settings = db::get_settings().await?;
+    let app_settings = db::get_app_settings().await?;
 
-    if settings.active_profile_id.is_none() {
+    if app_settings.active_profile_id.is_none() {
         return Ok("No active profile found. Please set one."
             .yellow()
             .to_string());
     }
 
     let profile_display =
-        db::get_profile_display_by_id(settings.active_profile_id.unwrap()).await?;
+        db::get_profile_display_by_id(app_settings.active_profile_id.unwrap()).await?;
     Ok(format!(
         "Active profile: {}",
         profile_display.to_string().bright_green().bold()
@@ -73,14 +74,14 @@ pub async fn play_active_profile() -> Result<String, eyre::Report> {
     // Do we have any profiles configured?
     // No, create one.
 
-    let settings = db::get_settings().await?;
+    let app_settings = db::get_app_settings().await?;
 
-    if settings.active_profile_id.is_none() {
+    if app_settings.active_profile_id.is_none() {
         return Ok("No active profile found, please set one.".red().to_string());
         // FIXME: Call the "set active profile" function
     };
 
-    play(settings.active_profile_id.unwrap()).await
+    play(app_settings.active_profile_id.unwrap()).await
 }
 
 pub async fn pick_and_play_profile() -> Result<String, eyre::Report> {
@@ -103,11 +104,15 @@ pub async fn play(profile_id: i32) -> Result<String, eyre::Report> {
     let single_profile = db::get_profile_by_id(profile_id).await?;
     let engine = db::get_engine_by_id(single_profile.engine_id.unwrap()).await?;
     let iwad = db::get_iwad_by_id(single_profile.iwad_id.unwrap()).await?;
-    let pwad = db::get_pwad_by_id(single_profile.pwad_id.unwrap()).await?;
 
-    // TODO: Refactor to be based off selected Doom Engine config
+    // TODO: Refactor to be based off selected Doom Engine config (each engine may have different arguments for the same thing)
     let mut cmd = Command::new(&engine.path);
-    cmd.arg("-iwad").arg(iwad.path).arg("-file").arg(&pwad.path);
+    cmd.arg("-iwad").arg(iwad.path);
+
+    if single_profile.pwad_id.is_some() {
+        let pwad = db::get_pwad_by_id(single_profile.pwad_id.unwrap()).await?;
+        cmd.arg("-file").arg(&pwad.path);
+    }
 
     if single_profile.additional_arguments.is_some() {
         let args: Vec<String> = shlex::split(&single_profile.additional_arguments.unwrap()).unwrap_or_default();

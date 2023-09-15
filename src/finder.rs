@@ -139,8 +139,7 @@ pub fn get_file_version(full_path: &str) -> Result<data::FileVersion, eyre::Repo
 
         let app_name_str = app_name.unwrap_or("");
 
-        // TODO: Improve error handling...
-
+        // TODO: Improve error handling for macOS version parsing
         match macos_parse_version(version_str) {
             Some((major, minor, build, revision)) => {
                 return Ok(data::FileVersion {

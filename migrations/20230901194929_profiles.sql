@@ -26,14 +26,29 @@ CREATE TABLE IF NOT EXISTS profiles (
     FOREIGN KEY (iwad_id) REFERENCES iwads (id),
     FOREIGN KEY (pwad_id) REFERENCES pwads (id)
 );
-CREATE TABLE IF NOT EXISTS settings (
+CREATE TABLE IF NOT EXISTS app_settings (
     id INTEGER PRIMARY KEY NOT NULL,
     active_profile_id INTEGER NULL,
     last_profile_id INTEGER NULL,
     exe_search_folder TEXT NULL,
     iwad_search_folder TEXT NULL,
     pwad_search_folder TEXT NULL,
-    game_settings TEXT NULL,
     FOREIGN KEY (active_profile_id) REFERENCES profiles (id),
     FOREIGN KEY (last_profile_id) REFERENCES profiles (id)
+);
+CREATE TABLE IF NOT EXISTS game_settings (
+    id INTEGER PRIMARY KEY NOT NULL,
+    comp_level TEXT NULL,
+    fast_monsters BOOLEAN NOT NULL,
+    no_monsters BOOLEAN NOT NULL,
+    respawn_monsters BOOLEAN NOT NULL,
+    warp TEXT NULL,
+    skill INTEGER NULL,
+    turbo INTEGER NULL,
+    timer INTEGER NULL,
+    width INTEGER NULL,
+    height INTEGER NULL,
+    full_screen BOOLEAN NOT NULL,
+    windowed BOOLEAN NOT NULL,
+    additional_arguments TEXT NULL
 );

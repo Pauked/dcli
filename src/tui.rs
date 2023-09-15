@@ -3,6 +3,8 @@ use std::str::FromStr;
 use strum_macros::Display;
 use strum_macros::EnumString;
 
+use crate::data;
+
 pub const ARG_PLAY: &str = "--play";
 pub const ARG_PROFILES: &str = "--profiles";
 pub const ARG_CONFIG: &str = "--config";
@@ -17,6 +19,8 @@ pub enum MainCommand {
     #[strum(serialize = "Pick and Play Profile")]
     PickAndPlayProfile,
     Profiles,
+    #[strum(serialize = "Game Settings")]
+    GameSettings,
     Config,
     Quit,
     Unknown,
@@ -51,8 +55,8 @@ pub enum ConfigCommand {
     ListIwads,
     #[strum(serialize = "List Patch WADs")]
     ListPwads,
-    #[strum(serialize = "List Settings")]
-    ListSettings,
+    #[strum(serialize = "List App Settings")]
+    ListAppSettings,
     Init,
     Update,
     #[strum(serialize = "Update Engines")]
@@ -74,11 +78,38 @@ pub fn convert_arg_to_configcommand(arg: &str) -> ConfigCommand {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, EnumString, Display)]
+pub enum GameSettingsCommand {
+    #[strum(serialize = "Comp Level")]
+    CompLevel,
+    #[strum(serialize = "Fast Monsters")]
+    FastMonsters,
+    #[strum(serialize = "No Monsters")]
+    NoMonsters,
+    #[strum(serialize = "Respawn Monsters")]
+    RespawnMonsters,
+    #[strum(serialize = "Warp to Level")]
+    WarpToLevel,
+    Skill,
+    Turbo,
+    Timer,
+    Width,
+    Height,
+    #[strum(serialize = "Full Screen")]
+    FullScreen,
+    Windowed,
+    #[strum(serialize = "Additional Arguments")]
+    AdditionalArguments,
+    Back,
+    Unknown,
+}
+
 pub fn main_menu_prompt() -> MainCommand {
     let selections = vec![
         MainCommand::PlayActiveProfile.to_string(),
         MainCommand::PickAndPlayProfile.to_string(),
         MainCommand::Profiles.to_string(),
+        MainCommand::GameSettings.to_string(),
         MainCommand::Config.to_string(),
         MainCommand::Quit.to_string(),
     ];
@@ -128,7 +159,7 @@ pub fn config_list_menu_prompt() -> ConfigCommand {
         ConfigCommand::ListEngines.to_string(),
         ConfigCommand::ListIwads.to_string(),
         ConfigCommand::ListPwads.to_string(),
-        ConfigCommand::ListSettings.to_string(),
+        ConfigCommand::ListAppSettings.to_string(),
         ConfigCommand::Back.to_string(),
     ];
 
@@ -150,4 +181,84 @@ pub fn config_update_menu_prompt() -> ConfigCommand {
         .prompt()
         .unwrap();
     ConfigCommand::from_str(&choice).unwrap()
+}
+
+pub fn game_settings_menu_prompt(game_settings: data::GameSettings) -> GameSettingsCommand {
+    let selections = vec![
+        format!(
+            "{} ({})",
+            GameSettingsCommand::CompLevel.to_string(),
+            data::display_option_comp_level(&game_settings.comp_level)
+        ),
+        format!(
+            "{} ({})",
+            GameSettingsCommand::FastMonsters.to_string(),
+            game_settings.fast_monsters
+        ),
+        format!(
+            "{} ({})",
+            GameSettingsCommand::NoMonsters.to_string(),
+            game_settings.no_monsters
+        ),
+        format!(
+            "{} ({})",
+            GameSettingsCommand::RespawnMonsters.to_string(),
+            game_settings.respawn_monsters
+        ),
+        format!(
+            "{} ({})",
+            GameSettingsCommand::WarpToLevel.to_string(),
+            data::display_option_string(&game_settings.warp)
+        ),
+        format!(
+            "{} ({})",
+            GameSettingsCommand::Skill.to_string(),
+            data::display_option_u8(&game_settings.skill)
+        ),
+        format!(
+            "{} ({})",
+            GameSettingsCommand::Turbo.to_string(),
+            data::display_option_u8(&game_settings.turbo)
+        ),
+        format!(
+            "{} ({})",
+            GameSettingsCommand::Timer.to_string(),
+            data::display_option_u32(&game_settings.timer)
+        ),
+        format!(
+            "{} ({})",
+            GameSettingsCommand::Width.to_string(),
+            data::display_option_u32(&game_settings.width)
+        ),
+        format!(
+            "{} ({})",
+            GameSettingsCommand::Height.to_string(),
+            data::display_option_u32(&game_settings.height)
+        ),
+        format!(
+            "{} ({})",
+            GameSettingsCommand::FullScreen.to_string(),
+            game_settings.full_screen
+        ),
+        format!(
+            "{} ({})",
+            GameSettingsCommand::Windowed.to_string(),
+            game_settings.windowed
+        ),
+        format!(
+            "{} ({})",
+            GameSettingsCommand::AdditionalArguments.to_string(),
+            data::display_option_string(&game_settings.additional_arguments)
+        ),
+        GameSettingsCommand::Back.to_string(),
+    ];
+
+    // clearscreen::clear().unwrap();
+    let choice: String = inquire::Select::new("Select a Game Settings option", selections)
+        .with_page_size(15)
+        .prompt()
+        .unwrap();
+
+    let first_part = choice.split('(').next().unwrap_or("").trim();
+    GameSettingsCommand::from_str(first_part).unwrap()
 }

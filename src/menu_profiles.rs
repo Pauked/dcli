@@ -62,17 +62,23 @@ async fn new_profile() -> Result<String, eyre::Report> {
     let iwad_selection = inquire::Select::new("Pick the IWAD you want to use", iwads).prompt()?;
 
     let pwad_selection =
-        inquire::Select::new("Pick the PWAD you want to use", pwads.clone()).prompt()?;
+        inquire::Select::new("Pick the PWAD you want to use (optional)", pwads.clone())
+            .prompt_skippable()?;
+
+    let pwad_id = match pwad_selection {
+        None => None,
+        Some(pwad) => Some(pwad.id),
+    };
 
     let additional_arguments =
-        inquire::Text::new("Enter any additional arguments").prompt_skippable()?;
+        inquire::Text::new("Enter any additional arguments (optional)").prompt_skippable()?;
 
     let profile = data::Profile {
         id: 0,
         name: profile_name,
         engine_id: Some(engine_selection.id),
         iwad_id: Some(iwad_selection.id),
-        pwad_id: Some(pwad_selection.id),
+        pwad_id,
         additional_arguments,
     };
     let add_result = db::add_profile(profile).await?;
@@ -88,8 +94,9 @@ async fn set_profile_as_active(profile_id: i32) -> Result<String, eyre::Report> 
         .prompt()
         .unwrap()
     {
-        let settings = db::get_settings().await?;
-        db::update_settings_active_profile(settings.id, profile_id)
+        let mut app_settings = db::get_app_settings().await?;
+        app_settings.active_profile_id = Some(profile_id);
+        db::save_app_settings(app_settings)
             .await
             .wrap_err("Failed to set Active profile")?;
         return Ok("Successfully set profile as active".to_string());
@@ -153,11 +160,17 @@ async fn edit_profile() -> Result<String, eyre::Report> {
         .with_starting_cursor(iwad_starting_cursor)
         .prompt()?;
 
-    let pwad_selection = inquire::Select::new("Pick the PWAD you want to use", pwads.clone())
-        .with_starting_cursor(pwad_starting_cursor)
-        .prompt()?;
+    let pwad_selection =
+        inquire::Select::new("Pick the PWAD you want to use (optional)", pwads.clone())
+            .with_starting_cursor(pwad_starting_cursor)
+            .prompt_skippable()?;
 
-    let additional_arguments = inquire::Text::new("Enter any additional arguments")
+    let pwad_id = match pwad_selection {
+        None => None,
+        Some(pwad) => Some(pwad.id),
+    };
+
+    let additional_arguments = inquire::Text::new("Enter any additional arguments (optional)")
         .with_default(&profile.additional_arguments)
         .prompt_skippable()?;
 
@@ -166,7 +179,7 @@ async fn edit_profile() -> Result<String, eyre::Report> {
         name: profile_name.clone(),
         engine_id: Some(engine_selection.id),
         iwad_id: Some(iwad_selection.id),
-        pwad_id: Some(pwad_selection.id),
+        pwad_id,
         additional_arguments,
     };
     db::update_profile(profile).await?;
@@ -214,10 +227,11 @@ async fn set_active_profile() -> Result<String, eyre::Report> {
     let profile =
         inquire::Select::new("Pick the Profile to mark as Active", profile_list).prompt()?;
 
-    let settings = db::get_settings().await?;
-    db::update_settings_active_profile(settings.id, profile.id)
+    let mut app_settings = db::get_app_settings().await?;
+    app_settings.active_profile_id = Some(profile.id);
+    db::save_app_settings(app_settings)
         .await
-        .wrap_err("Failed to update active profile")?;
+        .wrap_err("Failed to set Active profile")?;
 
     Ok(format!("Marked profile '{}' as active", profile))
 }

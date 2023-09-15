@@ -12,6 +12,7 @@ pub enum GameEngineType {
     Doom,
     GzDoom,
     PrBoomPlus,
+    Unknown,
 }
 
 #[derive(Clone, Debug, PartialEq, sqlx::Type, Display)]
@@ -104,6 +105,7 @@ pub enum InternalWadType {
     StrifeTeaser,
     Strife,
     StrifeVoices,
+    Unknown,
 }
 
 #[derive(Clone, Debug)]

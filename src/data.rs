@@ -5,7 +5,7 @@ use sqlx::FromRow;
 use strum_macros::{Display, EnumString};
 use tabled::Tabled;
 
-use crate::doom_data;
+use crate::{doom_data, constants};
 
 #[derive(Clone, Debug)]
 pub struct FileVersion {
@@ -82,21 +82,6 @@ impl fmt::Display for Pwad {
     }
 }
 
-/*
-    TODO: Expand profiles to include additional args.
-    - save games
-    - complevels
-    - episode
-    - level
-    - difficult
-    - fast monsters
-    - no monsters
-    - respawn monsters
-    - demo record,
-    - demo playback
-    - GzDoom specific options
-    - DSDA specific options
-*/
 #[derive(Clone, Debug, FromRow)]
 pub struct Profile {
     pub id: i32,
@@ -147,7 +132,7 @@ impl fmt::Display for ProfileDisplay {
 }
 
 #[derive(Clone, Debug, FromRow, Tabled)]
-pub struct Settings {
+pub struct AppSettings {
     #[tabled(skip)]
     pub id: i32,
     #[tabled(skip)]
@@ -166,25 +151,57 @@ pub struct Settings {
     pub pwad_search_folder: Option<String>,
 }
 
-// pub fn display_option_i32(value: &Option<i32>) -> String {
-//     match value {
-//         Some(i) => i.to_string(),
-//         None => "N/A".to_string(),
-//     }
-// }
+pub fn display_option_u8(value: &Option<u8>) -> String {
+    match value {
+        Some(i) => i.to_string(),
+        None => constants::DEFAULT_NOT_SET.to_string(),
+    }
+}
+
+pub fn display_option_u32(value: &Option<u32>) -> String {
+    match value {
+        Some(i) => i.to_string(),
+        None => constants::DEFAULT_NOT_SET.to_string(),
+    }
+}
 
 pub fn display_option_string(value: &Option<String>) -> String {
     match value {
         Some(s) => s.to_string(),
-        None => "N/A".to_string(),
+        None => constants::DEFAULT_NOT_SET.to_string(),
     }
 }
+
+pub fn display_option_comp_level(value: &Option<CompLevel>) -> String {
+    match value {
+        Some(s) => s.to_string(),
+        None => constants::DEFAULT_NOT_SET.to_string(),
+    }
+}
+
+
+/*
+    TODO: Expand game settings to include additional args.
+    - save games
+    - complevels
+    - episode
+    - level
+    - difficult
+    - fast monsters
+    - no monsters
+    - respawn monsters
+    - demo record,
+    - demo playback
+    - GzDoom specific options
+    - DSDA specific options
+*/
 
 #[derive(Clone, Debug, FromRow, Tabled)]
 pub struct GameSettings {
     #[tabled(skip)]
     pub id: i32,
-    pub comp_level: CompLevel,
+    #[tabled(display_with = "display_option_comp_level")]
+    pub comp_level: Option<CompLevel>,
     pub fast_monsters: bool,
     pub no_monsters: bool,
     pub respawn_monsters: bool,
@@ -192,31 +209,35 @@ pub struct GameSettings {
         rename = "Episode and Level or Map",
         display_with = "display_option_string"
     )]
-    pub map: Option<String>,
-    pub skill: Skill,
-    pub turbo: i8,
-    pub timer: i32,
-    #[tabled(rename = "Screen Resolution", display_with = "display_option_string")]
-    pub resolution: Option<String>,
+    pub warp: Option<String>,
+    #[tabled(display_with = "display_option_u8")]
+    pub skill: Option<u8>,
+    #[tabled(display_with = "display_option_u8")]
+    pub turbo: Option<u8>,
+    #[tabled(display_with = "display_option_u32")]
+    pub timer: Option<u32>,
+    #[tabled(display_with = "display_option_u32")]
+    pub width: Option<u32>,
+    #[tabled(display_with = "display_option_u32")]
+    pub height: Option<u32>,
     pub full_screen: bool,
+    pub windowed: bool,
+    #[tabled(display_with = "display_option_string")]
+    pub additional_arguments: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type)]
 pub enum CompLevel {
     Default = 0,
+    #[strum(serialize = "Doom and Doom 2")]
     DoomAndDoom2 = 2,
+    #[strum(serialize = "Ultimate Doom")]
     UltimateDoom = 3,
+    #[strum(serialize = "Final Doom")]
     FinalDoom = 4,
     Boom = 9,
+    #[strum(serialize = "MBF")]
     Mbf = 11,
+    #[strum(serialize = "MBF 21")]
     Mbf21 = 21,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type)]
-pub enum Skill {
-    One = 1,
-    Two = 2,
-    Three = 3,
-    Four = 4,
-    Five = 5,
 }

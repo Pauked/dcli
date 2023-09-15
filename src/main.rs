@@ -11,6 +11,7 @@ mod doom_data;
 mod finder;
 mod log_config;
 mod menu_config;
+mod menu_game_settings;
 mod menu_main;
 mod menu_profiles;
 mod paths;
@@ -38,7 +39,7 @@ async fn run() -> eyre::Result<String> {
     let reset_mode = args.contains(&tui::ARG_RESET.to_string());
     if !reset_mode {
         db::create_db().await?;
-        if db::is_empty_settings_table().await? {
+        if db::is_empty_app_settings_table().await? {
             info!("No settings found, running init...");
             menu_config::init().await?;
         }
