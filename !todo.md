@@ -1,5 +1,12 @@
 # Doom CLI v0.1
 
+## TODO
+[ ] Support for additional arguments
+[ ] Support for running a map editor
+[ ] Make the selection of a PWAD optional!
+[ ] Add a `--version` option to the CLI.
+[ ] Add a `--help` option to the CLI.
+
 Flow on first use:
  - Find/pick engines
  - Find/pick IWADS

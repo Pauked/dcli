@@ -282,11 +282,12 @@ pub async fn update_profile(
 ) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let db = SqlitePool::connect(DB_URL).await.unwrap();
 
-    sqlx::query("UPDATE profiles SET name = $1, engine_id = $2, iwad_id = $3, pwad_id = $4, WHERE id=$5 COLLATE NOCASE")
+    sqlx::query("UPDATE profiles SET name = $1, engine_id = $2, iwad_id = $3, pwad_id = $4, additional_arguments = $5 WHERE id=$6 COLLATE NOCASE")
         .bind(&profile.name)
         .bind(profile.engine_id)
         .bind(profile.iwad_id)
         .bind(profile.pwad_id)
+        .bind(profile.additional_arguments)
         .bind(profile.id)
         .execute(&db)
         .await

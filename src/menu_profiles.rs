@@ -163,7 +163,7 @@ async fn edit_profile() -> Result<String, eyre::Report> {
 
     let profile = data::Profile {
         id: profile.id,
-        name: profile_name,
+        name: profile_name.clone(),
         engine_id: Some(engine_selection.id),
         iwad_id: Some(iwad_selection.id),
         pwad_id: Some(pwad_selection.id),
@@ -171,7 +171,7 @@ async fn edit_profile() -> Result<String, eyre::Report> {
     };
     db::update_profile(profile).await?;
 
-    todo!("Edit profile")
+    Ok(format!("Successfully updated Profile - '{}'", profile_name))
 }
 
 async fn delete_profile() -> Result<String, eyre::Report> {
