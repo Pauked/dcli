@@ -7,7 +7,7 @@ use sqlx::{
     Sqlite, SqlitePool,
 };
 
-use crate::{data, paths};
+use crate::{constants, data, paths};
 
 const DB_URL: &str = "sqlite://sqlite.db";
 const DB_FILE: &str = "sqlite.db";
@@ -229,17 +229,18 @@ async fn add_app_settings(
     let db = get_db().await;
 
     sqlx::query(
-        "INSERT INTO app_settings (active_profile_id, exe_search_folder, iwad_search_folder, pwad_search_folder) VALUES (?,?,?,?)",
+        "INSERT INTO app_settings (active_profile_id, last_profile_id, exe_search_folder,
+            iwad_search_folder, pwad_search_folder, map_editor_search_folder) VALUES (?,?,?,?,?,?)",
     )
     .bind(app_settings.active_profile_id)
+    .bind(app_settings.last_profile_id)
     .bind(&app_settings.exe_search_folder)
     .bind(&app_settings.iwad_search_folder)
     .bind(&app_settings.pwad_search_folder)
+    .bind(&app_settings.map_editor_search_folder)
     .execute(&db)
     .await
-    .wrap_err(format!(
-        "Failed to add app settings '{:?}", app_settings
-    ))
+    .wrap_err(format!("Failed to add app settings '{:?}", app_settings))
 }
 
 async fn update_app_settings(
@@ -247,11 +248,14 @@ async fn update_app_settings(
 ) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let db = SqlitePool::connect(DB_URL).await.unwrap();
 
-    sqlx::query("UPDATE app_settings SET active_profile_id = $1, exe_search_folder = $2, iwad_search_folder = $3, pwad_search_folder = $4 WHERE id=$5 COLLATE NOCASE")
+    sqlx::query("UPDATE app_settings SET active_profile_id = $1, last_profile_id = $2, exe_search_folder = $3,
+    iwad_search_folder = $4, pwad_search_folder = $5, map_editor_search_folder = $6 WHERE id = $7 COLLATE NOCASE")
         .bind(app_settings.active_profile_id)
+        .bind(app_settings.last_profile_id)
         .bind(&app_settings.exe_search_folder)
         .bind(&app_settings.iwad_search_folder)
         .bind(&app_settings.pwad_search_folder)
+        .bind(&app_settings.map_editor_search_folder)
         .bind(app_settings.id)
         .execute(&db)
         .await
@@ -272,6 +276,45 @@ pub async fn get_app_settings() -> Result<data::AppSettings, eyre::Report> {
         Ok(app_settings) => Ok(app_settings),
         Err(_) => Ok(data::AppSettings::default()),
     }
+}
+
+pub async fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre::Report> {
+    let app_settings = get_app_settings().await?;
+    let active_profile: String = match app_settings.active_profile_id {
+        Some(id) => {
+            let profile = get_profile_display_by_id(id).await?;
+            profile.to_string()
+        }
+        None => constants::DEFAULT_NOT_SET.to_string(),
+    };
+    let last_profile = match app_settings.last_profile_id {
+        Some(id) => {
+            let profile = get_profile_display_by_id(id).await?;
+            profile.to_string()
+        }
+        None => constants::DEFAULT_NOT_SET.to_string(),
+    };
+    let exe_search_folder = app_settings
+        .exe_search_folder
+        .unwrap_or(constants::DEFAULT_NOT_SET.to_string());
+    let iwad_search_folder = app_settings
+        .iwad_search_folder
+        .unwrap_or(constants::DEFAULT_NOT_SET.to_string());
+    let pwad_search_folder = app_settings
+        .pwad_search_folder
+        .unwrap_or(constants::DEFAULT_NOT_SET.to_string());
+    let map_editor_search_folder = app_settings
+        .map_editor_search_folder
+        .unwrap_or(constants::DEFAULT_NOT_SET.to_string());
+
+    Ok(data::AppSettingsDisplay {
+        active_profile,
+        last_profile,
+        exe_search_folder,
+        iwad_search_folder,
+        pwad_search_folder,
+        map_editor_search_folder,
+    })
 }
 
 pub async fn add_profile(

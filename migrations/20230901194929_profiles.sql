@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
     exe_search_folder TEXT NULL,
     iwad_search_folder TEXT NULL,
     pwad_search_folder TEXT NULL,
+    map_editor_search_folder TEXT NULL,
     FOREIGN KEY (active_profile_id) REFERENCES profiles (id),
     FOREIGN KEY (last_profile_id) REFERENCES profiles (id)
 );

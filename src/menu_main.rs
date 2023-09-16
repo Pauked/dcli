@@ -10,12 +10,13 @@ use color_eyre::{
 use colored::Colorize;
 use log::info;
 
-use crate::{db, menu_config, menu_game_settings, menu_profiles, tui, menu_map_editor};
+use crate::{db, menu_config, menu_game_settings, menu_map_editor, menu_profiles, tui};
 
 pub async fn main_menu() -> Result<String, eyre::Report> {
     clearscreen::clear().unwrap();
     loop {
         info!("{}", get_active_profile_text().await?);
+        info!("{}", get_last_profile_text().await?);
 
         let menu_command = tui::main_menu_prompt();
         if let tui::MainCommand::Quit = menu_command {
@@ -35,6 +36,7 @@ pub async fn run_main_menu_option(command: tui::MainCommand) -> Result<String, e
 
     match command {
         tui::MainCommand::PlayActiveProfile => play_active_profile().await,
+        tui::MainCommand::PlayLastProfile => play_last_profile().await,
         tui::MainCommand::PickAndPlayProfile => pick_and_play_profile().await,
         tui::MainCommand::Profiles => menu_profiles::profiles_menu().await,
         tui::MainCommand::MapEditor => menu_map_editor::map_editor_menu().await,
@@ -68,24 +70,56 @@ pub async fn get_active_profile_text() -> Result<String, eyre::Report> {
         db::get_profile_display_by_id(app_settings.active_profile_id.unwrap()).await?;
     Ok(format!(
         "Active profile: {}",
-        profile_display.to_string().bright_green().bold()
+        profile_display.to_string().green().bold()
+    ))
+}
+
+pub async fn get_last_profile_text() -> Result<String, eyre::Report> {
+    if db::is_empty_app_settings_table().await? {
+        return Ok("No settings configured. Please run 'init'."
+            .red()
+            .to_string());
+    }
+
+    let app_settings = db::get_app_settings().await?;
+    if app_settings.last_profile_id.is_none() {
+        return Ok(
+            "No last run profile found. Run a profile to make it the last run."
+                .yellow()
+                .to_string(),
+        );
+    }
+
+    let profile_display =
+        db::get_profile_display_by_id(app_settings.last_profile_id.unwrap()).await?;
+    Ok(format!(
+        "Last profile: {}",
+        profile_display.to_string().purple().bold()
     ))
 }
 
 pub async fn play_active_profile() -> Result<String, eyre::Report> {
-    // Do we have an active profile?
-    // No, pick one.
-    // Do we have any profiles configured?
-    // No, create one.
-
     let app_settings = db::get_app_settings().await?;
 
     if app_settings.active_profile_id.is_none() {
-        return Ok("No active profile found, please set one.".red().to_string());
-        // FIXME: Call the "set active profile" function
+        return Ok("No active profile found. Please set one.".red().to_string());
     };
 
     play(app_settings.active_profile_id.unwrap()).await
+}
+
+pub async fn play_last_profile() -> Result<String, eyre::Report> {
+    let app_settings = db::get_app_settings().await?;
+
+    if app_settings.active_profile_id.is_none() {
+        return Ok(
+            "No last run profile found. Run a profile to make it the last run."
+                .red()
+                .to_string(),
+        );
+    };
+
+    play(app_settings.last_profile_id.unwrap()).await
 }
 
 pub async fn pick_and_play_profile() -> Result<String, eyre::Report> {
@@ -97,11 +131,13 @@ pub async fn pick_and_play_profile() -> Result<String, eyre::Report> {
                 .to_string(),
         );
     }
-    // Generate a list of profiles showing the full details
-    let profile =
-        inquire::Select::new("Pick the Profile you want to Play", profile_list).prompt()?;
+    let profile = inquire::Select::new("Pick the Profile you want to Play", profile_list)
+        .prompt_skippable()?;
 
-    play(profile.id).await
+    match profile {
+        Some(profile) => play(profile.id).await,
+        None => Ok("No profile selected.".yellow().to_string()),
+    }
 }
 
 pub async fn play(profile_id: i32) -> Result<String, eyre::Report> {
@@ -188,10 +224,18 @@ pub async fn play(profile_id: i32) -> Result<String, eyre::Report> {
         display_args.blue()
     );
 
+    // Let's go!
     cmd.stdout(Stdio::null())
+        .stderr(Stdio::null())
         .spawn()
         .wrap_err(format!("Failed to run {}", run_message))?;
 
+    // Update last run profile
+    let mut app_settings = db::get_app_settings().await?;
+    app_settings.last_profile_id = Some(profile_id);
+    db::save_app_settings(app_settings).await?;
+
+    // Confirm all good
     info!("Successfully opened {}", run_message);
     inquire::Text::new("Press any key to continue...").prompt_skippable()?;
     Ok(format!("Successfully opened {}", run_message))

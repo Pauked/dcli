@@ -8,7 +8,7 @@ use crate::data;
 pub const ARG_PLAY: &str = "--play";
 //pub const ARG_PROFILES: &str = "--profiles";
 //pub const ARG_CONFIG: &str = "--config";
-pub const ARG_MAP_EDITOR: &str = "--mapeditor";
+// pub const ARG_MAP_EDITOR: &str = "--mapeditor";
 pub const ARG_INIT: &str = "--init";
 pub const ARG_RESET: &str = "--reset";
 
@@ -25,7 +25,7 @@ pub enum MainCommand {
     Profiles,
     #[strum(serialize = "Game Settings")]
     GameSettings,
-    #[strum(serialize = "Config Engines and WADs")]
+    #[strum(serialize = "Config Engines, WADs, App Settings")]
     Config,
     Quit,
     Unknown,
@@ -53,7 +53,7 @@ pub enum ProfileCommand {
 
 #[derive(Debug, Clone, PartialEq, EnumString, Display)]
 pub enum ConfigCommand {
-    #[strum(serialize = "List Engines and WADs")]
+    #[strum(serialize = "List Engines, WADs, App Settings")]
     List,
     #[strum(serialize = "List Engines")]
     ListEngines,
@@ -113,9 +113,16 @@ pub enum GameSettingsCommand {
     Unknown,
 }
 
+#[derive(Debug, Clone, PartialEq, EnumString, Display)]
 pub enum MapEditorCommand {
+    #[strum(serialize = "Open Map Editor with Active Profile PWAD")]
     OpenMapEditor,
-
+    #[strum(serialize = "Open Map Editor and Pick PWAD")]
+    OpenMapEditorWithMap,
+    #[strum(serialize = "List Map Editors")]
+    List,
+    #[strum(serialize = "Update Map Editors")]
+    Update,
     Back,
     Unknown,
 }
@@ -125,12 +132,12 @@ pub fn main_menu_prompt() -> MainCommand {
         MainCommand::PlayActiveProfile.to_string(),
         MainCommand::PickAndPlayProfile.to_string(),
         MainCommand::Profiles.to_string(),
+        MainCommand::MapEditor.to_string(),
         MainCommand::GameSettings.to_string(),
         MainCommand::Config.to_string(),
         MainCommand::Quit.to_string(),
     ];
 
-    // clearscreen::clear().unwrap();
     let choice = inquire::Select::new("Select a Main Menu option", selections)
         .prompt()
         .unwrap();
@@ -147,7 +154,6 @@ pub fn profiles_menu_prompt() -> ProfileCommand {
         ProfileCommand::Back.to_string(),
     ];
 
-    // clearscreen::clear().unwrap();
     let choice: String = inquire::Select::new("Select a Profile option", selections)
         .prompt()
         .unwrap();
@@ -163,7 +169,6 @@ pub fn config_menu_prompt() -> ConfigCommand {
         ConfigCommand::Back.to_string(),
     ];
 
-    // clearscreen::clear().unwrap();
     let choice: String = inquire::Select::new("Select a Config option", selections)
         .prompt()
         .unwrap();
@@ -269,7 +274,6 @@ pub fn game_settings_menu_prompt(game_settings: data::GameSettings) -> GameSetti
         GameSettingsCommand::Back.to_string(),
     ];
 
-    // clearscreen::clear().unwrap();
     let choice: String = inquire::Select::new("Select a Game Settings option", selections)
         .with_page_size(15)
         .prompt()
@@ -277,4 +281,19 @@ pub fn game_settings_menu_prompt(game_settings: data::GameSettings) -> GameSetti
 
     let first_part = choice.split('(').next().unwrap_or("").trim();
     GameSettingsCommand::from_str(first_part).unwrap()
+}
+
+pub fn map_editor_menu_prompt() -> MapEditorCommand {
+    let selections = vec![
+        MapEditorCommand::OpenMapEditor.to_string(),
+        MapEditorCommand::OpenMapEditorWithMap.to_string(),
+        MapEditorCommand::Update.to_string(),
+        MapEditorCommand::List.to_string(),
+        MapEditorCommand::Back.to_string(),
+    ];
+
+    let choice: String = inquire::Select::new("Select a Map Editor option", selections)
+        .prompt()
+        .unwrap();
+    MapEditorCommand::from_str(&choice).unwrap()
 }

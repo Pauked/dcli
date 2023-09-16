@@ -506,7 +506,7 @@ pub async fn display_pwads() -> Result<String, eyre::Report> {
 }
 
 pub async fn display_app_settings() -> Result<String, eyre::Report> {
-    let app_settings = db::get_app_settings()
+    let app_settings = db::get_app_settings_display()
         .await
         .wrap_err("Unable to settings listing".to_string())?;
 

@@ -163,24 +163,31 @@ impl fmt::Display for ProfileDisplay {
     }
 }
 
-#[derive(Clone, Debug, FromRow, Tabled, Default)]
+#[derive(Clone, Debug, FromRow, Default)]
 pub struct AppSettings {
-    #[tabled(skip)]
     pub id: i32,
-    #[tabled(skip)]
     pub active_profile_id: Option<i32>,
-    #[tabled(rename = "Exe Search Folder", display_with = "display_option_string")]
+    pub last_profile_id: Option<i32>,
     pub exe_search_folder: Option<String>,
-    #[tabled(
-        rename = "Internal WAD Search Folder",
-        display_with = "display_option_string"
-    )]
     pub iwad_search_folder: Option<String>,
-    #[tabled(
-        rename = "Patch WAD Search Folder",
-        display_with = "display_option_string"
-    )]
     pub pwad_search_folder: Option<String>,
+    pub map_editor_search_folder: Option<String>,
+}
+
+#[derive(Clone, Debug, Tabled)]
+pub struct AppSettingsDisplay {
+    #[tabled(rename = "Active Profile")]
+    pub active_profile: String,
+    #[tabled(rename = "Last Run Profile")]
+    pub last_profile: String,
+    #[tabled(rename = "Executable Search Folder")]
+    pub exe_search_folder: String,
+    #[tabled(rename = "Internal WAD Search Folder")]
+    pub iwad_search_folder: String,
+    #[tabled(rename = "Patch WAD Search Folder")]
+    pub pwad_search_folder: String,
+    #[tabled(rename = "Map Editor Search Folder")]
+    pub map_editor_search_folder: String,
 }
 
 pub fn display_option_u8(value: &Option<u8>) -> String {
