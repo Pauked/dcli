@@ -56,13 +56,17 @@ async fn new_profile() -> Result<String, eyre::Report> {
         .with_validator(inquire::min_length!(5))
         .prompt()?;
 
-    let engine_selection =
-        inquire::Select::new("Pick the Engine you want to use", engines).prompt()?;
+    let engine_selection = inquire::Select::new("Pick the Engine you want to use", engines)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt()?;
 
-    let iwad_selection = inquire::Select::new("Pick the IWAD you want to use", iwads).prompt()?;
+    let iwad_selection = inquire::Select::new("Pick the IWAD you want to use", iwads)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt()?;
 
     let pwad_selection =
         inquire::Select::new("Pick the PWAD you want to use (optional)", pwads.clone())
+            .with_page_size(tui::MENU_PAGE_SIZE)
             .prompt_skippable()?;
 
     let pwad_id = match pwad_selection {
@@ -129,7 +133,9 @@ async fn edit_profile() -> Result<String, eyre::Report> {
             .to_string());
     }
 
-    let profile = inquire::Select::new("Pick the Profile to Edit", profile_list).prompt()?;
+    let profile = inquire::Select::new("Pick the Profile to Edit", profile_list)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt()?;
 
     let engine_starting_cursor = engines
         .iter()
@@ -154,15 +160,18 @@ async fn edit_profile() -> Result<String, eyre::Report> {
 
     let engine_selection = inquire::Select::new("Pick the Engine you want to use", engines)
         .with_starting_cursor(engine_starting_cursor)
+        .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
     let iwad_selection = inquire::Select::new("Pick the IWAD you want to use", iwads)
         .with_starting_cursor(iwad_starting_cursor)
+        .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
     let pwad_selection =
         inquire::Select::new("Pick the PWAD you want to use (optional)", pwads.clone())
             .with_starting_cursor(pwad_starting_cursor)
+            .with_page_size(tui::MENU_PAGE_SIZE)
             .prompt_skippable()?;
 
     let pwad_id = match pwad_selection {
@@ -223,17 +232,27 @@ async fn set_active_profile() -> Result<String, eyre::Report> {
                 .to_string(),
         );
     }
-    // Generate a list of profiles showing the full details
-    let profile =
-        inquire::Select::new("Pick the Profile to mark as Active", profile_list).prompt()?;
 
     let mut app_settings = db::get_app_settings().await?;
-    app_settings.active_profile_id = Some(profile.id);
-    db::save_app_settings(app_settings)
-        .await
-        .wrap_err("Failed to set Active profile")?;
+    let starting_cursor = match app_settings.active_profile_id {
+        Some(ref s) => profile_list.iter().position(|x| x.id == *s).unwrap(),
+        None => 0,
+    };
 
-    Ok(format!("Marked profile '{}' as active", profile))
+    let profile = inquire::Select::new("Pick the Profile to mark as Active", profile_list)
+        .with_starting_cursor(starting_cursor)
+        .prompt_skippable()?;
+
+    match profile {
+        Some(profile) => {
+            app_settings.active_profile_id = Some(profile.id);
+            db::save_app_settings(app_settings)
+                .await
+                .wrap_err("Failed to set Active profile")?;
+            Ok(format!("Marked Profile '{}' as Active", profile))
+        }
+        None => Ok("No changes made to setting profile as active".to_string()),
+    }
 }
 
 pub async fn display_profiles() -> Result<String, eyre::Report> {

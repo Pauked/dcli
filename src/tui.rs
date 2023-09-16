@@ -5,12 +5,15 @@ use strum_macros::EnumString;
 
 use crate::data;
 
-pub const ARG_PLAY: &str = "--play";
-//pub const ARG_PROFILES: &str = "--profiles";
-//pub const ARG_CONFIG: &str = "--config";
-// pub const ARG_MAP_EDITOR: &str = "--mapeditor";
-pub const ARG_INIT: &str = "--init";
+const ARG_PLAY: &str = "--play";
+const ARG_PLAY_LAST: &str = "--playlast";
+//const ARG_PROFILES: &str = "--profiles";
+//const ARG_CONFIG: &str = "--config";
+// const ARG_MAP_EDITOR: &str = "--mapeditor";
+const ARG_INIT: &str = "--init";
 pub const ARG_RESET: &str = "--reset";
+
+pub const MENU_PAGE_SIZE: usize = 15;
 
 #[derive(Debug, PartialEq, EnumString, Display)]
 pub enum MainCommand {
@@ -34,6 +37,7 @@ pub enum MainCommand {
 pub fn convert_arg_to_maincommand(arg: &str) -> MainCommand {
     match arg {
         ARG_PLAY => MainCommand::PlayActiveProfile,
+        ARG_PLAY_LAST => MainCommand::PlayLastProfile,
         // ARG_PROFILES => MainCommand::Profiles,
         // ARG_CONFIG => MainCommand::Config,
         _ => MainCommand::Unknown,
@@ -130,6 +134,7 @@ pub enum MapEditorCommand {
 pub fn main_menu_prompt() -> MainCommand {
     let selections = vec![
         MainCommand::PlayActiveProfile.to_string(),
+        MainCommand::PlayLastProfile.to_string(),
         MainCommand::PickAndPlayProfile.to_string(),
         MainCommand::Profiles.to_string(),
         MainCommand::MapEditor.to_string(),
@@ -139,6 +144,7 @@ pub fn main_menu_prompt() -> MainCommand {
     ];
 
     let choice = inquire::Select::new("Select a Main Menu option", selections)
+        .with_page_size(MENU_PAGE_SIZE)
         .prompt()
         .unwrap();
     MainCommand::from_str(&choice).unwrap()
@@ -275,7 +281,7 @@ pub fn game_settings_menu_prompt(game_settings: data::GameSettings) -> GameSetti
     ];
 
     let choice: String = inquire::Select::new("Select a Game Settings option", selections)
-        .with_page_size(15)
+        .with_page_size(MENU_PAGE_SIZE)
         .prompt()
         .unwrap();
 

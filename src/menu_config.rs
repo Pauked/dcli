@@ -206,6 +206,7 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
     let selections =
         inquire::MultiSelect::new("Pick the engines you want to use", engines_extended)
             .with_default(&db_defaults)
+            .with_page_size(tui::MENU_PAGE_SIZE)
             .prompt()?;
 
     // Remove entries that were not selected but have entries in the database
@@ -288,6 +289,7 @@ pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     // TODO: Mark the IWADs that have been picked previously
     let selections = inquire::MultiSelect::new("Pick the IWADs you want to use", iwads)
         .with_default(&db_defaults)
+        .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
     // Remove entries that were not selected but have entries in the database

@@ -365,7 +365,7 @@ pub async fn delete_profile(id: i32) -> Result<sqlx::sqlite::SqliteQueryResult, 
 pub async fn get_profiles() -> Result<Vec<data::Profile>, eyre::Report> {
     let db = SqlitePool::connect(DB_URL).await.unwrap();
 
-    sqlx::query_as::<_, data::Profile>("SELECT * FROM profiles")
+    sqlx::query_as::<_, data::Profile>("SELECT * FROM profiles ORDER BY name")
         .fetch_all(&db)
         .await
         .wrap_err("Failed to get list of all profiles")

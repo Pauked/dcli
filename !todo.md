@@ -8,6 +8,7 @@
 [x] Add "game settings" menu to be able to config -fastmonster, -nomonsters, etc, switched use for all runs
 [x] Add game settings automatically to play
 [ ] Have a profile switch of "include game settings?"
+[ ] Make menus less crashy if user aborts
 [ ] Add a `--version` option to the CLI.
 [ ] Add a `--help` option to the CLI.
 
