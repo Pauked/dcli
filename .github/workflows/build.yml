@@ -1,0 +1,58 @@
+name: Build and Package
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+
+    - name: Build
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release
+
+    - name: Package
+      run: |
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          ZIP_NAME="app-name-${{ github.sha }}.zip"
+          cd target/release
+          7z a $ZIP_NAME your_app_name.exe
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+        else
+          DMG_NAME="app-name-${{ github.sha }}.dmg"
+          # For MacOS, we'll use the create-dmg tool
+          npx create-dmg target/release/your_app_name $DMG_NAME
+          echo "DMG_NAME=$DMG_NAME" >> $GITHUB_ENV
+        fi
+
+    - name: Upload Artifact (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v2
+      with:
+        name: windows-artifact
+        path: target/release/${{ env.ZIP_NAME }}
+
+    - name: Upload Artifact (MacOS)
+      if: matrix.os == 'macos-latest'
+      uses: actions/upload-artifact@v2
+      with:
+        name: macos-artifact
+        path: ${{ env.DMG_NAME }}
