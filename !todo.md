@@ -9,8 +9,9 @@
 [x] Add game settings automatically to play
 [ ] Have a profile switch of "include game settings?"
 [ ] Make menus less crashy if user aborts
-[ ] Add a `--version` option to the CLI.
+[x] Add a `--version` option to the CLI.
 [ ] Add a `--help` option to the CLI.
+[ ] Remember last position in a given menu!
 
 # Savegame notes:
  - dsda-doom - save files are .dsg. subfolder of app, dsda-doom\IWAD name\PWAD name

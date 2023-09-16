@@ -105,7 +105,7 @@ pub async fn play_active_profile() -> Result<String, eyre::Report> {
         return Ok("No active profile found. Please set one.".red().to_string());
     };
 
-    play(app_settings.active_profile_id.unwrap()).await
+    play(app_settings.active_profile_id.unwrap(), false).await
 }
 
 pub async fn play_last_profile() -> Result<String, eyre::Report> {
@@ -119,7 +119,7 @@ pub async fn play_last_profile() -> Result<String, eyre::Report> {
         );
     };
 
-    play(app_settings.last_profile_id.unwrap()).await
+    play(app_settings.last_profile_id.unwrap(), true).await
 }
 
 pub async fn pick_and_play_profile() -> Result<String, eyre::Report> {
@@ -135,12 +135,12 @@ pub async fn pick_and_play_profile() -> Result<String, eyre::Report> {
         .prompt_skippable()?;
 
     match profile {
-        Some(profile) => play(profile.id).await,
+        Some(profile) => play(profile.id, true).await,
         None => Ok("No profile selected.".yellow().to_string()),
     }
 }
 
-pub async fn play(profile_id: i32) -> Result<String, eyre::Report> {
+pub async fn play(profile_id: i32, update_last_profile: bool) -> Result<String, eyre::Report> {
     let single_profile = db::get_profile_by_id(profile_id).await?;
     let engine = db::get_engine_by_id(single_profile.engine_id.unwrap()).await?;
     let iwad = db::get_iwad_by_id(single_profile.iwad_id.unwrap()).await?;
@@ -231,9 +231,11 @@ pub async fn play(profile_id: i32) -> Result<String, eyre::Report> {
         .wrap_err(format!("Failed to run {}", run_message))?;
 
     // Update last run profile
-    let mut app_settings = db::get_app_settings().await?;
-    app_settings.last_profile_id = Some(profile_id);
-    db::save_app_settings(app_settings).await?;
+    if update_last_profile {
+        let mut app_settings = db::get_app_settings().await?;
+        app_settings.last_profile_id = Some(profile_id);
+        db::save_app_settings(app_settings).await?;
+    }
 
     // Confirm all good
     info!("Successfully opened {}", run_message);

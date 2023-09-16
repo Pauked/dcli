@@ -7,11 +7,12 @@ use crate::data;
 
 const ARG_PLAY: &str = "--play";
 const ARG_PLAY_LAST: &str = "--playlast";
-//const ARG_PROFILES: &str = "--profiles";
-//const ARG_CONFIG: &str = "--config";
+// const ARG_PROFILES: &str = "--profiles";
+// const ARG_CONFIG: &str = "--config";
 // const ARG_MAP_EDITOR: &str = "--mapeditor";
 const ARG_INIT: &str = "--init";
 pub const ARG_RESET: &str = "--reset";
+pub const ARG_VERSION: &str = "--version";
 
 pub const MENU_PAGE_SIZE: usize = 15;
 

@@ -201,24 +201,28 @@ async fn delete_profile() -> Result<String, eyre::Report> {
     if profile_list.is_empty() {
         return Ok("There are no profiles to delete.".red().to_string());
     }
-    // Generate a list of profiles showing the full details
-    let profile = inquire::Select::new("Pick the Profile to Delete", profile_list).prompt()?;
 
-    if inquire::Confirm::new(&format!(
-        "Are you sure you want to delete this profile - '{}'? This cannot be undone.",
-        profile.name
-    ))
-    .with_default(false)
-    .prompt()
-    .unwrap()
-    {
-        db::delete_profile(profile.id)
-            .await
-            .wrap_err(format!("Failed to delete profile - '{}", profile))?;
-        return Ok(format!("Successfully Deleted profile '{}'", profile));
+    let profile =
+        inquire::Select::new("Pick the Profile to Delete", profile_list).prompt_skippable()?;
+
+    if profile.is_some() {
+        let profile = profile.unwrap();
+        if inquire::Confirm::new(&format!(
+            "Are you sure you want to delete this profile - '{}'? This cannot be undone.",
+            profile.name
+        ))
+        .with_default(false)
+        .prompt()
+        .unwrap()
+        {
+            db::delete_profile(profile.id)
+                .await
+                .wrap_err(format!("Failed to delete profile - '{}", profile))?;
+            return Ok(format!("Successfully Deleted profile '{}'", profile));
+        }
     }
 
-    Ok("Cancelled profile deletion".to_string())
+    Ok("Cancelled Profile deletion.".yellow().to_string())
 }
 
 async fn set_active_profile() -> Result<String, eyre::Report> {

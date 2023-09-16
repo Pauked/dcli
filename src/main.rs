@@ -31,11 +31,15 @@ async fn run() -> eyre::Result<String> {
         constants::CRATE_VERSION,
     );
 
-    info!("Welcome to {}", constants::APP_NAME.bright_yellow());
-
     // Attempt to run from arguments
     // We don't want the full exe path, just the args
     let args: Vec<String> = env::args().skip(1).collect();
+
+    if args.contains(&tui::ARG_VERSION.to_string()) {
+        return Ok(format!("{} {}", constants::APP_NAME, constants::CRATE_VERSION));
+    }
+
+    info!("Welcome to {}", constants::APP_NAME.bright_yellow());
 
     let reset_mode = args.contains(&tui::ARG_RESET.to_string());
     if !reset_mode {
