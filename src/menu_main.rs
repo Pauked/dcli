@@ -10,7 +10,7 @@ use color_eyre::{
 use colored::Colorize;
 use log::info;
 
-use crate::{db, menu_config, menu_game_settings, menu_profiles, tui};
+use crate::{db, menu_config, menu_game_settings, menu_profiles, tui, menu_map_editor};
 
 pub async fn main_menu() -> Result<String, eyre::Report> {
     clearscreen::clear().unwrap();
@@ -37,6 +37,7 @@ pub async fn run_main_menu_option(command: tui::MainCommand) -> Result<String, e
         tui::MainCommand::PlayActiveProfile => play_active_profile().await,
         tui::MainCommand::PickAndPlayProfile => pick_and_play_profile().await,
         tui::MainCommand::Profiles => menu_profiles::profiles_menu().await,
+        tui::MainCommand::MapEditor => menu_map_editor::map_editor_menu().await,
         tui::MainCommand::GameSettings => menu_game_settings::game_settings_menu().await,
         tui::MainCommand::Config => menu_config::config_menu().await,
         tui::MainCommand::Quit => Ok("Quitting".to_string()),

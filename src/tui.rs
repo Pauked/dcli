@@ -6,9 +6,9 @@ use strum_macros::EnumString;
 use crate::data;
 
 pub const ARG_PLAY: &str = "--play";
-pub const ARG_PROFILES: &str = "--profiles";
-pub const ARG_CONFIG: &str = "--config";
-// pub const ARG_EDITOR: &str = "--editor";
+//pub const ARG_PROFILES: &str = "--profiles";
+//pub const ARG_CONFIG: &str = "--config";
+pub const ARG_MAP_EDITOR: &str = "--mapeditor";
 pub const ARG_INIT: &str = "--init";
 pub const ARG_RESET: &str = "--reset";
 
@@ -16,11 +16,16 @@ pub const ARG_RESET: &str = "--reset";
 pub enum MainCommand {
     #[strum(serialize = "Play Active Profile")]
     PlayActiveProfile,
-    #[strum(serialize = "Pick and Play Profile")]
+    #[strum(serialize = "Play Last Profile")]
+    PlayLastProfile,
+    #[strum(serialize = "Pick & Play Profile")]
     PickAndPlayProfile,
+    #[strum(serialize = "Map Editor")]
+    MapEditor,
     Profiles,
     #[strum(serialize = "Game Settings")]
     GameSettings,
+    #[strum(serialize = "Config Engines and WADs")]
     Config,
     Quit,
     Unknown,
@@ -29,8 +34,8 @@ pub enum MainCommand {
 pub fn convert_arg_to_maincommand(arg: &str) -> MainCommand {
     match arg {
         ARG_PLAY => MainCommand::PlayActiveProfile,
-        ARG_PROFILES => MainCommand::Profiles,
-        ARG_CONFIG => MainCommand::Config,
+        // ARG_PROFILES => MainCommand::Profiles,
+        // ARG_CONFIG => MainCommand::Config,
         _ => MainCommand::Unknown,
     }
 }
@@ -48,6 +53,7 @@ pub enum ProfileCommand {
 
 #[derive(Debug, Clone, PartialEq, EnumString, Display)]
 pub enum ConfigCommand {
+    #[strum(serialize = "List Engines and WADs")]
     List,
     #[strum(serialize = "List Engines")]
     ListEngines,
@@ -57,7 +63,7 @@ pub enum ConfigCommand {
     ListPwads,
     #[strum(serialize = "List App Settings")]
     ListAppSettings,
-    Init,
+    #[strum(serialize = "Update Engines and WADs")]
     Update,
     #[strum(serialize = "Update Engines")]
     UpdateEngines,
@@ -65,6 +71,7 @@ pub enum ConfigCommand {
     UpdateIwads,
     #[strum(serialize = "Update Patch WADs")]
     UpdatePwads,
+    Init,
     Reset,
     Back,
     Unknown,
@@ -93,13 +100,22 @@ pub enum GameSettingsCommand {
     Skill,
     Turbo,
     Timer,
+    #[strum(serialize = "Screen Width")]
     Width,
+    #[strum(serialize = "Screen Height")]
     Height,
     #[strum(serialize = "Full Screen")]
     FullScreen,
     Windowed,
     #[strum(serialize = "Additional Arguments")]
     AdditionalArguments,
+    Back,
+    Unknown,
+}
+
+pub enum MapEditorCommand {
+    OpenMapEditor,
+
     Back,
     Unknown,
 }
@@ -123,10 +139,10 @@ pub fn main_menu_prompt() -> MainCommand {
 
 pub fn profiles_menu_prompt() -> ProfileCommand {
     let selections = vec![
-        ProfileCommand::Active.to_string(),
-        ProfileCommand::List.to_string(),
         ProfileCommand::New.to_string(),
         ProfileCommand::Edit.to_string(),
+        ProfileCommand::Active.to_string(),
+        ProfileCommand::List.to_string(),
         ProfileCommand::Delete.to_string(),
         ProfileCommand::Back.to_string(),
     ];
@@ -140,9 +156,9 @@ pub fn profiles_menu_prompt() -> ProfileCommand {
 
 pub fn config_menu_prompt() -> ConfigCommand {
     let selections = vec![
+        ConfigCommand::Update.to_string(),
         ConfigCommand::List.to_string(),
         ConfigCommand::Init.to_string(),
-        ConfigCommand::Update.to_string(),
         ConfigCommand::Reset.to_string(),
         ConfigCommand::Back.to_string(),
     ];

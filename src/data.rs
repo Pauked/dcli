@@ -54,8 +54,8 @@ impl Default for Engine {
     fn default() -> Self {
         Engine {
             id: 0,
-            app_name: "Not Set".to_string(),
-            path: "Not Set".to_string(),
+            app_name: constants::DEFAULT_NOT_SET.to_string(),
+            path: constants::DEFAULT_NOT_SET.to_string(),
             version: "-".to_string(),
             game_engine_type: doom_data::GameEngineType::Unknown,
         }
@@ -82,7 +82,7 @@ impl Default for Iwad {
     fn default() -> Self {
         Iwad {
             id: 0,
-            path: "Not Set".to_string(),
+            path: constants::DEFAULT_NOT_SET.to_string(),
             internal_wad_type: doom_data::InternalWadType::Unknown,
         }
     }
@@ -108,8 +108,8 @@ impl Default for Pwad {
     fn default() -> Self {
         Pwad {
             id: 0,
-            name: "Not Set".to_string(),
-            path: "Not Set".to_string(),
+            name: constants::DEFAULT_NOT_SET.to_string(),
+            path: constants::DEFAULT_NOT_SET.to_string(),
         }
     }
 }

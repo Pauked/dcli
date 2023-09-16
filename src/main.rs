@@ -13,6 +13,7 @@ mod log_config;
 mod menu_config;
 mod menu_game_settings;
 mod menu_main;
+mod menu_map_editor;
 mod menu_profiles;
 mod paths;
 mod tui;
@@ -54,8 +55,8 @@ async fn run() -> eyre::Result<String> {
         } else {
             let config_arg = tui::convert_arg_to_configcommand(&arg);
             if config_arg != tui::ConfigCommand::Unknown {
-                menu_config::run_config_menu_option(config_arg.clone()).await?;
-                if config_arg == tui::ConfigCommand::Reset {
+                let result = menu_config::run_config_menu_option(config_arg.clone()).await?;
+                if config_arg == tui::ConfigCommand::Reset && result != *"Database reset not confirmed." {
                     menu_config::init().await?;
                 }
             } else {
