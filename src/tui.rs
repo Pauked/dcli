@@ -24,14 +24,15 @@ pub enum MainCommand {
     PlayLastProfile,
     #[strum(serialize = "Pick & Play Profile")]
     PickAndPlayProfile,
-    #[strum(serialize = "Map Editor")]
+    #[strum(serialize = "Map Editor >>")]
     MapEditor,
+    #[strum(serialize = "Profiles >>")]
     Profiles,
-    #[strum(serialize = "Game Settings")]
+    #[strum(serialize = "Game Settings >>")]
     GameSettings,
-    #[strum(serialize = "View Map Readme")]
+    #[strum(serialize = "View Map Readme >>")]
     ViewMapReadme,
-    #[strum(serialize = "Config Engines, WADs, App Settings")]
+    #[strum(serialize = "Config App >>")]
     Config,
     #[strum(serialize = "Quit (ESC)")]
     Quit,
@@ -62,7 +63,7 @@ pub enum ProfileCommand {
 
 #[derive(Debug, Clone, PartialEq, EnumString, Display)]
 pub enum ConfigCommand {
-    #[strum(serialize = "List Engines, WADs, App Settings")]
+    #[strum(serialize = "List Stored Data >>")]
     List,
     #[strum(serialize = "List Engines")]
     ListEngines,
@@ -70,9 +71,11 @@ pub enum ConfigCommand {
     ListIwads,
     #[strum(serialize = "List Patch WADs")]
     ListPwads,
+    #[strum(serialize = "List Map Editors")]
+    ListMapEditors,
     #[strum(serialize = "List App Settings")]
     ListAppSettings,
-    #[strum(serialize = "Update Engines and WADs")]
+    #[strum(serialize = "Update Stored Data >>")]
     Update,
     #[strum(serialize = "Update Engines")]
     UpdateEngines,
@@ -80,6 +83,8 @@ pub enum ConfigCommand {
     UpdateIwads,
     #[strum(serialize = "Update Patch WADs")]
     UpdatePwads,
+    #[strum(serialize = "Update Map Editors")]
+    UpdateMapEditors,
     Init,
     Reset,
     #[strum(serialize = "Back (ESC)")]
@@ -97,7 +102,7 @@ pub fn convert_arg_to_configcommand(arg: &str) -> ConfigCommand {
 
 #[derive(Debug, Clone, PartialEq, EnumString, Display)]
 pub enum GameSettingsCommand {
-    #[strum(serialize = "Comp Level")]
+    #[strum(serialize = "Compatibility Level")]
     CompLevel,
     #[strum(serialize = "Config File")]
     ConfigFile,
@@ -127,27 +132,30 @@ pub enum GameSettingsCommand {
 
 #[derive(Debug, Clone, PartialEq, EnumString, Display)]
 pub enum MapEditorCommand {
-    #[strum(serialize = "Open Map Editor with Active Profile PWAD")]
-    OpenMapEditor,
-    #[strum(serialize = "Open Map Editor and Pick PWAD")]
-    OpenMapEditorPickPwad,
-    #[strum(serialize = "List Map Editors")]
+    #[strum(serialize = "Open from Active Profile PWAD")]
+    OpenFromActiveProfile,
+    #[strum(serialize = "Open from Last Profile PWAD")]
+    OpenFromLastProfile,
+    #[strum(serialize = "Open from Pick Profile")]
+    OpenFromPickProfile,
+    #[strum(serialize = "Open from Pick PWAD")]
+    OpenFromPickPwad,
     List,
-    #[strum(serialize = "Update Map Editors")]
     Update,
+    Delete,
     #[strum(serialize = "Back (ESC)")]
     Back,
 }
 
 #[derive(Debug, Clone, PartialEq, EnumString, Display)]
-pub enum ViewMapReadmeCommand {
-    #[strum(serialize = "View Readme from Active Profile")]
+pub enum ViewReadmeCommand {
+    #[strum(serialize = "View from Active Profile")]
     ViewFromActiveProfile,
-    #[strum(serialize = "View Readme from Last Profile")]
+    #[strum(serialize = "View from Last Profile")]
     ViewFromLastProfile,
-    #[strum(serialize = "View Readme and Pick Profile")]
+    #[strum(serialize = "View from Pick Profile")]
     ViewFromPickProfile,
-    #[strum(serialize = "View Readme and Pick PWAD")]
+    #[strum(serialize = "View from Pick PWAD")]
     ViewFromPickPwad,
     #[strum(serialize = "Back (ESC)")]
     Back,
@@ -188,6 +196,7 @@ pub fn profiles_menu_prompt() -> ProfileCommand {
     ];
 
     let choice = inquire::Select::new("Select a Profile option:", selections)
+        .with_page_size(MENU_PAGE_SIZE)
         .prompt_skippable()
         .unwrap();
 
@@ -207,6 +216,7 @@ pub fn config_menu_prompt() -> ConfigCommand {
     ];
 
     let choice = inquire::Select::new("Select a Config option:", selections)
+        .with_page_size(MENU_PAGE_SIZE)
         .prompt_skippable()
         .unwrap();
 
@@ -221,11 +231,13 @@ pub fn config_list_menu_prompt() -> ConfigCommand {
         ConfigCommand::ListEngines.to_string(),
         ConfigCommand::ListIwads.to_string(),
         ConfigCommand::ListPwads.to_string(),
+        ConfigCommand::ListMapEditors.to_string(),
         ConfigCommand::ListAppSettings.to_string(),
         ConfigCommand::Back.to_string(),
     ];
 
     let choice = inquire::Select::new("Select a Config / List option:", selections)
+        .with_page_size(MENU_PAGE_SIZE)
         .prompt_skippable()
         .unwrap();
 
@@ -240,10 +252,12 @@ pub fn config_update_menu_prompt() -> ConfigCommand {
         ConfigCommand::UpdateEngines.to_string(),
         ConfigCommand::UpdateIwads.to_string(),
         ConfigCommand::UpdatePwads.to_string(),
+        ConfigCommand::UpdateMapEditors.to_string(),
         ConfigCommand::Back.to_string(),
     ];
 
     let choice = inquire::Select::new("Select an Config / Update option:", selections)
+        .with_page_size(MENU_PAGE_SIZE)
         .prompt_skippable()
         .unwrap();
 
@@ -344,14 +358,18 @@ pub fn game_settings_menu_prompt(game_settings: data::GameSettings) -> GameSetti
 
 pub fn map_editor_menu_prompt() -> MapEditorCommand {
     let selections = vec![
-        MapEditorCommand::OpenMapEditor.to_string(),
-        MapEditorCommand::OpenMapEditorPickPwad.to_string(),
+        MapEditorCommand::OpenFromActiveProfile.to_string(),
+        MapEditorCommand::OpenFromLastProfile.to_string(),
+        MapEditorCommand::OpenFromPickProfile.to_string(),
+        MapEditorCommand::OpenFromPickPwad.to_string(),
         MapEditorCommand::Update.to_string(),
+        MapEditorCommand::Delete.to_string(),
         MapEditorCommand::List.to_string(),
         MapEditorCommand::Back.to_string(),
     ];
 
     let choice = inquire::Select::new("Select a Map Editor option:", selections)
+        .with_page_size(MENU_PAGE_SIZE)
         .prompt_skippable()
         .unwrap();
 
@@ -361,21 +379,22 @@ pub fn map_editor_menu_prompt() -> MapEditorCommand {
     }
 }
 
-pub fn view_map_readme_menu_prompt() -> ViewMapReadmeCommand {
+pub fn view_readme_menu_prompt() -> ViewReadmeCommand {
     let selections = vec![
-        ViewMapReadmeCommand::ViewFromActiveProfile.to_string(),
-        ViewMapReadmeCommand::ViewFromLastProfile.to_string(),
-        ViewMapReadmeCommand::ViewFromPickProfile.to_string(),
-        ViewMapReadmeCommand::ViewFromPickPwad.to_string(),
-        ViewMapReadmeCommand::Back.to_string(),
+        ViewReadmeCommand::ViewFromActiveProfile.to_string(),
+        ViewReadmeCommand::ViewFromLastProfile.to_string(),
+        ViewReadmeCommand::ViewFromPickProfile.to_string(),
+        ViewReadmeCommand::ViewFromPickPwad.to_string(),
+        ViewReadmeCommand::Back.to_string(),
     ];
 
     let choice = inquire::Select::new("Select a Readme option:", selections)
+        .with_page_size(MENU_PAGE_SIZE)
         .prompt_skippable()
         .unwrap();
 
     match choice {
-        Some(choice) => ViewMapReadmeCommand::from_str(&choice).unwrap(),
-        None => ViewMapReadmeCommand::Back,
+        Some(choice) => ViewReadmeCommand::from_str(&choice).unwrap(),
+        None => ViewReadmeCommand::Back,
     }
 }

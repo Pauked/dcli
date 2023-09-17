@@ -86,8 +86,8 @@ async fn update_config_file() -> Result<String, eyre::Error> {
                 Ok(Validation::Invalid("Config File does not exist.".into()))
             }
         })
-        .with_help_message("Include the full path and file name")
         .with_default(&game_settings.config_file.unwrap_or("".to_string()))
+        .with_help_message("Include the full path and file name")
         .prompt_skippable()?;
     db::save_game_settings(game_settings).await?;
 
@@ -141,7 +141,7 @@ async fn update_warp_to_level() -> Result<String, eyre::Error> {
 async fn update_skill() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
-    game_settings.skill = inquire::CustomType::<u8>::new("Enter Skill value [1-5]:")
+    game_settings.skill = inquire::CustomType::<u8>::new("Enter Skill value:")
         .with_validator(|input: &u8| {
             if (&1..=&5).contains(&input) {
                 Ok(Validation::Valid)
@@ -152,6 +152,7 @@ async fn update_skill() -> Result<String, eyre::Error> {
             }
         })
         .with_default(game_settings.skill.unwrap_or(4))
+        .with_help_message("Range is 1 to 5")
         .prompt_skippable()
         .unwrap();
 
@@ -162,17 +163,16 @@ async fn update_skill() -> Result<String, eyre::Error> {
 async fn update_turbo() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
-    game_settings.turbo = inquire::CustomType::<u8>::new("Enter Turbo value [10-255]:")
+    game_settings.turbo = inquire::CustomType::<u8>::new("Enter Turbo value:")
         .with_validator(|input: &u8| {
             if (&50..=&255).contains(&input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid(
-                    "Turbo is not within the range [10-255].".into(),
-                ))
+                Ok(Validation::Invalid("Turbo is not within the range.".into()))
             }
         })
         .with_default(game_settings.turbo.unwrap_or(255))
+        .with_help_message("Range is 10 to 255")
         .prompt_skippable()
         .unwrap();
 
@@ -183,17 +183,16 @@ async fn update_turbo() -> Result<String, eyre::Error> {
 async fn update_timer() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
-    game_settings.timer = inquire::CustomType::<u32>::new("Enter Timer value [1-43800]:")
+    game_settings.timer = inquire::CustomType::<u32>::new("Enter Timer value:")
         .with_validator(|input: &u32| {
             if (&1..=&43800).contains(&input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid(
-                    "Timer is not within the range [1-43800].".into(),
-                ))
+                Ok(Validation::Invalid("Timer is not within the range.".into()))
             }
         })
         .with_default(game_settings.timer.unwrap_or(10))
+        .with_help_message("Range is 1 to 43800")
         .prompt_skippable()
         .unwrap();
 
@@ -204,17 +203,18 @@ async fn update_timer() -> Result<String, eyre::Error> {
 async fn update_height() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
-    game_settings.height = inquire::CustomType::<u32>::new("Enter Screen Height [1-10240]:")
+    game_settings.height = inquire::CustomType::<u32>::new("Enter Screen Height:")
         .with_validator(|input: &u32| {
             if (&1..=&10240).contains(&input) {
                 Ok(Validation::Valid)
             } else {
                 Ok(Validation::Invalid(
-                    "Height is not within the range [1-10240].".into(),
+                    "Height is not within the range.".into(),
                 ))
             }
         })
         .with_default(game_settings.height.unwrap_or(768))
+        .with_help_message("Range is 1 to 10240")
         .prompt_skippable()
         .unwrap();
 
@@ -225,17 +225,16 @@ async fn update_height() -> Result<String, eyre::Error> {
 async fn update_width() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
-    game_settings.width = inquire::CustomType::<u32>::new("Enter Screen Width [1-2880]:")
+    game_settings.width = inquire::CustomType::<u32>::new("Enter Screen Width:")
         .with_validator(|input: &u32| {
             if (&1..=&2880).contains(&input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid(
-                    "Width is not within the range [1-2880].".into(),
-                ))
+                Ok(Validation::Invalid("Width is not within the range.".into()))
             }
         })
         .with_default(game_settings.width.unwrap_or(1024))
+        .with_help_message("Range is 1 to 2880")
         .prompt_skippable()
         .unwrap();
 

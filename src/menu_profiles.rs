@@ -199,7 +199,7 @@ async fn edit_profile() -> Result<String, eyre::Report> {
 async fn delete_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list().await?;
     if profile_list.is_empty() {
-        return Ok("There are no profiles to delete.".red().to_string());
+        return Ok("There are no Profiles to delete.".red().to_string());
     }
 
     let profile =
@@ -208,7 +208,7 @@ async fn delete_profile() -> Result<String, eyre::Report> {
     if profile.is_some() {
         let profile = profile.unwrap();
         if inquire::Confirm::new(&format!(
-            "Are you sure you want to delete this profile - '{}'? This cannot be undone.",
+            "Are you sure you want to delete this Profile - '{}'? This cannot be undone.",
             profile.name
         ))
         .with_default(false)
@@ -217,8 +217,8 @@ async fn delete_profile() -> Result<String, eyre::Report> {
         {
             db::delete_profile(profile.id)
                 .await
-                .wrap_err(format!("Failed to delete profile - '{}", profile))?;
-            return Ok(format!("Successfully Deleted profile '{}'", profile));
+                .wrap_err(format!("Failed to delete Profile - '{}", profile))?;
+            return Ok(format!("Successfully deleted Profile '{}'", profile));
         }
     }
 

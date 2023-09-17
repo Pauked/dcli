@@ -84,12 +84,40 @@ fn get_windows_file_description_information(full_path: &str) -> Result<String, e
     }
 }
 
-fn macos_parse_version(version: &str) -> Option<(u32, u32, u32, u32)> {
+fn get_macos_file_version_information(full_path: &str) -> Result<(String, String), eyre::Report> {
+    // Construct path to Info.plist
+    let plist_path = Path::new(full_path).join("Contents").join("Info.plist");
+
+    // Open the plist file
+    let file = File::open(plist_path)?;
+
+    // Parse the plist file
+    let value: Value = plist::from_reader(file)?;
+
+    // Extract the version information from the plist
+    let version = value
+        .as_dictionary()
+        .and_then(|dict| dict.get("CFBundleShortVersionString"))
+        .and_then(|title| title.as_string());
+
+    let version_str = version.unwrap_or("");
+
+    let app_name = value
+        .as_dictionary()
+        .and_then(|dict| dict.get("CFBundleName"))
+        .and_then(|title| title.as_string());
+
+    let app_name_str = app_name.unwrap_or("");
+
+    Ok((version_str.to_string(), app_name_str.to_string()))
+}
+
+fn parse_file_version_to_i32(version: &str) -> Option<(u32, u32, u32, u32)> {
     let parts: Vec<_> = version
         .split('.')
         .map(|part| part.parse::<u32>())
         .collect::<Result<Vec<_>, _>>()
-        .ok()?;
+        .ok()?; // FIXME: Improve error handling?
 
     match parts.len() {
         3 => Some((parts[0], parts[1], parts[2], 0)),
@@ -98,7 +126,6 @@ fn macos_parse_version(version: &str) -> Option<(u32, u32, u32, u32)> {
     }
 }
 
-// FIXME: Refactor error handling in get_file_version
 pub fn get_file_version(full_path: &str) -> Result<data::FileVersion, eyre::Report> {
     if env::consts::OS == constants::OS_WINDOWS {
         let (major, minor, build, revision) = get_windows_file_version_information(full_path)?;
@@ -115,35 +142,12 @@ pub fn get_file_version(full_path: &str) -> Result<data::FileVersion, eyre::Repo
     }
 
     if env::consts::OS == constants::OS_MACOS {
-        // Construct path to Info.plist
-        let plist_path = Path::new(full_path).join("Contents").join("Info.plist");
+        let (version, app_name) = get_macos_file_version_information(full_path)?;
 
-        // Open the plist file
-        let file = File::open(plist_path)?;
-
-        // Parse the plist file
-        let value: Value = plist::from_reader(file)?;
-
-        // Extract the version information from the plist
-        let version = value
-            .as_dictionary()
-            .and_then(|dict| dict.get("CFBundleShortVersionString"))
-            .and_then(|title| title.as_string());
-
-        let version_str = version.unwrap_or("");
-
-        let app_name = value
-            .as_dictionary()
-            .and_then(|dict| dict.get("CFBundleName"))
-            .and_then(|title| title.as_string());
-
-        let app_name_str = app_name.unwrap_or("");
-
-        // TODO: Improve error handling for macOS version parsing
-        match macos_parse_version(version_str) {
+        match parse_file_version_to_i32(&version) {
             Some((major, minor, build, revision)) => {
                 return Ok(data::FileVersion {
-                    app_name: app_name_str.to_string(),
+                    app_name,
                     path: full_path.to_string(),
                     major,
                     minor,
@@ -152,13 +156,16 @@ pub fn get_file_version(full_path: &str) -> Result<data::FileVersion, eyre::Repo
                 });
             }
             None => {
-                println!("Failed to parse the version string.");
+                return Err(eyre::eyre!(format!(
+                    "Failed to parse the version string - '{}",
+                    version,
+                )))
             }
         }
     }
 
     Err(eyre::eyre!(format!(
-        "get_file_version is only supported on Windows, not on '{}'",
+        "get_file_version is only supported on Windows and MacOS, not on '{}'",
         env::consts::OS
     )))
 }

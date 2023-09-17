@@ -9,7 +9,7 @@ use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{
     data::{self},
-    db, doom_data, files, paths, tui,
+    db, doom_data, files, menu_map_editor, paths, tui,
 };
 
 pub async fn config_menu() -> Result<String, eyre::Report> {
@@ -64,10 +64,11 @@ pub async fn run_config_menu_option(
 ) -> Result<String, eyre::Report> {
     match menu_command {
         tui::ConfigCommand::List => Ok("".to_string()),
-        tui::ConfigCommand::ListEngines => display_engines().await,
-        tui::ConfigCommand::ListIwads => display_iwads().await,
-        tui::ConfigCommand::ListPwads => display_pwads().await,
-        tui::ConfigCommand::ListAppSettings => display_app_settings().await,
+        tui::ConfigCommand::ListEngines => list_engines().await,
+        tui::ConfigCommand::ListIwads => list_iwads().await,
+        tui::ConfigCommand::ListPwads => list_pwads().await,
+        tui::ConfigCommand::ListMapEditors => menu_map_editor::list_map_editors().await,
+        tui::ConfigCommand::ListAppSettings => list_app_settings().await,
         tui::ConfigCommand::Init => init().await,
         tui::ConfigCommand::Update => Ok("".to_string()),
         tui::ConfigCommand::UpdateEngines => {
@@ -97,6 +98,7 @@ pub async fn run_config_menu_option(
             inquire::Text::new("Press any key to continue...").prompt_skippable()?;
             Ok("Successfully updated PWADs".to_string())
         }
+        tui::ConfigCommand::UpdateMapEditors => menu_map_editor::update_map_editors().await,
         tui::ConfigCommand::Reset => reset(false).await,
         tui::ConfigCommand::Back => Ok("".to_string()),
         tui::ConfigCommand::Unknown => Ok("Unknown command".to_string()),
@@ -139,7 +141,7 @@ pub async fn init() -> Result<String, eyre::Report> {
 }
 
 pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> {
-    let exe_search_folder: String = inquire::Text::new("Folder to search for Doom engines:")
+    let exe_search_folder: String = inquire::Text::new("Folder to search for Engines:")
         .with_validator(|input: &str| {
             if paths::folder_exists(input) {
                 Ok(Validation::Valid)
@@ -170,7 +172,7 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
     let db_engines = db::get_engines().await?;
     let mut db_defaults = vec![];
     for (index, engine) in engines.iter().enumerate() {
-        if db_engines.iter().any(|e| &e.path == engine) {
+        if db_engines.iter().any(|db| &db.path == engine) {
             db_defaults.push(index);
         }
     }
@@ -207,7 +209,7 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
 
     // Multi-select prompt to user
     let selections =
-        inquire::MultiSelect::new("Pick the engines you want to use:", engines_extended)
+        inquire::MultiSelect::new("Pick the Engines you want to save:", engines_extended)
             .with_default(&db_defaults)
             .with_page_size(tui::MENU_PAGE_SIZE)
             .prompt()?;
@@ -216,7 +218,7 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
     for db_engine in &db_engines {
         if !selections.iter().any(|e| e.path == db_engine.path) {
             db::delete_engine(&db_engine.path).await?;
-            debug!("Deleted engine: {:?}", db_engine);
+            debug!("Deleted Engine: {:?}", db_engine);
         }
     }
 
@@ -224,25 +226,25 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
     for selection in selections {
         let existing_engine = db_engines.iter().find(|e| e.path == selection.path);
         match existing_engine {
-            Some(existing_engine) => {
+            Some(existing) => {
                 debug!("Engine already exists, no need to add: {}", selection);
-                if existing_engine.version != selection.version {
+                if existing.version != selection.version {
                     debug!(
-                        "Updating engine version from '{}' to '{}'",
-                        existing_engine.version, selection.version
+                        "Updating Engine version from '{}' to '{}'",
+                        existing.version, selection.version
                     );
-                    db::update_engine_version(existing_engine.id, &selection.version).await?;
+                    db::update_engine_version(existing.id, &selection.version).await?;
                 }
             }
             None => {
                 db::add_engine(&selection).await?;
-                debug!("Added engine: {:?}", selection);
+                debug!("Added Engine: {:?}", selection);
             }
         }
     }
 
     // FIXME: This is getting blanked by menu display...
-    info!("{}", display_engines().await?);
+    info!("{}", list_engines().await?);
 
     Ok(exe_search_folder)
 }
@@ -284,13 +286,13 @@ pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     let db_iwads = db::get_iwads().await?;
     let mut db_defaults = vec![];
     for (index, iwad) in iwads.iter().enumerate() {
-        if db_iwads.iter().any(|e| &e.path == iwad) {
+        if db_iwads.iter().any(|db| &db.path == iwad) {
             db_defaults.push(index);
         }
     }
 
     // TODO: Mark the IWADs that have been picked previously
-    let selections = inquire::MultiSelect::new("Pick the IWADs you want to use:", iwads)
+    let selections = inquire::MultiSelect::new("Pick the IWADs you want to save:", iwads)
         .with_default(&db_defaults)
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
@@ -329,7 +331,7 @@ pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     }
 
     // FIXME: This is getting blanked by menu display...
-    info!("{}", display_iwads().await?);
+    info!("{}", list_iwads().await?);
 
     Ok(iwad_search_folder)
 }
@@ -393,15 +395,15 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
     }
 
     // FIXME: This is getting blanked by menu display...
-    info!("{}", display_pwads().await?);
+    info!("{}", list_pwads().await?);
 
     Ok(pwad_search_folder)
 }
 
-pub async fn display_engines() -> Result<String, eyre::Report> {
+pub async fn list_engines() -> Result<String, eyre::Report> {
     let engines = db::get_engines()
         .await
-        .wrap_err("Unable to generate engine listing".to_string())?;
+        .wrap_err("Unable to generate Engine listing".to_string())?;
 
     let table = tabled::Table::new(engines)
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
@@ -410,7 +412,7 @@ pub async fn display_engines() -> Result<String, eyre::Report> {
     Ok(table)
 }
 
-pub async fn display_iwads() -> Result<String, eyre::Report> {
+pub async fn list_iwads() -> Result<String, eyre::Report> {
     let iwads = db::get_iwads()
         .await
         .wrap_err("Unable to iwad listing".to_string())?;
@@ -422,7 +424,7 @@ pub async fn display_iwads() -> Result<String, eyre::Report> {
     Ok(table)
 }
 
-pub async fn display_pwads() -> Result<String, eyre::Report> {
+pub async fn list_pwads() -> Result<String, eyre::Report> {
     let pwads = db::get_pwads()
         .await
         .wrap_err("Unable to iwad listing".to_string())?;
@@ -434,7 +436,7 @@ pub async fn display_pwads() -> Result<String, eyre::Report> {
     Ok(table)
 }
 
-pub async fn display_app_settings() -> Result<String, eyre::Report> {
+pub async fn list_app_settings() -> Result<String, eyre::Report> {
     let app_settings = db::get_app_settings_display()
         .await
         .wrap_err("Unable to settings listing".to_string())?;

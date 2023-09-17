@@ -15,6 +15,14 @@ CREATE TABLE IF NOT EXISTS pwads (
     name TEXT NOT NULL UNIQUE,
     path TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS map_editors (
+    id INTEGER PRIMARY KEY NOT NULL,
+    app_name TEXT NOT NULL,
+    path TEXT NOT NULL UNIQUE,
+    load_file_argument TEXT NULL,
+    additional_arguments TEXT NULL,
+    version TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS profiles (
     id INTEGER PRIMARY KEY NOT NULL,
     name TEXT NOT NULL UNIQUE,
@@ -53,4 +61,9 @@ CREATE TABLE IF NOT EXISTS game_settings (
     full_screen BOOLEAN NOT NULL,
     windowed BOOLEAN NOT NULL,
     additional_arguments TEXT NULL
+);
+CREATE TABLE IF NOT EXISTS track_menu (
+    id INTEGER PRIMARY KEY NOT NULL,
+    option_name TEXT NOT NULL UNIQUE,
+    usage INTEGER NOT NULL
 );

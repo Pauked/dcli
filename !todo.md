@@ -1,6 +1,8 @@
 # Doom CLI v0.1
 
 ## TODO
+[ ] Track usage of options to generate a "most used options menu"
+[ ] Define a quick access menu
 [x] Support for additional arguments
 [ ] Support for running a map editor
 [x] Make the selection of a PWAD optional!

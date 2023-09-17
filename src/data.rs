@@ -114,6 +114,31 @@ impl Default for Pwad {
     }
 }
 
+#[derive(Clone, Debug, FromRow, Tabled)]
+pub struct MapEditor {
+    #[tabled(skip)]
+    pub id: i32,
+    #[tabled(rename = "App Name")]
+    pub app_name: String,
+    #[tabled(rename = "Path")]
+    pub path: String,
+    #[tabled(rename = "Load File Argument", display_with = "display_option_string")]
+    pub load_file_argument: Option<String>,
+    #[tabled(
+        rename = "Additional Arguments",
+        display_with = "display_option_string"
+    )]
+    pub additional_arguments: Option<String>,
+    #[tabled(rename = "Version")]
+    pub version: String,
+}
+
+impl fmt::Display for MapEditor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} ({} [{}])", self.app_name, self.path, self.version)
+    }
+}
+
 #[derive(Clone, Debug, FromRow)]
 pub struct Profile {
     pub id: i32,

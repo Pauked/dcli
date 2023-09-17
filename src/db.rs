@@ -102,7 +102,7 @@ pub async fn update_engine_version(
 ) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let db = SqlitePool::connect(DB_URL).await.unwrap();
 
-    sqlx::query("UPDATE engines SET version = $1 WHERE id=$3 COLLATE NOCASE")
+    sqlx::query("UPDATE engines SET version = $1 WHERE id=$2 COLLATE NOCASE")
         .bind(version)
         // .bind(Utc::now())
         .bind(id)
@@ -543,3 +543,65 @@ pub async fn get_game_settings() -> Result<data::GameSettings, eyre::Report> {
         Err(_) => Ok(data::GameSettings::default()),
     }
 }
+
+pub async fn add_map_editor(
+    map_editor: &data::MapEditor,
+) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let db = get_db().await;
+
+    sqlx::query("INSERT INTO map_editors (app_name, path, version, load_file_argument, additional_arguments) VALUES (?,?,?,?,?)")
+        .bind(&map_editor.app_name)
+        .bind(&map_editor.path)
+        .bind(&map_editor.version)
+        .bind(&map_editor.load_file_argument)
+        .bind(&map_editor.additional_arguments)
+        .execute(&db)
+        .await
+        .wrap_err(format!("Failed to add map editor '{:?}", map_editor))
+}
+
+pub async fn delete_map_editor(id: i32) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let db = SqlitePool::connect(DB_URL).await.unwrap();
+
+    sqlx::query("DELETE FROM map_editors WHERE id=$1")
+        .bind(id)
+        .execute(&db)
+        .await
+        .wrap_err(format!("Failed to delete map editor with id '{}'", id))
+}
+
+pub async fn update_map_editor_version(
+    id: i32,
+    version: &str,
+) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let db = SqlitePool::connect(DB_URL).await.unwrap();
+
+    sqlx::query("UPDATE engines SET version = $1 WHERE id=$2 COLLATE NOCASE")
+        .bind(version)
+        .bind(id)
+        .execute(&db)
+        .await
+        .wrap_err(format!(
+            "Failed to update version '{}' for engine with id '{}'",
+            version, id
+        ))
+}
+
+pub async fn get_map_editors() -> Result<Vec<data::MapEditor>, eyre::Report> {
+    let db = get_db().await;
+
+    sqlx::query_as::<_, data::MapEditor>("SELECT * FROM map_editors ORDER BY app_name")
+        .fetch_all(&db)
+        .await
+        .wrap_err("Failed to get list of all map editors")
+}
+
+// pub async fn get_map_editor_by_id(id: i32) -> Result<data::MapEditor, eyre::Report> {
+//     let db = get_db().await;
+
+//     sqlx::query_as::<_, data::MapEditor>("SELECT * FROM map_editors WHERE id = ?")
+//         .bind(id)
+//         .fetch_one(&db)
+//         .await
+//         .wrap_err(format!("Failed to get map editor with id '{}'", id))
+// }

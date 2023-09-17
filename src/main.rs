@@ -11,12 +11,13 @@ mod doom_data;
 mod files;
 mod finder;
 mod log_config;
+mod menu_common;
 mod menu_config;
 mod menu_game_settings;
 mod menu_main;
 mod menu_map_editor;
 mod menu_profiles;
-mod menu_view_map_readme;
+mod menu_view_readme;
 mod paths;
 mod runner;
 mod tui;
@@ -39,10 +40,14 @@ async fn run() -> eyre::Result<String> {
     let args: Vec<String> = env::args().skip(1).collect();
 
     if args.len() == 1 && args.contains(&tui::ARG_VERSION.to_string()) {
-        return Ok(format!("{} {}", constants::APP_NAME, constants::CRATE_VERSION));
+        return Ok(format!(
+            "{} {}",
+            constants::APP_NAME,
+            constants::CRATE_VERSION
+        ));
     }
 
-    let reset_mode =  args.len() == 1 && args.contains(&tui::ARG_RESET.to_string());
+    let reset_mode = args.len() == 1 && args.contains(&tui::ARG_RESET.to_string());
     if !reset_mode {
         db::create_db().await?;
         if db::is_empty_app_settings_table().await? {
@@ -61,7 +66,9 @@ async fn run() -> eyre::Result<String> {
             let config_arg = tui::convert_arg_to_configcommand(&arg);
             if config_arg != tui::ConfigCommand::Unknown {
                 let result = menu_config::run_config_menu_option(config_arg.clone()).await?;
-                if config_arg == tui::ConfigCommand::Reset && result != *"Database reset not confirmed." {
+                if config_arg == tui::ConfigCommand::Reset
+                    && result != *"Database reset not confirmed."
+                {
                     menu_config::init().await?;
                 }
             } else {
@@ -75,7 +82,6 @@ async fn run() -> eyre::Result<String> {
 }
 
 // async fn manage_args() -> eyre::Result<String> {
-
 
 //     Ok("".to_string())
 // }

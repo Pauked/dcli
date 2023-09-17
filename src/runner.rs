@@ -8,7 +8,7 @@ use colored::Colorize;
 use eyre::Context;
 use log::info;
 
-use crate::{constants, db, files};
+use crate::{constants, data, db, files};
 
 pub async fn play(profile_id: i32, update_last_profile: bool) -> Result<String, eyre::Report> {
     let single_profile = db::get_profile_by_id(profile_id).await?;
@@ -166,6 +166,36 @@ pub fn open_map_readme(pwad_path: &str) -> Result<String, eyre::Report> {
             .yellow()
             .to_string()),
     }
+}
+
+pub fn map_editor(pwad_path: &str, map_editor: data::MapEditor) -> Result<String, eyre::Report> {
+    let mut cmd = Command::new(&map_editor.path);
+    if map_editor.load_file_argument.is_some() {
+        cmd.arg(map_editor.load_file_argument.unwrap());
+    }
+
+    cmd.arg(pwad_path);
+
+    if map_editor.additional_arguments.is_some() {
+        let args: Vec<String> =
+            shlex::split(&map_editor.additional_arguments.unwrap()).unwrap_or_default();
+        for arg in args {
+            cmd.arg(arg);
+        }
+    }
+
+    cmd.stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .wrap_err(format!(
+            "Failed to open Map Editor with PWAD - '{}' / '{}'",
+            map_editor.path, pwad_path
+        ))?;
+
+    Ok(format!(
+        "Opened the Map Editor with PWAD - '{}' / '{}'",
+        map_editor.path, pwad_path
+    ))
 }
 
 // pub fn notepad_config(config_file_path: PathBuf) -> Result<String, eyre::Report> {
