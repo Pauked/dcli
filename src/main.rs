@@ -8,6 +8,7 @@ mod constants;
 mod data;
 mod db;
 mod doom_data;
+mod files;
 mod finder;
 mod log_config;
 mod menu_config;
@@ -16,6 +17,7 @@ mod menu_main;
 mod menu_map_editor;
 mod menu_profiles;
 mod paths;
+mod runner;
 mod tui;
 
 #[tokio::main]

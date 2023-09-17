@@ -9,7 +9,7 @@ use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{
     data::{self},
-    db, doom_data, finder, paths, tui,
+    db, doom_data, files, paths, tui,
 };
 
 pub async fn config_menu() -> Result<String, eyre::Report> {
@@ -76,6 +76,7 @@ pub async fn run_config_menu_option(
                 init_engines(&app_settings.exe_search_folder.unwrap_or("".to_string())).await?;
             app_settings.exe_search_folder = Some(folder);
             db::save_app_settings(app_settings).await?;
+            inquire::Text::new("Press any key to continue...").prompt_skippable()?;
             Ok("Successfully updated Engines".to_string())
         }
         tui::ConfigCommand::UpdateIwads => {
@@ -84,6 +85,7 @@ pub async fn run_config_menu_option(
                 init_iwads(&app_settings.iwad_search_folder.unwrap_or("".to_string())).await?;
             app_settings.iwad_search_folder = Some(folder);
             db::save_app_settings(app_settings).await?;
+            inquire::Text::new("Press any key to continue...").prompt_skippable()?;
             Ok("Successfully updated IWADs".to_string())
         }
         tui::ConfigCommand::UpdatePwads => {
@@ -92,6 +94,7 @@ pub async fn run_config_menu_option(
                 init_pwads(&app_settings.pwad_search_folder.unwrap_or("".to_string())).await?;
             app_settings.pwad_search_folder = Some(folder);
             db::save_app_settings(app_settings).await?;
+            inquire::Text::new("Press any key to continue...").prompt_skippable()?;
             Ok("Successfully updated PWADs".to_string())
         }
         tui::ConfigCommand::Reset => reset(false).await,
@@ -176,9 +179,9 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
     let mut engines_extended: Vec<data::Engine> = Vec::new();
     for engine in engines {
         info!("Getting version information for Engine: '{}'", engine);
-        let game_engine = get_game_engine_from_exe_name(doom_engine_list.clone(), &engine)?;
+        let game_engine = files::get_game_engine_from_exe_name(doom_engine_list.clone(), &engine)?;
         let file_version =
-            get_version_from_exe_name(&engine, game_engine.game_engine_type.clone())?;
+            files::get_version_from_exe_name(&engine, game_engine.game_engine_type.clone())?;
 
         let final_engine_path: String = {
             match game_engine.internal_path {
@@ -303,7 +306,7 @@ pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     // Save engines to  engines table
     for selection in selections {
         let internal_wad_type =
-            get_internal_wad_type_from_file_name(iwad_list.clone(), &selection)?;
+            files::get_internal_wad_type_from_file_name(iwad_list.clone(), &selection)?;
 
         let existing_iwad = db_iwads.iter().find(|e| e.path == selection);
 
@@ -377,7 +380,7 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
             None => {
                 info!("Getting map name for PWAD: '{}'", pwad);
                 let pwad = data::Pwad {
-                    name: get_map_name_from_readme(&pwad)?,
+                    name: files::get_map_name_from_readme(&pwad)?,
                     path: pwad.clone(),
                     id: 0,
                 };
@@ -393,82 +396,6 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
     info!("{}", display_pwads().await?);
 
     Ok(pwad_search_folder)
-}
-
-fn get_map_name_from_readme(pwad: &str) -> Result<String, eyre::Report> {
-    // TODO: Write method to get map name from associated map readme!
-
-    //let path = paths::extract_path(pwad);
-    let file_name = paths::extract_file_name(pwad);
-    // replace the wad extension with readme
-    let readme = pwad.replace(".wad", ".txt");
-    if !paths::file_exists(&readme) {
-        return Ok(file_name);
-    }
-
-    let lines = paths::lines_from_file("readme", &readme)?;
-    for line in lines {
-        if line.starts_with("Title") {
-            let parts: Vec<&str> = line.split(':').collect();
-            if parts.len() > 1 {
-                return Ok(parts[1].trim().to_string());
-            }
-        }
-    }
-
-    Ok(file_name)
-}
-
-fn get_version_from_exe_name(
-    exe_name: &str,
-    game_engine_type: doom_data::GameEngineType,
-) -> Result<data::FileVersion, eyre::Report> {
-    match game_engine_type {
-        doom_data::GameEngineType::Doom => todo!("Doom version not implemented yet!"),
-        doom_data::GameEngineType::PrBoomPlus => Ok(finder::get_prboom_file_version(exe_name)?),
-        doom_data::GameEngineType::GzDoom => Ok(finder::get_file_version(exe_name)?),
-        doom_data::GameEngineType::Unknown => Err(eyre::eyre!("Unknown game engine type")),
-    }
-}
-
-fn get_game_engine_from_exe_name(
-    engine_list: Vec<doom_data::GameEngine>,
-    exe_name: &str,
-) -> Result<doom_data::GameEngine, eyre::Report> {
-    // Get the exe name from the path
-    let exe_name = paths::extract_file_name(exe_name);
-
-    // Search the engine list for the exe name
-    for engine in engine_list {
-        if engine.exe_name.to_lowercase() == exe_name.to_lowercase() {
-            return Ok(engine);
-        }
-    }
-
-    Err(eyre::eyre!(format!(
-        "Unable to find engine type for exe name '{}'",
-        exe_name
-    )))
-}
-
-fn get_internal_wad_type_from_file_name(
-    iwad_list: Vec<doom_data::InternalWad>,
-    path: &str,
-) -> Result<doom_data::InternalWadType, eyre::Report> {
-    // Get the file from the path
-    let file_name = paths::extract_file_name(path);
-
-    // Search the engine list for the exe name
-    for iwad in iwad_list {
-        if iwad.file_name.to_lowercase() == file_name.to_lowercase() {
-            return Ok(iwad.internal_wad_type);
-        }
-    }
-
-    Err(eyre::eyre!(format!(
-        "Unable to find internal wad type for file name '{}'",
-        file_name
-    )))
 }
 
 pub async fn display_engines() -> Result<String, eyre::Report> {
@@ -521,7 +448,7 @@ pub async fn display_app_settings() -> Result<String, eyre::Report> {
 
 async fn reset(force: bool) -> Result<String, eyre::Report> {
     if !db::database_exists().await {
-        return Ok("Database does not exist, nothing to reset.".to_string());
+        return Ok("Database does not exist. Nothing to reset.".to_string());
     }
 
     // Prompt the user for confirmation to delete the file

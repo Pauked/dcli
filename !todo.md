@@ -4,14 +4,16 @@
 [x] Support for additional arguments
 [ ] Support for running a map editor
 [x] Make the selection of a PWAD optional!
-[ ] Open PWAD readme in local text editor
+[/] Open PWAD readme in local text editor
 [x] Add "game settings" menu to be able to config -fastmonster, -nomonsters, etc, switched use for all runs
 [x] Add game settings automatically to play
 [ ] Have a profile switch of "include game settings?"
-[ ] Make menus less crashy if user aborts
+[/] Make menus less crashy if user aborts
 [x] Add a `--version` option to the CLI.
 [ ] Add a `--help` option to the CLI.
 [ ] Remember last position in a given menu!
+[ ] Block deleting of Engine/IWAD/PWAD if linked in Profiles.
+[ ] Play, do a file exists check on Engine/IWAD/PWAD (might have been moved/deleted after config)
 
 # Savegame notes:
  - dsda-doom - save files are .dsg. subfolder of app, dsda-doom\IWAD name\PWAD name

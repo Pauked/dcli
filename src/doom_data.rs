@@ -6,6 +6,7 @@ use crate::constants;
 
 pub const EXT_WAD: &str = "wad";
 pub const EXT_PK3: &str = "pk3";
+pub const EXT_TXT: &str = "txt";
 
 #[derive(Clone, Debug, PartialEq, sqlx::Type, Display)]
 pub enum GameEngineType {

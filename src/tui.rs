@@ -53,6 +53,8 @@ pub enum ProfileCommand {
     #[strum(serialize = "Set Active Profile")]
     Active,
     List,
+    #[strum(serialize = "View Map Readme")]
+    ViewMapReadme,
     Back,
 }
 
@@ -160,6 +162,7 @@ pub fn profiles_menu_prompt() -> ProfileCommand {
         ProfileCommand::New.to_string(),
         ProfileCommand::Edit.to_string(),
         ProfileCommand::Active.to_string(),
+        ProfileCommand::ViewMapReadme.to_string(),
         ProfileCommand::List.to_string(),
         ProfileCommand::Delete.to_string(),
         ProfileCommand::Back.to_string(),
