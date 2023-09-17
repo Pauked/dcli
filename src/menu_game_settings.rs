@@ -60,7 +60,7 @@ async fn update_comp_level() -> Result<String, eyre::Report> {
         None => 0,
     };
 
-    let comp_level = inquire::Select::new("Select a Compatibility Level", selections)
+    let comp_level = inquire::Select::new("Select a Compatibility Level:", selections)
         .with_starting_cursor(starting_cursor)
         .prompt()?;
 
@@ -111,7 +111,7 @@ async fn update_respawn_monsters() -> Result<String, eyre::Error> {
 
 async fn update_warp_to_level() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
-    game_settings.warp = inquire::Text::new("Enter Warp value")
+    game_settings.warp = inquire::Text::new("Enter Warp value:")
         .with_default(&game_settings.warp.unwrap_or("".to_string()))
         .with_help_message("Typically in the format of m (1-32) or e m (1-4, 1-9)")
         .prompt_skippable()?;
@@ -123,7 +123,7 @@ async fn update_warp_to_level() -> Result<String, eyre::Error> {
 async fn update_skill() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
-    game_settings.skill = inquire::CustomType::<u8>::new("Set Skill? [1-5]")
+    game_settings.skill = inquire::CustomType::<u8>::new("Enter Skill value [1-5]:")
         .with_validator(|input: &u8| {
             if (&1..=&5).contains(&input) {
                 Ok(Validation::Valid)
@@ -144,7 +144,7 @@ async fn update_skill() -> Result<String, eyre::Error> {
 async fn update_turbo() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
-    game_settings.turbo = inquire::CustomType::<u8>::new("Set Turbo? [10-255]")
+    game_settings.turbo = inquire::CustomType::<u8>::new("Enter Turbo value [10-255]:")
         .with_validator(|input: &u8| {
             if (&50..=&255).contains(&input) {
                 Ok(Validation::Valid)
@@ -165,7 +165,7 @@ async fn update_turbo() -> Result<String, eyre::Error> {
 async fn update_timer() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
-    game_settings.timer = inquire::CustomType::<u32>::new("Set Timer? [1-43800]")
+    game_settings.timer = inquire::CustomType::<u32>::new("Enter Timer value [1-43800]:")
         .with_validator(|input: &u32| {
             if (&1..=&43800).contains(&input) {
                 Ok(Validation::Valid)
@@ -186,7 +186,7 @@ async fn update_timer() -> Result<String, eyre::Error> {
 async fn update_height() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
-    game_settings.height = inquire::CustomType::<u32>::new("Set Height? [1-10240]")
+    game_settings.height = inquire::CustomType::<u32>::new("Enter Screen Height [1-10240]:")
         .with_validator(|input: &u32| {
             if (&1..=&10240).contains(&input) {
                 Ok(Validation::Valid)
@@ -207,7 +207,7 @@ async fn update_height() -> Result<String, eyre::Error> {
 async fn update_width() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
-    game_settings.width = inquire::CustomType::<u32>::new("Set Width? [1-2880]")
+    game_settings.width = inquire::CustomType::<u32>::new("Enter Screen Width [1-2880]:")
         .with_validator(|input: &u32| {
             if (&1..=&2880).contains(&input) {
                 Ok(Validation::Valid)
@@ -249,7 +249,7 @@ async fn update_windowed() -> Result<String, eyre::Error> {
 
 async fn update_additional_arguments() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
-    game_settings.additional_arguments = inquire::Text::new("Enter any Additional Arguments")
+    game_settings.additional_arguments = inquire::Text::new("Enter any Additional Arguments:")
         .with_default(&game_settings.additional_arguments.unwrap_or("".to_string()))
         .prompt_skippable()?;
     db::save_game_settings(game_settings).await?;

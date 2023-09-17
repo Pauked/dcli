@@ -35,13 +35,11 @@ async fn run() -> eyre::Result<String> {
     // We don't want the full exe path, just the args
     let args: Vec<String> = env::args().skip(1).collect();
 
-    if args.contains(&tui::ARG_VERSION.to_string()) {
+    if args.len() == 1 && args.contains(&tui::ARG_VERSION.to_string()) {
         return Ok(format!("{} {}", constants::APP_NAME, constants::CRATE_VERSION));
     }
 
-    info!("Welcome to {}", constants::APP_NAME.bright_yellow());
-
-    let reset_mode = args.contains(&tui::ARG_RESET.to_string());
+    let reset_mode =  args.len() == 1 && args.contains(&tui::ARG_RESET.to_string());
     if !reset_mode {
         db::create_db().await?;
         if db::is_empty_app_settings_table().await? {
@@ -69,8 +67,15 @@ async fn run() -> eyre::Result<String> {
         }
     }
 
+    info!("Welcome to {}", constants::APP_NAME.bright_yellow());
     menu_main::main_menu().await
 }
+
+// async fn manage_args() -> eyre::Result<String> {
+
+
+//     Ok("".to_string())
+// }
 
 fn main() {
     match run() {

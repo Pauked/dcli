@@ -144,7 +144,7 @@ pub fn main_menu_prompt() -> MainCommand {
         MainCommand::Quit.to_string(),
     ];
 
-    let choice = inquire::Select::new("Select a Main Menu option", selections)
+    let choice = inquire::Select::new("Select a Main Menu option:", selections)
         .with_page_size(MENU_PAGE_SIZE)
         .prompt()
         .unwrap();
@@ -161,7 +161,7 @@ pub fn profiles_menu_prompt() -> ProfileCommand {
         ProfileCommand::Back.to_string(),
     ];
 
-    let choice: String = inquire::Select::new("Select a Profile option", selections)
+    let choice: String = inquire::Select::new("Select a Profile option:", selections)
         .prompt()
         .unwrap();
     ProfileCommand::from_str(&choice).unwrap()
@@ -176,7 +176,7 @@ pub fn config_menu_prompt() -> ConfigCommand {
         ConfigCommand::Back.to_string(),
     ];
 
-    let choice: String = inquire::Select::new("Select a Config option", selections)
+    let choice: String = inquire::Select::new("Select a Config option:", selections)
         .prompt()
         .unwrap();
     ConfigCommand::from_str(&choice).unwrap()
@@ -191,7 +191,7 @@ pub fn config_list_menu_prompt() -> ConfigCommand {
         ConfigCommand::Back.to_string(),
     ];
 
-    let choice: String = inquire::Select::new("Select a Config / List option", selections)
+    let choice: String = inquire::Select::new("Select a Config / List option:", selections)
         .prompt()
         .unwrap();
     ConfigCommand::from_str(&choice).unwrap()
@@ -205,7 +205,7 @@ pub fn config_update_menu_prompt() -> ConfigCommand {
         ConfigCommand::Back.to_string(),
     ];
 
-    let choice: String = inquire::Select::new("Select an Config / Update option", selections)
+    let choice: String = inquire::Select::new("Select an Config / Update option:", selections)
         .prompt()
         .unwrap();
     ConfigCommand::from_str(&choice).unwrap()
@@ -281,7 +281,7 @@ pub fn game_settings_menu_prompt(game_settings: data::GameSettings) -> GameSetti
         GameSettingsCommand::Back.to_string(),
     ];
 
-    let choice: String = inquire::Select::new("Select a Game Settings option", selections)
+    let choice: String = inquire::Select::new("Select a Game Settings option:", selections)
         .with_page_size(MENU_PAGE_SIZE)
         .prompt()
         .unwrap();
@@ -299,7 +299,7 @@ pub fn map_editor_menu_prompt() -> MapEditorCommand {
         MapEditorCommand::Back.to_string(),
     ];
 
-    let choice: String = inquire::Select::new("Select a Map Editor option", selections)
+    let choice: String = inquire::Select::new("Select a Map Editor option:", selections)
         .prompt()
         .unwrap();
     MapEditorCommand::from_str(&choice).unwrap()

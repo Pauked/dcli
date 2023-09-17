@@ -52,20 +52,20 @@ async fn new_profile() -> Result<String, eyre::Report> {
     }
 
     // TODO: Validate if profile_name already exists
-    let profile_name = inquire::Text::new("Enter a name for your Profile")
+    let profile_name = inquire::Text::new("Enter a name for your Profile:")
         .with_validator(inquire::min_length!(5))
         .prompt()?;
 
-    let engine_selection = inquire::Select::new("Pick the Engine you want to use", engines)
+    let engine_selection = inquire::Select::new("Pick the Engine you want to use:", engines)
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
-    let iwad_selection = inquire::Select::new("Pick the IWAD you want to use", iwads)
+    let iwad_selection = inquire::Select::new("Pick the IWAD you want to use:", iwads)
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
     let pwad_selection =
-        inquire::Select::new("Pick the PWAD you want to use (optional)", pwads.clone())
+        inquire::Select::new("Pick the PWAD you want to use (optional):", pwads.clone())
             .with_page_size(tui::MENU_PAGE_SIZE)
             .prompt_skippable()?;
 
@@ -75,7 +75,7 @@ async fn new_profile() -> Result<String, eyre::Report> {
     };
 
     let additional_arguments =
-        inquire::Text::new("Enter any additional arguments (optional)").prompt_skippable()?;
+        inquire::Text::new("Enter any additional arguments (optional):").prompt_skippable()?;
 
     let profile = data::Profile {
         id: 0,
@@ -133,7 +133,7 @@ async fn edit_profile() -> Result<String, eyre::Report> {
             .to_string());
     }
 
-    let profile = inquire::Select::new("Pick the Profile to Edit", profile_list)
+    let profile = inquire::Select::new("Pick the Profile to Edit:", profile_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
@@ -153,23 +153,23 @@ async fn edit_profile() -> Result<String, eyre::Report> {
         .unwrap_or(0);
 
     // TODO: Validate if profile_name already exists
-    let profile_name = inquire::Text::new("Enter a name for your Profile")
+    let profile_name = inquire::Text::new("Enter a name for your Profile:")
         .with_validator(inquire::min_length!(5))
         .with_default(&profile.name)
         .prompt()?;
 
-    let engine_selection = inquire::Select::new("Pick the Engine you want to use", engines)
+    let engine_selection = inquire::Select::new("Pick the Engine you want to use:", engines)
         .with_starting_cursor(engine_starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
-    let iwad_selection = inquire::Select::new("Pick the IWAD you want to use", iwads)
+    let iwad_selection = inquire::Select::new("Pick the IWAD you want to use:", iwads)
         .with_starting_cursor(iwad_starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
     let pwad_selection =
-        inquire::Select::new("Pick the PWAD you want to use (optional)", pwads.clone())
+        inquire::Select::new("Pick the PWAD you want to use (optional):", pwads.clone())
             .with_starting_cursor(pwad_starting_cursor)
             .with_page_size(tui::MENU_PAGE_SIZE)
             .prompt_skippable()?;
@@ -179,7 +179,7 @@ async fn edit_profile() -> Result<String, eyre::Report> {
         Some(pwad) => Some(pwad.id),
     };
 
-    let additional_arguments = inquire::Text::new("Enter any additional arguments (optional)")
+    let additional_arguments = inquire::Text::new("Enter any additional arguments (optional):")
         .with_default(&profile.additional_arguments)
         .prompt_skippable()?;
 
@@ -203,7 +203,7 @@ async fn delete_profile() -> Result<String, eyre::Report> {
     }
 
     let profile =
-        inquire::Select::new("Pick the Profile to Delete", profile_list).prompt_skippable()?;
+        inquire::Select::new("Pick the Profile to Delete:", profile_list).prompt_skippable()?;
 
     if profile.is_some() {
         let profile = profile.unwrap();
@@ -243,7 +243,7 @@ async fn set_active_profile() -> Result<String, eyre::Report> {
         None => 0,
     };
 
-    let profile = inquire::Select::new("Pick the Profile to mark as Active", profile_list)
+    let profile = inquire::Select::new("Pick the Profile to mark as Active:", profile_list)
         .with_starting_cursor(starting_cursor)
         .prompt_skippable()?;
 

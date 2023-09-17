@@ -136,7 +136,7 @@ pub async fn init() -> Result<String, eyre::Report> {
 }
 
 pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> {
-    let exe_search_folder: String = inquire::Text::new("Folder to search for Doom engines")
+    let exe_search_folder: String = inquire::Text::new("Folder to search for Doom engines:")
         .with_validator(|input: &str| {
             if paths::folder_exists(input) {
                 Ok(Validation::Valid)
@@ -204,7 +204,7 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
 
     // Multi-select prompt to user
     let selections =
-        inquire::MultiSelect::new("Pick the engines you want to use", engines_extended)
+        inquire::MultiSelect::new("Pick the engines you want to use:", engines_extended)
             .with_default(&db_defaults)
             .with_page_size(tui::MENU_PAGE_SIZE)
             .prompt()?;
@@ -249,7 +249,7 @@ pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     // Use the same folder as the engines, but given option to change
     // Save to IWADs table
     let iwad_search_folder: String =
-        inquire::Text::new("Folder to search for IWADs (Internal WAD files)")
+        inquire::Text::new("Folder to search for IWADs (Internal WAD files):")
             .with_validator(|input: &str| {
                 if paths::folder_exists(input) {
                     Ok(Validation::Valid)
@@ -287,7 +287,7 @@ pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     }
 
     // TODO: Mark the IWADs that have been picked previously
-    let selections = inquire::MultiSelect::new("Pick the IWADs you want to use", iwads)
+    let selections = inquire::MultiSelect::new("Pick the IWADs you want to use:", iwads)
         .with_default(&db_defaults)
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;

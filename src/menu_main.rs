@@ -131,7 +131,7 @@ pub async fn pick_and_play_profile() -> Result<String, eyre::Report> {
                 .to_string(),
         );
     }
-    let profile = inquire::Select::new("Pick the Profile you want to Play", profile_list)
+    let profile = inquire::Select::new("Pick the Profile you want to Play:", profile_list)
         .prompt_skippable()?;
 
     match profile {
