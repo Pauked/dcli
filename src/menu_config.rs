@@ -144,7 +144,7 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
             if paths::folder_exists(input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid("This is not a valid folder".into()))
+                Ok(Validation::Invalid("Folder does not exist.".into()))
             }
         })
         .with_default(default_folder)
@@ -257,7 +257,7 @@ pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
                 if paths::folder_exists(input) {
                     Ok(Validation::Valid)
                 } else {
-                    Ok(Validation::Invalid("This is not a valid folder".into()))
+                    Ok(Validation::Invalid("Folder does not exist.".into()))
                 }
             })
             .with_default(default_folder)
@@ -341,7 +341,7 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
                 if paths::folder_exists(input) {
                     Ok(Validation::Valid)
                 } else {
-                    Ok(Validation::Invalid("This is not a valid folder".into()))
+                    Ok(Validation::Invalid("Folder does not exist".into()))
                 }
             })
             .with_default(default_folder)

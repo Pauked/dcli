@@ -4,7 +4,7 @@ use colored::Colorize;
 use inquire::validator::Validation;
 use log::info;
 
-use crate::{constants, data, db, tui};
+use crate::{constants, data, db, paths, tui};
 
 pub async fn game_settings_menu() -> Result<String, eyre::Report> {
     clearscreen::clear().unwrap();
@@ -25,6 +25,7 @@ pub async fn run_game_settings_menu_option(
 ) -> Result<String, eyre::Report> {
     match menu_command {
         tui::GameSettingsCommand::CompLevel => update_comp_level().await,
+        tui::GameSettingsCommand::ConfigFile => update_config_file().await,
         tui::GameSettingsCommand::FastMonsters => update_fast_monsters().await,
         tui::GameSettingsCommand::NoMonsters => update_no_monsters().await,
         tui::GameSettingsCommand::RespawnMonsters => update_respawn_monsters().await,
@@ -73,6 +74,24 @@ async fn update_comp_level() -> Result<String, eyre::Report> {
     Ok("Successfully updated Compatibility Level"
         .green()
         .to_string())
+}
+
+async fn update_config_file() -> Result<String, eyre::Error> {
+    let mut game_settings = db::get_game_settings().await?;
+    game_settings.config_file = inquire::Text::new("Enter Config File Path:")
+        .with_validator(|input: &str| {
+            if paths::file_exists(input) {
+                Ok(Validation::Valid)
+            } else {
+                Ok(Validation::Invalid("Config File does not exist.".into()))
+            }
+        })
+        .with_help_message("Include the full path and file name")
+        .with_default(&game_settings.config_file.unwrap_or("".to_string()))
+        .prompt_skippable()?;
+    db::save_game_settings(game_settings).await?;
+
+    Ok("Successfully updated Warp".green().to_string())
 }
 
 async fn update_fast_monsters() -> Result<String, eyre::Error> {

@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
 CREATE TABLE IF NOT EXISTS game_settings (
     id INTEGER PRIMARY KEY NOT NULL,
     comp_level TEXT NULL,
+    config_file TEXT NULL,
     fast_monsters BOOLEAN NOT NULL,
     no_monsters BOOLEAN NOT NULL,
     respawn_monsters BOOLEAN NOT NULL,

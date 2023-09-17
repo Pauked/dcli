@@ -99,6 +99,8 @@ pub fn convert_arg_to_configcommand(arg: &str) -> ConfigCommand {
 pub enum GameSettingsCommand {
     #[strum(serialize = "Comp Level")]
     CompLevel,
+    #[strum(serialize = "Config File")]
+    ConfigFile,
     #[strum(serialize = "Fast Monsters")]
     FastMonsters,
     #[strum(serialize = "No Monsters")]
@@ -257,6 +259,11 @@ pub fn game_settings_menu_prompt(game_settings: data::GameSettings) -> GameSetti
             "{} ({})",
             GameSettingsCommand::CompLevel.to_string(),
             data::display_option_comp_level(&game_settings.comp_level)
+        ),
+        format!(
+            "{} ({})",
+            GameSettingsCommand::ConfigFile.to_string(),
+            data::display_option_string(&game_settings.config_file)
         ),
         format!(
             "{} ({})",

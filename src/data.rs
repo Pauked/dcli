@@ -250,32 +250,21 @@ pub enum CompLevel {
     - DSDA specific options
 */
 
-#[derive(Clone, Debug, FromRow, Tabled, Default)]
+#[derive(Clone, Debug, FromRow, Default)]
 pub struct GameSettings {
-    #[tabled(skip)]
     pub id: i32,
-    #[tabled(display_with = "display_option_comp_level")]
     pub comp_level: Option<CompLevel>,
+    pub config_file: Option<String>,
     pub fast_monsters: bool,
     pub no_monsters: bool,
     pub respawn_monsters: bool,
-    #[tabled(
-        rename = "Episode and Level or Map",
-        display_with = "display_option_string"
-    )]
     pub warp: Option<String>,
-    #[tabled(display_with = "display_option_u8")]
     pub skill: Option<u8>,
-    #[tabled(display_with = "display_option_u8")]
     pub turbo: Option<u8>,
-    #[tabled(display_with = "display_option_u32")]
     pub timer: Option<u32>,
-    #[tabled(display_with = "display_option_u32")]
     pub width: Option<u32>,
-    #[tabled(display_with = "display_option_u32")]
     pub height: Option<u32>,
     pub full_screen: bool,
     pub windowed: bool,
-    #[tabled(display_with = "display_option_string")]
     pub additional_arguments: Option<String>,
 }

@@ -40,6 +40,9 @@ pub async fn play(profile_id: i32, update_last_profile: bool) -> Result<String, 
         cmd.arg("-complevel")
             .arg(game_settings.comp_level.unwrap().to_string());
     }
+    if game_settings.config_file.is_some() {
+        cmd.arg("-config").arg(game_settings.config_file.unwrap());
+    }
     if game_settings.fast_monsters {
         cmd.arg("-fast");
     }
