@@ -29,8 +29,11 @@ pub enum MainCommand {
     Profiles,
     #[strum(serialize = "Game Settings")]
     GameSettings,
+    #[strum(serialize = "View Map Readme")]
+    ViewMapReadme,
     #[strum(serialize = "Config Engines, WADs, App Settings")]
     Config,
+    #[strum(serialize = "Quit (ESC)")]
     Quit,
     Unknown,
 }
@@ -53,8 +56,7 @@ pub enum ProfileCommand {
     #[strum(serialize = "Set Active Profile")]
     Active,
     List,
-    #[strum(serialize = "View Map Readme")]
-    ViewMapReadme,
+    #[strum(serialize = "Back (ESC)")]
     Back,
 }
 
@@ -80,6 +82,7 @@ pub enum ConfigCommand {
     UpdatePwads,
     Init,
     Reset,
+    #[strum(serialize = "Back (ESC)")]
     Back,
     Unknown,
 }
@@ -116,8 +119,8 @@ pub enum GameSettingsCommand {
     Windowed,
     #[strum(serialize = "Additional Arguments")]
     AdditionalArguments,
+    #[strum(serialize = "Back (ESC)")]
     Back,
-    Unknown,
 }
 
 #[derive(Debug, Clone, PartialEq, EnumString, Display)]
@@ -125,13 +128,27 @@ pub enum MapEditorCommand {
     #[strum(serialize = "Open Map Editor with Active Profile PWAD")]
     OpenMapEditor,
     #[strum(serialize = "Open Map Editor and Pick PWAD")]
-    OpenMapEditorWithMap,
+    OpenMapEditorPickPwad,
     #[strum(serialize = "List Map Editors")]
     List,
     #[strum(serialize = "Update Map Editors")]
     Update,
+    #[strum(serialize = "Back (ESC)")]
     Back,
-    Unknown,
+}
+
+#[derive(Debug, Clone, PartialEq, EnumString, Display)]
+pub enum ViewMapReadmeCommand {
+    #[strum(serialize = "View Readme from Active Profile")]
+    ViewFromActiveProfile,
+    #[strum(serialize = "View Readme from Last Profile")]
+    ViewFromLastProfile,
+    #[strum(serialize = "View Readme and Pick Profile")]
+    ViewFromPickProfile,
+    #[strum(serialize = "View Readme and Pick PWAD")]
+    ViewFromPickPwad,
+    #[strum(serialize = "Back (ESC)")]
+    Back,
 }
 
 pub fn main_menu_prompt() -> MainCommand {
@@ -142,6 +159,7 @@ pub fn main_menu_prompt() -> MainCommand {
         MainCommand::Profiles.to_string(),
         MainCommand::MapEditor.to_string(),
         MainCommand::GameSettings.to_string(),
+        MainCommand::ViewMapReadme.to_string(),
         MainCommand::Config.to_string(),
         MainCommand::Quit.to_string(),
     ];
@@ -162,7 +180,6 @@ pub fn profiles_menu_prompt() -> ProfileCommand {
         ProfileCommand::New.to_string(),
         ProfileCommand::Edit.to_string(),
         ProfileCommand::Active.to_string(),
-        ProfileCommand::ViewMapReadme.to_string(),
         ProfileCommand::List.to_string(),
         ProfileCommand::Delete.to_string(),
         ProfileCommand::Back.to_string(),
@@ -321,7 +338,7 @@ pub fn game_settings_menu_prompt(game_settings: data::GameSettings) -> GameSetti
 pub fn map_editor_menu_prompt() -> MapEditorCommand {
     let selections = vec![
         MapEditorCommand::OpenMapEditor.to_string(),
-        MapEditorCommand::OpenMapEditorWithMap.to_string(),
+        MapEditorCommand::OpenMapEditorPickPwad.to_string(),
         MapEditorCommand::Update.to_string(),
         MapEditorCommand::List.to_string(),
         MapEditorCommand::Back.to_string(),
@@ -334,5 +351,24 @@ pub fn map_editor_menu_prompt() -> MapEditorCommand {
     match choice {
         Some(choice) => MapEditorCommand::from_str(&choice).unwrap(),
         None => MapEditorCommand::Back,
+    }
+}
+
+pub fn view_map_readme_menu_prompt() -> ViewMapReadmeCommand {
+    let selections = vec![
+        ViewMapReadmeCommand::ViewFromActiveProfile.to_string(),
+        ViewMapReadmeCommand::ViewFromLastProfile.to_string(),
+        ViewMapReadmeCommand::ViewFromPickProfile.to_string(),
+        ViewMapReadmeCommand::ViewFromPickPwad.to_string(),
+        ViewMapReadmeCommand::Back.to_string(),
+    ];
+
+    let choice = inquire::Select::new("Select a Readme option:", selections)
+        .prompt_skippable()
+        .unwrap();
+
+    match choice {
+        Some(choice) => ViewMapReadmeCommand::from_str(&choice).unwrap(),
+        None => ViewMapReadmeCommand::Back,
     }
 }

@@ -3,7 +3,7 @@ use eyre::Context;
 use log::info;
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
-use crate::{data, db, tui, runner};
+use crate::{data, db, tui};
 
 pub async fn profiles_menu() -> Result<String, eyre::Report> {
     clearscreen::clear().unwrap();
@@ -27,7 +27,6 @@ pub async fn run_profiles_menu_option(
         tui::ProfileCommand::Delete => delete_profile().await,
         tui::ProfileCommand::Active => set_active_profile().await,
         tui::ProfileCommand::List => display_profiles().await,
-        tui::ProfileCommand::ViewMapReadme => view_map_readme().await,
         tui::ProfileCommand::Back => Ok("".to_string()),
     }
 }
@@ -271,28 +270,4 @@ pub async fn display_profiles() -> Result<String, eyre::Report> {
     Ok(table)
 }
 
-pub async fn view_map_readme() -> Result<String, eyre::Report> {
-    let profile_list = db::get_profile_display_list().await?;
-    if profile_list.is_empty() {
-        return Ok("There are no profiles to select from.".red().to_string());
-    }
-
-    let profile = inquire::Select::new("Pick the Profile to view Map Readme from:", profile_list)
-        .prompt_skippable()?;
-
-    match profile {
-        Some(profile) => {
-            if profile.pwad_id > 0 {
-                let pwad = db::get_pwad_by_id(profile.pwad_id)
-                    .await
-                    .wrap_err("Unable to get PWAD".to_string())?;
-
-                runner::open_map_read(&pwad.path)
-            } else {
-                Ok("No PWAD selected for this Profile.".yellow().to_string())
-            }
-        }
-        None => Ok("Cancelled viewing Map Readme.".yellow().to_string()),
-    }
-}
 

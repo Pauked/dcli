@@ -20,10 +20,9 @@ pub async fn run_map_editor_menu_option(
 ) -> Result<String, eyre::Report> {
     match menu_command {
         tui::MapEditorCommand::OpenMapEditor => todo!("Open map editor"),
-        tui::MapEditorCommand::OpenMapEditorWithMap => todo!("Open map editor with map"),
+        tui::MapEditorCommand::OpenMapEditorPickPwad => todo!("Open map editor with map"),
         tui::MapEditorCommand::List => todo!("List map editors"),
         tui::MapEditorCommand::Update => todo!("Update map editors"),
         tui::MapEditorCommand::Back => Ok("".to_string()),
-        tui::MapEditorCommand::Unknown => Ok("Unknown command".to_string()),
     }
 }

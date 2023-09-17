@@ -128,7 +128,7 @@ pub fn open_map_read(pwad_path: &str) -> Result<String, eyre::Report> {
             #[cfg(target_os = "macos")]
             let mut cmd = Command::new("open");
             #[cfg(target_os = "macos")]
-            cmd.arg(readme_file_name);
+            cmd.arg(&readme_file_name);
 
             #[cfg(target_os = "windows")]
             let mut cmd = Command::new("cmd");

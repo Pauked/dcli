@@ -16,6 +16,7 @@ mod menu_game_settings;
 mod menu_main;
 mod menu_map_editor;
 mod menu_profiles;
+mod menu_view_map_readme;
 mod paths;
 mod runner;
 mod tui;

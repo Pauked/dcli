@@ -38,7 +38,6 @@ pub async fn run_game_settings_menu_option(
         tui::GameSettingsCommand::Windowed => update_windowed().await,
         tui::GameSettingsCommand::AdditionalArguments => update_additional_arguments().await,
         tui::GameSettingsCommand::Back => Ok("".to_string()),
-        tui::GameSettingsCommand::Unknown => Ok("Unknown command".to_string()),
     }
 }
 
