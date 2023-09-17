@@ -1,10 +1,14 @@
-use std::{process::{Command, Stdio}, ffi::OsStr};
+use std::{
+    env,
+    ffi::OsStr,
+    process::{Command, Stdio},
+};
 
 use colored::Colorize;
 use eyre::Context;
 use log::info;
 
-use crate::{db, files};
+use crate::{constants, db, files};
 
 pub async fn play(profile_id: i32, update_last_profile: bool) -> Result<String, eyre::Report> {
     let single_profile = db::get_profile_by_id(profile_id).await?;
@@ -119,19 +123,26 @@ fn get_display_args(cmd: &Command) -> String {
     result
 }
 
-pub fn open_map_read(pwad_path: &str) -> Result<String, eyre::Report> {
+pub fn open_map_readme(pwad_path: &str) -> Result<String, eyre::Report> {
     let readme_file_name = files::get_map_readme_file_name(pwad_path)
         .wrap_err(format!("Unable to get Map Readme for PWAD '{}'", pwad_path).to_string())?;
 
     match readme_file_name {
         Some(readme_file_name) => {
-            #[cfg(target_os = "macos")]
-            let mut cmd = Command::new("open");
+            let program = {
+                if env::consts::OS == constants::OS_MACOS {
+                    "open"
+                } else if env::consts::OS == constants::OS_WINDOWS {
+                    "cmd"
+                } else {
+                    ""
+                }
+            };
+
+            let mut cmd = Command::new(program);
+
             #[cfg(target_os = "macos")]
             cmd.arg(&readme_file_name);
-
-            #[cfg(target_os = "windows")]
-            let mut cmd = Command::new("cmd");
             #[cfg(target_os = "windows")]
             cmd.args(["/C", "start", "", &readme_file_name]);
 

@@ -34,7 +34,7 @@ async fn view_map_readme_from_pwad_id(pwad_id: i32) -> Result<String, eyre::Repo
         .await
         .wrap_err("Unable to get PWAD".to_string())?;
 
-    runner::open_map_read(&pwad.path)
+    runner::open_map_readme(&pwad.path)
 }
 
 async fn view_map_readme_from_active_profile() -> Result<String, eyre::Report> {
