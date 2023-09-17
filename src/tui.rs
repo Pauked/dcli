@@ -146,9 +146,13 @@ pub fn main_menu_prompt() -> MainCommand {
 
     let choice = inquire::Select::new("Select a Main Menu option:", selections)
         .with_page_size(MENU_PAGE_SIZE)
-        .prompt()
+        .prompt_skippable()
         .unwrap();
-    MainCommand::from_str(&choice).unwrap()
+
+    match choice {
+        Some(choice) => MainCommand::from_str(&choice).unwrap(),
+        None => MainCommand::Quit,
+    }
 }
 
 pub fn profiles_menu_prompt() -> ProfileCommand {
@@ -161,10 +165,14 @@ pub fn profiles_menu_prompt() -> ProfileCommand {
         ProfileCommand::Back.to_string(),
     ];
 
-    let choice: String = inquire::Select::new("Select a Profile option:", selections)
-        .prompt()
+    let choice = inquire::Select::new("Select a Profile option:", selections)
+        .prompt_skippable()
         .unwrap();
-    ProfileCommand::from_str(&choice).unwrap()
+
+    match choice {
+        Some(choice) => ProfileCommand::from_str(&choice).unwrap(),
+        None => ProfileCommand::Back,
+    }
 }
 
 pub fn config_menu_prompt() -> ConfigCommand {
@@ -176,10 +184,14 @@ pub fn config_menu_prompt() -> ConfigCommand {
         ConfigCommand::Back.to_string(),
     ];
 
-    let choice: String = inquire::Select::new("Select a Config option:", selections)
-        .prompt()
+    let choice = inquire::Select::new("Select a Config option:", selections)
+        .prompt_skippable()
         .unwrap();
-    ConfigCommand::from_str(&choice).unwrap()
+
+    match choice {
+        Some(choice) => ConfigCommand::from_str(&choice).unwrap(),
+        None => ConfigCommand::Back,
+    }
 }
 
 pub fn config_list_menu_prompt() -> ConfigCommand {
@@ -191,10 +203,14 @@ pub fn config_list_menu_prompt() -> ConfigCommand {
         ConfigCommand::Back.to_string(),
     ];
 
-    let choice: String = inquire::Select::new("Select a Config / List option:", selections)
-        .prompt()
+    let choice = inquire::Select::new("Select a Config / List option:", selections)
+        .prompt_skippable()
         .unwrap();
-    ConfigCommand::from_str(&choice).unwrap()
+
+    match choice {
+        Some(choice) => ConfigCommand::from_str(&choice).unwrap(),
+        None => ConfigCommand::Back,
+    }
 }
 
 pub fn config_update_menu_prompt() -> ConfigCommand {
@@ -205,10 +221,14 @@ pub fn config_update_menu_prompt() -> ConfigCommand {
         ConfigCommand::Back.to_string(),
     ];
 
-    let choice: String = inquire::Select::new("Select an Config / Update option:", selections)
-        .prompt()
+    let choice = inquire::Select::new("Select an Config / Update option:", selections)
+        .prompt_skippable()
         .unwrap();
-    ConfigCommand::from_str(&choice).unwrap()
+
+    match choice {
+        Some(choice) => ConfigCommand::from_str(&choice).unwrap(),
+        None => ConfigCommand::Back,
+    }
 }
 
 pub fn game_settings_menu_prompt(game_settings: data::GameSettings) -> GameSettingsCommand {
@@ -281,13 +301,18 @@ pub fn game_settings_menu_prompt(game_settings: data::GameSettings) -> GameSetti
         GameSettingsCommand::Back.to_string(),
     ];
 
-    let choice: String = inquire::Select::new("Select a Game Settings option:", selections)
+    let choice = inquire::Select::new("Select a Game Settings option:", selections)
         .with_page_size(MENU_PAGE_SIZE)
-        .prompt()
+        .prompt_skippable()
         .unwrap();
 
-    let first_part = choice.split('(').next().unwrap_or("").trim();
-    GameSettingsCommand::from_str(first_part).unwrap()
+    match choice {
+        Some(choice) => {
+            let first_part = choice.split('(').next().unwrap_or("").trim();
+            GameSettingsCommand::from_str(first_part).unwrap()
+        }
+        None => GameSettingsCommand::Back,
+    }
 }
 
 pub fn map_editor_menu_prompt() -> MapEditorCommand {
@@ -299,8 +324,12 @@ pub fn map_editor_menu_prompt() -> MapEditorCommand {
         MapEditorCommand::Back.to_string(),
     ];
 
-    let choice: String = inquire::Select::new("Select a Map Editor option:", selections)
-        .prompt()
+    let choice = inquire::Select::new("Select a Map Editor option:", selections)
+        .prompt_skippable()
         .unwrap();
-    MapEditorCommand::from_str(&choice).unwrap()
+
+    match choice {
+        Some(choice) => MapEditorCommand::from_str(&choice).unwrap(),
+        None => MapEditorCommand::Back,
+    }
 }
