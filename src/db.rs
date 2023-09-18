@@ -230,7 +230,7 @@ async fn add_app_settings(
 
     sqlx::query(
         "INSERT INTO app_settings (active_profile_id, last_profile_id, exe_search_folder,
-            iwad_search_folder, pwad_search_folder, map_editor_search_folder) VALUES (?,?,?,?,?,?)",
+            iwad_search_folder, pwad_search_folder, map_editor_search_folder, active_map_editor_id) VALUES (?,?,?,?,?,?,?)",
     )
     .bind(app_settings.active_profile_id)
     .bind(app_settings.last_profile_id)
@@ -238,6 +238,7 @@ async fn add_app_settings(
     .bind(&app_settings.iwad_search_folder)
     .bind(&app_settings.pwad_search_folder)
     .bind(&app_settings.map_editor_search_folder)
+    .bind(app_settings.active_map_editor_id)
     .execute(&db)
     .await
     .wrap_err(format!("Failed to add app settings '{:?}", app_settings))
@@ -249,13 +250,15 @@ async fn update_app_settings(
     let db = SqlitePool::connect(DB_URL).await.unwrap();
 
     sqlx::query("UPDATE app_settings SET active_profile_id = $1, last_profile_id = $2, exe_search_folder = $3,
-    iwad_search_folder = $4, pwad_search_folder = $5, map_editor_search_folder = $6 WHERE id = $7 COLLATE NOCASE")
+    iwad_search_folder = $4, pwad_search_folder = $5, map_editor_search_folder = $6, active_map_editor_id = $7
+     WHERE id = $8 COLLATE NOCASE")
         .bind(app_settings.active_profile_id)
         .bind(app_settings.last_profile_id)
         .bind(&app_settings.exe_search_folder)
         .bind(&app_settings.iwad_search_folder)
         .bind(&app_settings.pwad_search_folder)
         .bind(&app_settings.map_editor_search_folder)
+        .bind(app_settings.active_map_editor_id)
         .bind(app_settings.id)
         .execute(&db)
         .await
@@ -294,6 +297,13 @@ pub async fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre
         }
         None => constants::DEFAULT_NOT_SET.to_string(),
     };
+    let active_map_editor = match app_settings.active_map_editor_id {
+        Some(id) => {
+            let map_editor = get_map_editor_by_id(id).await?;
+            map_editor.to_string()
+        }
+        None => constants::DEFAULT_NOT_SET.to_string(),
+    };
     let exe_search_folder = app_settings
         .exe_search_folder
         .unwrap_or(constants::DEFAULT_NOT_SET.to_string());
@@ -310,6 +320,7 @@ pub async fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre
     Ok(data::AppSettingsDisplay {
         active_profile,
         last_profile,
+        active_map_editor,
         exe_search_folder,
         iwad_search_folder,
         pwad_search_folder,
@@ -596,12 +607,12 @@ pub async fn get_map_editors() -> Result<Vec<data::MapEditor>, eyre::Report> {
         .wrap_err("Failed to get list of all map editors")
 }
 
-// pub async fn get_map_editor_by_id(id: i32) -> Result<data::MapEditor, eyre::Report> {
-//     let db = get_db().await;
+pub async fn get_map_editor_by_id(id: i32) -> Result<data::MapEditor, eyre::Report> {
+    let db = get_db().await;
 
-//     sqlx::query_as::<_, data::MapEditor>("SELECT * FROM map_editors WHERE id = ?")
-//         .bind(id)
-//         .fetch_one(&db)
-//         .await
-//         .wrap_err(format!("Failed to get map editor with id '{}'", id))
-// }
+    sqlx::query_as::<_, data::MapEditor>("SELECT * FROM map_editors WHERE id = ?")
+        .bind(id)
+        .fetch_one(&db)
+        .await
+        .wrap_err(format!("Failed to get map editor with id '{}'", id))
+}

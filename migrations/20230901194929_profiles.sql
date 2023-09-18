@@ -38,12 +38,14 @@ CREATE TABLE IF NOT EXISTS app_settings (
     id INTEGER PRIMARY KEY NOT NULL,
     active_profile_id INTEGER NULL,
     last_profile_id INTEGER NULL,
+    active_map_editor_id INTEGER NULL,
     exe_search_folder TEXT NULL,
     iwad_search_folder TEXT NULL,
     pwad_search_folder TEXT NULL,
     map_editor_search_folder TEXT NULL,
     FOREIGN KEY (active_profile_id) REFERENCES profiles (id),
-    FOREIGN KEY (last_profile_id) REFERENCES profiles (id)
+    FOREIGN KEY (last_profile_id) REFERENCES profiles (id),
+    FOREIGN KEY (active_map_editor_id) REFERENCES map_editors (id)
 );
 CREATE TABLE IF NOT EXISTS game_settings (
     id INTEGER PRIMARY KEY NOT NULL,

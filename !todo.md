@@ -1,12 +1,14 @@
-# Doom CLI v0.1
+# DCLI v0.1
 
 ## TODO
 [ ] Track usage of options to generate a "most used options menu"
 [ ] Define a quick access menu
 [x] Support for additional arguments
-[ ] Support for running a map editor
+[x] Support for running a map editor
+[ ] Add --mapeditor and --mapeditorlast
+[ ] Add "active" map editor to game settings
 [x] Make the selection of a PWAD optional!
-[/] Open PWAD readme in local text editor
+[x] Open PWAD readme in local text editor
 [x] Add "game settings" menu to be able to config -fastmonster, -nomonsters, etc, switched use for all runs
 [x] Add game settings automatically to play
 [ ] Have a profile switch of "include game settings?"
@@ -15,7 +17,14 @@
 [ ] Add a `--help` option to the CLI.
 [ ] Remember last position in a given menu!
 [ ] Block deleting of Engine/IWAD/PWAD if linked in Profiles.
-[ ] Play, do a file exists check on Engine/IWAD/PWAD (might have been moved/deleted after config)
+[ ] Play, do file exists check on Engine/IWAD/PWAD (might have been moved/deleted after config)
+[ ] Write Readme in repo root
+[ ] Add PWAD/IWAD checking of files (read first few bytes to check file identifier)
+[ ] Rename "Game Settings" to "Play Settings". Move to be uder Play options on Main Menu.
+[ ] Get Map Author(s) from map readme.
+
+## Thoughts
+-
 
 # Savegame notes:
  - dsda-doom - save files are .dsg. subfolder of app, dsda-doom\IWAD name\PWAD name

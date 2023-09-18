@@ -193,6 +193,7 @@ pub struct AppSettings {
     pub id: i32,
     pub active_profile_id: Option<i32>,
     pub last_profile_id: Option<i32>,
+    pub active_map_editor_id: Option<i32>,
     pub exe_search_folder: Option<String>,
     pub iwad_search_folder: Option<String>,
     pub pwad_search_folder: Option<String>,
@@ -205,6 +206,8 @@ pub struct AppSettingsDisplay {
     pub active_profile: String,
     #[tabled(rename = "Last Run Profile")]
     pub last_profile: String,
+    #[tabled(rename = "Active Map Editor")]
+    pub active_map_editor: String,
     #[tabled(rename = "Executable Search Folder")]
     pub exe_search_folder: String,
     #[tabled(rename = "Internal WAD Search Folder")]

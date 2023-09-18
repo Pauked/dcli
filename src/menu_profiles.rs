@@ -215,6 +215,7 @@ async fn delete_profile() -> Result<String, eyre::Report> {
         .prompt()
         .unwrap()
         {
+            // TODO: Check if "active profile" and remove link if so
             db::delete_profile(profile.id)
                 .await
                 .wrap_err(format!("Failed to delete Profile - '{}", profile))?;
@@ -229,7 +230,7 @@ async fn set_active_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list().await?;
     if profile_list.is_empty() {
         return Ok(
-            "Cannot set active profile, there are no profiles found. Please create one."
+            "Cannot set Active Profile. There are no Profiles found. Please create one."
                 .red()
                 .to_string(),
         );
@@ -251,10 +252,10 @@ async fn set_active_profile() -> Result<String, eyre::Report> {
             app_settings.active_profile_id = Some(profile.id);
             db::save_app_settings(app_settings)
                 .await
-                .wrap_err("Failed to set Active profile")?;
+                .wrap_err("Failed to set Active Profile")?;
             Ok(format!("Marked Profile '{}' as Active", profile))
         }
-        None => Ok("No changes made to setting profile as active".to_string()),
+        None => Ok("No changes made to setting Profile as Active".to_string()),
     }
 }
 
@@ -269,5 +270,3 @@ pub async fn display_profiles() -> Result<String, eyre::Report> {
         .to_string();
     Ok(table)
 }
-
-

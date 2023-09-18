@@ -6,7 +6,6 @@ use std::{
 
 use colored::Colorize;
 use eyre::Context;
-use log::info;
 
 use crate::{constants, data, db, files};
 
@@ -111,7 +110,7 @@ pub async fn play(profile_id: i32, update_last_profile: bool) -> Result<String, 
     }
 
     // Confirm all good
-    info!("Successfully opened {}", run_message);
+    // info!("Successfully opened {}", run_message);
     inquire::Text::new("Press any key to continue...").prompt_skippable()?;
     Ok(format!("Successfully opened {}", run_message))
 }
@@ -184,18 +183,19 @@ pub fn map_editor(pwad_path: &str, map_editor: data::MapEditor) -> Result<String
         }
     }
 
+    let display_args = get_display_args(&cmd);
+    let run_message = format!(
+        "Map Editor '{}', Args '{}'",
+        &map_editor.path.green(),
+        display_args.blue()
+    );
+
     cmd.stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
-        .wrap_err(format!(
-            "Failed to open Map Editor with PWAD - '{}' / '{}'",
-            map_editor.path, pwad_path
-        ))?;
+        .wrap_err(format!("Failed to run {}", run_message))?;
 
-    Ok(format!(
-        "Opened the Map Editor with PWAD - '{}' / '{}'",
-        map_editor.path, pwad_path
-    ))
+    Ok(format!("Successfully opened {}", run_message))
 }
 
 // pub fn notepad_config(config_file_path: PathBuf) -> Result<String, eyre::Report> {

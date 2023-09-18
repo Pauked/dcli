@@ -33,6 +33,7 @@ pub async fn run_map_editor_menu_option(
         tui::MapEditorCommand::OpenFromLastProfile => open_from_last_profile().await,
         tui::MapEditorCommand::OpenFromPickProfile => open_from_pick_profile().await,
         tui::MapEditorCommand::OpenFromPickPwad => open_from_pick_pwad().await,
+        tui::MapEditorCommand::Active => set_active_map_editor().await,
         tui::MapEditorCommand::List => list_map_editors().await,
         tui::MapEditorCommand::Update => update_map_editors().await,
         tui::MapEditorCommand::Delete => delete_map_editor().await,
@@ -93,6 +94,40 @@ async fn open_from_pick_pwad() -> Result<String, eyre::Report> {
     .await?;
 
     open_map_editor_from_pwad_id(pwad_id).await
+}
+
+async fn set_active_map_editor() -> Result<String, eyre::Report> {
+    let map_editor_list = db::get_map_editors().await?;
+    if map_editor_list.is_empty() {
+        return Ok(
+            "Cannot set Active Map Editor. There are no Map Editors found. Please add one."
+                .red()
+                .to_string(),
+        );
+    }
+
+    // Try to get the current active map eidtor
+    let mut app_settings = db::get_app_settings().await?;
+    let starting_cursor = match app_settings.active_map_editor_id {
+        Some(ref s) => map_editor_list.iter().position(|x| x.id == *s).unwrap(),
+        None => 0,
+    };
+
+    let map_editor =
+        inquire::Select::new("Pick the Map Editor to mark as Active:", map_editor_list)
+            .with_starting_cursor(starting_cursor)
+            .prompt_skippable()?;
+
+    match map_editor {
+        Some(map_editor) => {
+            app_settings.active_map_editor_id = Some(map_editor.id);
+            db::save_app_settings(app_settings)
+                .await
+                .wrap_err("Failed to set Active Map Editor")?;
+            Ok(format!("Marked Map Editor '{}' as Active", map_editor))
+        }
+        None => Ok("No changes made to setting Map Editor as Active".to_string()),
+    }
 }
 
 pub async fn list_map_editors() -> Result<String, eyre::Report> {
@@ -249,6 +284,7 @@ pub async fn delete_map_editor() -> Result<String, eyre::Report> {
         .prompt()
         .unwrap()
         {
+            // TODO: Check if "active map editor" and remove link if so
             db::delete_map_editor(map_editor.id)
                 .await
                 .wrap_err(format!("Failed to delete Map Editor - '{}", map_editor))?;

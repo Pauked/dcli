@@ -140,6 +140,8 @@ pub enum MapEditorCommand {
     OpenFromPickProfile,
     #[strum(serialize = "Open from Pick PWAD")]
     OpenFromPickPwad,
+    #[strum(serialize = "Set Active Map Editor")]
+    Active,
     List,
     Update,
     Delete,
@@ -362,6 +364,7 @@ pub fn map_editor_menu_prompt() -> MapEditorCommand {
         MapEditorCommand::OpenFromLastProfile.to_string(),
         MapEditorCommand::OpenFromPickProfile.to_string(),
         MapEditorCommand::OpenFromPickPwad.to_string(),
+        MapEditorCommand::Active.to_string(),
         MapEditorCommand::Update.to_string(),
         MapEditorCommand::Delete.to_string(),
         MapEditorCommand::List.to_string(),
