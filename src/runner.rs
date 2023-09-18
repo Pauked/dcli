@@ -9,10 +9,10 @@ use eyre::Context;
 
 use crate::{constants, data, db, files};
 
-pub async fn play(profile_id: i32, update_last_profile: bool) -> Result<String, eyre::Report> {
-    let single_profile = db::get_profile_by_id(profile_id).await?;
-    let engine = db::get_engine_by_id(single_profile.engine_id.unwrap()).await?;
-    let iwad = db::get_iwad_by_id(single_profile.iwad_id.unwrap()).await?;
+pub fn play(profile_id: i32, update_last_profile: bool) -> Result<String, eyre::Report> {
+    let single_profile = db::get_profile_by_id(profile_id)?;
+    let engine = db::get_engine_by_id(single_profile.engine_id.unwrap())?;
+    let iwad = db::get_iwad_by_id(single_profile.iwad_id.unwrap())?;
 
     // TODO: Refactor to be based off selected Doom Engine config (each engine may have different arguments for the same thing)
 
@@ -21,7 +21,7 @@ pub async fn play(profile_id: i32, update_last_profile: bool) -> Result<String, 
     cmd.arg("-iwad").arg(iwad.path);
 
     if single_profile.pwad_id.is_some() {
-        let pwad = db::get_pwad_by_id(single_profile.pwad_id.unwrap()).await?;
+        let pwad = db::get_pwad_by_id(single_profile.pwad_id.unwrap())?;
         cmd.arg("-file").arg(&pwad.path);
     }
 
@@ -34,7 +34,7 @@ pub async fn play(profile_id: i32, update_last_profile: bool) -> Result<String, 
     }
 
     // Add in shared Game settings
-    let game_settings = db::get_game_settings().await?;
+    let game_settings = db::get_game_settings()?;
     if game_settings.comp_level.is_some() {
         cmd.arg("-complevel")
             .arg(game_settings.comp_level.unwrap().to_string());
@@ -104,9 +104,9 @@ pub async fn play(profile_id: i32, update_last_profile: bool) -> Result<String, 
 
     // Update last run profile
     if update_last_profile {
-        let mut app_settings = db::get_app_settings().await?;
+        let mut app_settings = db::get_app_settings()?;
         app_settings.last_profile_id = Some(profile_id);
-        db::save_app_settings(app_settings).await?;
+        db::save_app_settings(app_settings)?;
     }
 
     // Confirm all good

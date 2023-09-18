@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use async_recursion::async_recursion;
 use colored::Colorize;
 use log::debug;
 use log::info;
@@ -153,7 +152,7 @@ pub enum MenuCommand {
     Ignore,
 }
 
-pub async fn menu_prompt(menu_level: &MenuLevel) -> Result<MenuCommand, eyre::Report> {
+pub fn menu_prompt(menu_level: &MenuLevel) -> Result<MenuCommand, eyre::Report> {
     let (selections, menu_name) = match menu_level {
         MenuLevel::Main => {
             let selections = vec![
@@ -181,7 +180,7 @@ pub async fn menu_prompt(menu_level: &MenuLevel) -> Result<MenuCommand, eyre::Re
             (selections, "Profile".to_string())
         }
         MenuLevel::GameSettings => {
-            let game_settings = db::get_game_settings().await?;
+            let game_settings = db::get_game_settings()?;
             let selections = vec![
                 format!(
                     "{} ({})",
@@ -328,15 +327,15 @@ pub async fn menu_prompt(menu_level: &MenuLevel) -> Result<MenuCommand, eyre::Re
     }
 }
 
-pub async fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
+pub fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
     clearscreen::clear().unwrap();
     loop {
         if let MenuLevel::Main = menu_level {
-            info!("{}", menu_main::get_active_profile_text().await?);
-            info!("{}", menu_main::get_last_profile_text().await?);
+            info!("{}", menu_main::get_active_profile_text()?);
+            info!("{}", menu_main::get_last_profile_text()?);
         }
 
-        let menu_command = menu_prompt(&menu_level).await?;
+        let menu_command = menu_prompt(&menu_level)?;
 
         if let MenuCommand::Back = menu_command {
             return Ok("".to_string());
@@ -345,7 +344,7 @@ pub async fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
             return Ok("Quitting...".to_string());
         }
 
-        let result = run_menu_command(menu_command).await;
+        let result = run_menu_command(menu_command);
         clearscreen::clear().unwrap();
         match result {
             Ok(result) => info!("{}", result.green()),
@@ -357,98 +356,96 @@ pub async fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
     }
 }
 
-#[async_recursion]
-pub async fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Report> {
+pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Report> {
     match menu_command {
         // Main Menu
-        MenuCommand::PlayActiveProfile => menu_main::play_active_profile().await,
-        MenuCommand::PlayLastProfile => menu_main::play_last_profile().await,
-        MenuCommand::PickAndPlayProfile => menu_main::pick_and_play_profile().await,
-        MenuCommand::MapEditor => menu(MenuLevel::MapEditor).await,
-        MenuCommand::Profiles => menu(MenuLevel::Profiles).await,
-        MenuCommand::GameSettings => menu(MenuLevel::GameSettings).await,
-        MenuCommand::ViewMapReadme => menu(MenuLevel::ViewReadme).await,
-        MenuCommand::Config => menu(MenuLevel::Config).await,
+        MenuCommand::PlayActiveProfile => menu_main::play_active_profile(),
+        MenuCommand::PlayLastProfile => menu_main::play_last_profile(),
+        MenuCommand::PickAndPlayProfile => menu_main::pick_and_play_profile(),
+        MenuCommand::MapEditor => menu(MenuLevel::MapEditor),
+        MenuCommand::Profiles => menu(MenuLevel::Profiles),
+        MenuCommand::GameSettings => menu(MenuLevel::GameSettings),
+        MenuCommand::ViewMapReadme => menu(MenuLevel::ViewReadme),
+        MenuCommand::Config => menu(MenuLevel::Config),
 
         // Profile Menu
-        MenuCommand::NewProfile => menu_profiles::new_profile().await,
-        MenuCommand::EditProfile => menu_profiles::edit_profile().await,
-        MenuCommand::DeleteProfile => menu_profiles::delete_profile().await,
-        MenuCommand::ActiveProfile => menu_profiles::set_active_profile().await,
-        MenuCommand::ListProfile => menu_profiles::list_profiles().await,
+        MenuCommand::NewProfile => menu_profiles::new_profile(),
+        MenuCommand::EditProfile => menu_profiles::edit_profile(),
+        MenuCommand::DeleteProfile => menu_profiles::delete_profile(),
+        MenuCommand::ActiveProfile => menu_profiles::set_active_profile(),
+        MenuCommand::ListProfile => menu_profiles::list_profiles(),
 
         // Config Menu
-        MenuCommand::ListStoredData => menu(MenuLevel::ConfigList).await,
-        MenuCommand::ListEngines => menu_config::list_engines().await,
-        MenuCommand::ListIwads => menu_config::list_iwads().await,
-        MenuCommand::ListPwads => menu_config::list_pwads().await,
-        MenuCommand::ListAppSettings => menu_config::list_app_settings().await,
-        MenuCommand::Init => menu_config::init().await,
-        MenuCommand::UpdateStoredData => menu(MenuLevel::ConfigUpdate).await,
+        MenuCommand::ListStoredData => menu(MenuLevel::ConfigList),
+        MenuCommand::ListEngines => menu_config::list_engines(),
+        MenuCommand::ListIwads => menu_config::list_iwads(),
+        MenuCommand::ListPwads => menu_config::list_pwads(),
+        MenuCommand::ListAppSettings => menu_config::list_app_settings(),
+        MenuCommand::Init => menu_config::init(),
+        MenuCommand::UpdateStoredData => menu(MenuLevel::ConfigUpdate),
         MenuCommand::UpdateEngines => {
-            let mut app_settings = db::get_app_settings().await?;
+            let mut app_settings = db::get_app_settings()?;
             let folder = menu_config::init_engines(
                 &app_settings.exe_search_folder.unwrap_or("".to_string()),
-            )
-            .await?;
+            )?;
             app_settings.exe_search_folder = Some(folder);
-            db::save_app_settings(app_settings).await?;
+            db::save_app_settings(app_settings)?;
             inquire::Text::new("Press any key to continue...").prompt_skippable()?;
             Ok("Successfully updated Engines".to_string())
         }
         MenuCommand::UpdateIwads => {
-            let mut app_settings = db::get_app_settings().await?;
-            let folder =
-                menu_config::init_iwads(&app_settings.iwad_search_folder.unwrap_or("".to_string()))
-                    .await?;
+            let mut app_settings = db::get_app_settings()?;
+            let folder = menu_config::init_iwads(
+                &app_settings.iwad_search_folder.unwrap_or("".to_string()),
+            )?;
             app_settings.iwad_search_folder = Some(folder);
-            db::save_app_settings(app_settings).await?;
+            db::save_app_settings(app_settings)?;
             inquire::Text::new("Press any key to continue...").prompt_skippable()?;
             Ok("Successfully updated IWADs".to_string())
         }
         MenuCommand::UpdatePwads => {
-            let mut app_settings = db::get_app_settings().await?;
-            let folder =
-                menu_config::init_pwads(&app_settings.pwad_search_folder.unwrap_or("".to_string()))
-                    .await?;
+            let mut app_settings = db::get_app_settings()?;
+            let folder = menu_config::init_pwads(
+                &app_settings.pwad_search_folder.unwrap_or("".to_string()),
+            )?;
             app_settings.pwad_search_folder = Some(folder);
-            db::save_app_settings(app_settings).await?;
+            db::save_app_settings(app_settings)?;
             inquire::Text::new("Press any key to continue...").prompt_skippable()?;
             Ok("Successfully updated PWADs".to_string())
         }
-        MenuCommand::Reset => menu_config::reset(false).await,
+        MenuCommand::Reset => menu_config::reset(false),
 
         // Game Settings Menu
-        MenuCommand::CompLevel => menu_game_settings::update_comp_level().await,
-        MenuCommand::ConfigFile => menu_game_settings::update_config_file().await,
-        MenuCommand::FastMonsters => menu_game_settings::update_fast_monsters().await,
-        MenuCommand::NoMonsters => menu_game_settings::update_no_monsters().await,
-        MenuCommand::RespawnMonsters => menu_game_settings::update_respawn_monsters().await,
-        MenuCommand::WarpToLevel => menu_game_settings::update_warp_to_level().await,
-        MenuCommand::Skill => menu_game_settings::update_skill().await,
-        MenuCommand::Turbo => menu_game_settings::update_turbo().await,
-        MenuCommand::Timer => menu_game_settings::update_timer().await,
-        MenuCommand::Width => menu_game_settings::update_width().await,
-        MenuCommand::Height => menu_game_settings::update_height().await,
-        MenuCommand::FullScreen => menu_game_settings::update_full_screen().await,
-        MenuCommand::Windowed => menu_game_settings::update_windowed().await,
-        MenuCommand::AdditionalArguments => menu_game_settings::update_additional_arguments().await,
+        MenuCommand::CompLevel => menu_game_settings::update_comp_level(),
+        MenuCommand::ConfigFile => menu_game_settings::update_config_file(),
+        MenuCommand::FastMonsters => menu_game_settings::update_fast_monsters(),
+        MenuCommand::NoMonsters => menu_game_settings::update_no_monsters(),
+        MenuCommand::RespawnMonsters => menu_game_settings::update_respawn_monsters(),
+        MenuCommand::WarpToLevel => menu_game_settings::update_warp_to_level(),
+        MenuCommand::Skill => menu_game_settings::update_skill(),
+        MenuCommand::Turbo => menu_game_settings::update_turbo(),
+        MenuCommand::Timer => menu_game_settings::update_timer(),
+        MenuCommand::Width => menu_game_settings::update_width(),
+        MenuCommand::Height => menu_game_settings::update_height(),
+        MenuCommand::FullScreen => menu_game_settings::update_full_screen(),
+        MenuCommand::Windowed => menu_game_settings::update_windowed(),
+        MenuCommand::AdditionalArguments => menu_game_settings::update_additional_arguments(),
 
         // Map Editor Menu
-        MenuCommand::OpenFromActiveProfile => menu_map_editor::open_from_active_profile().await,
-        MenuCommand::OpenFromLastProfile => menu_map_editor::open_from_last_profile().await,
-        MenuCommand::OpenFromPickProfile => menu_map_editor::open_from_pick_profile().await,
-        MenuCommand::OpenFromPickPwad => menu_map_editor::open_from_pick_pwad().await,
-        MenuCommand::ActiveMapEditor => menu_map_editor::set_active_map_editor().await,
-        MenuCommand::ListMapEditor => menu_map_editor::list_map_editors().await,
-        MenuCommand::UpdateMapEditor => menu_map_editor::update_map_editors().await,
-        MenuCommand::DeleteMapEditor => menu_map_editor::delete_map_editor().await,
+        MenuCommand::OpenFromActiveProfile => menu_map_editor::open_from_active_profile(),
+        MenuCommand::OpenFromLastProfile => menu_map_editor::open_from_last_profile(),
+        MenuCommand::OpenFromPickProfile => menu_map_editor::open_from_pick_profile(),
+        MenuCommand::OpenFromPickPwad => menu_map_editor::open_from_pick_pwad(),
+        MenuCommand::ActiveMapEditor => menu_map_editor::set_active_map_editor(),
+        MenuCommand::ListMapEditor => menu_map_editor::list_map_editors(),
+        MenuCommand::UpdateMapEditor => menu_map_editor::update_map_editors(),
+        MenuCommand::DeleteMapEditor => menu_map_editor::delete_map_editor(),
 
         // View Readme Menu
-        MenuCommand::ViewFromActiveProfile => menu_view_readme::view_from_active_profile().await,
-        MenuCommand::ViewFromLastProfile => menu_view_readme::view_from_last_profile().await,
-        MenuCommand::ViewFromPickProfile => menu_view_readme::view_from_pick_profile().await,
-        MenuCommand::ViewFromPickPwad => menu_view_readme::view_from_pick_pwad().await,
+        MenuCommand::ViewFromActiveProfile => menu_view_readme::view_from_active_profile(),
+        MenuCommand::ViewFromLastProfile => menu_view_readme::view_from_last_profile(),
+        MenuCommand::ViewFromPickProfile => menu_view_readme::view_from_pick_profile(),
+        MenuCommand::ViewFromPickPwad => menu_view_readme::view_from_pick_pwad(),
 
         // Back and Quit
         MenuCommand::Ignore => Ok("".to_string()),

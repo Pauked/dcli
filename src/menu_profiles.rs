@@ -4,20 +4,20 @@ use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{data, db, tui};
 
-pub async fn new_profile() -> Result<String, eyre::Report> {
-    let engines = db::get_engines().await?;
+pub fn new_profile() -> Result<String, eyre::Report> {
+    let engines = db::get_engines()?;
     if engines.is_empty() {
         return Ok("There are no Engines to select. Please run 'init'."
             .red()
             .to_string());
     }
-    let iwads = db::get_iwads().await?;
+    let iwads = db::get_iwads()?;
     if iwads.is_empty() {
         return Ok("There are no IWADs to select. Please run 'init."
             .red()
             .to_string());
     }
-    let pwads = db::get_pwads().await?;
+    let pwads = db::get_pwads()?;
     if pwads.is_empty() {
         return Ok("There are no PWADs to select. Please run 'init'."
             .red()
@@ -58,23 +58,22 @@ pub async fn new_profile() -> Result<String, eyre::Report> {
         pwad_id,
         additional_arguments,
     };
-    let add_result = db::add_profile(profile).await?;
+    let add_result = db::add_profile(profile)?;
     let new_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
-    set_profile_as_active(new_profile_id).await?;
+    set_profile_as_active(new_profile_id)?;
 
     Ok("Successfully created a new Profile".to_string())
 }
 
-pub async fn set_profile_as_active(profile_id: i32) -> Result<String, eyre::Report> {
+pub fn set_profile_as_active(profile_id: i32) -> Result<String, eyre::Report> {
     if inquire::Confirm::new("Would you like to set this as your Active Profile?")
         .with_default(false)
         .prompt()
         .unwrap()
     {
-        let mut app_settings = db::get_app_settings().await?;
+        let mut app_settings = db::get_app_settings()?;
         app_settings.active_profile_id = Some(profile_id);
         db::save_app_settings(app_settings)
-            .await
             .wrap_err("Failed to set Active profile")?;
         return Ok("Successfully set profile as active".to_string());
     }
@@ -82,24 +81,24 @@ pub async fn set_profile_as_active(profile_id: i32) -> Result<String, eyre::Repo
     Ok("No changes made to setting profile as active".to_string())
 }
 
-pub async fn edit_profile() -> Result<String, eyre::Report> {
-    let profile_list = db::get_profile_display_list().await?;
+pub fn edit_profile() -> Result<String, eyre::Report> {
+    let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
         return Ok("There are no profiles to edit.".red().to_string());
     }
-    let engines = db::get_engines().await?;
+    let engines = db::get_engines()?;
     if engines.is_empty() {
         return Ok("There are no Engines to select. Please run 'init'."
             .red()
             .to_string());
     }
-    let iwads = db::get_iwads().await?;
+    let iwads = db::get_iwads()?;
     if iwads.is_empty() {
         return Ok("There are no IWADs to select. Please run 'init."
             .red()
             .to_string());
     }
-    let pwads = db::get_pwads().await?;
+    let pwads = db::get_pwads()?;
     if pwads.is_empty() {
         return Ok("There are no PWADs to select. Please run 'init'."
             .red()
@@ -164,22 +163,21 @@ pub async fn edit_profile() -> Result<String, eyre::Report> {
         pwad_id,
         additional_arguments,
     };
-    db::update_profile(profile).await?;
+    db::update_profile(profile)?;
 
     Ok(format!("Successfully updated Profile - '{}'", profile_name))
 }
 
-pub async fn delete_profile() -> Result<String, eyre::Report> {
-    let profile_list = db::get_profile_display_list().await?;
+pub fn delete_profile() -> Result<String, eyre::Report> {
+    let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
         return Ok("There are no Profiles to delete.".red().to_string());
     }
 
-    let profile =
+    let profile_selection =
         inquire::Select::new("Pick the Profile to Delete:", profile_list).prompt_skippable()?;
 
-    if profile.is_some() {
-        let profile = profile.unwrap();
+    if let Some(profile) = profile_selection {
         if inquire::Confirm::new(&format!(
             "Are you sure you want to delete this Profile - '{}'? This cannot be undone.",
             profile.name
@@ -190,7 +188,6 @@ pub async fn delete_profile() -> Result<String, eyre::Report> {
         {
             // TODO: Check if "active profile" and remove link if so
             db::delete_profile(profile.id)
-                .await
                 .wrap_err(format!("Failed to delete Profile - '{}", profile))?;
             return Ok(format!("Successfully deleted Profile '{}'", profile));
         }
@@ -199,8 +196,8 @@ pub async fn delete_profile() -> Result<String, eyre::Report> {
     Ok("Cancelled Profile deletion.".yellow().to_string())
 }
 
-pub async fn set_active_profile() -> Result<String, eyre::Report> {
-    let profile_list = db::get_profile_display_list().await?;
+pub fn set_active_profile() -> Result<String, eyre::Report> {
+    let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
         return Ok(
             "Cannot set Active Profile. There are no Profiles found. Please create one."
@@ -210,7 +207,7 @@ pub async fn set_active_profile() -> Result<String, eyre::Report> {
     }
 
     // Try to get the current active profile
-    let mut app_settings = db::get_app_settings().await?;
+    let mut app_settings = db::get_app_settings()?;
     let starting_cursor = match app_settings.active_profile_id {
         Some(ref s) => profile_list.iter().position(|x| x.id == *s).unwrap(),
         None => 0,
@@ -224,7 +221,6 @@ pub async fn set_active_profile() -> Result<String, eyre::Report> {
         Some(profile) => {
             app_settings.active_profile_id = Some(profile.id);
             db::save_app_settings(app_settings)
-                .await
                 .wrap_err("Failed to set Active Profile")?;
             Ok(format!("Marked Profile '{}' as Active", profile))
         }
@@ -232,9 +228,8 @@ pub async fn set_active_profile() -> Result<String, eyre::Report> {
     }
 }
 
-pub async fn list_profiles() -> Result<String, eyre::Report> {
+pub fn list_profiles() -> Result<String, eyre::Report> {
     let profiles = db::get_profile_display_list()
-        .await
         .wrap_err("Unable to profile listing".to_string())?;
 
     let table = tabled::Table::new(profiles)

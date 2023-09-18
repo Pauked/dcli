@@ -22,8 +22,7 @@ mod paths;
 mod runner;
 mod tui;
 
-#[tokio::main]
-async fn run() -> eyre::Result<String> {
+fn run() -> eyre::Result<String> {
     color_eyre::install()?;
     log_config::init_log(constants::APP_NAME);
     // This line is intentionally blank... so I can see new runs in the log file
@@ -49,10 +48,10 @@ async fn run() -> eyre::Result<String> {
 
     let reset_mode = args.len() == 1 && args.contains(&tui::ARG_RESET.to_string());
     if !reset_mode {
-        db::create_db().await?;
-        if db::is_empty_app_settings_table().await? {
+        db::create_db()?;
+        if db::is_empty_app_settings_table()? {
             info!("No settings found, running init...");
-            menu_config::init().await?;
+            //menu_config::init()?;
         }
     }
 
@@ -61,15 +60,15 @@ async fn run() -> eyre::Result<String> {
         // TODO: Refactor to be less bad
         let main_arg = tui::convert_arg_to_menu_command(&arg);
         if main_arg != tui::MenuCommand::Ignore {
-            let result = tui::run_menu_command(main_arg).await?;
+            let result = tui::run_menu_command(main_arg)?;
             if reset_mode && result != *"Database reset not confirmed." {
-                menu_config::init().await?;
+                menu_config::init()?;
             }
         }
     }
 
     info!("Welcome to {}", constants::APP_NAME.bright_yellow());
-    tui::menu(tui::MenuLevel::Main).await
+    tui::menu(tui::MenuLevel::Main)
 }
 
 fn main() {

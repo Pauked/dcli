@@ -6,22 +6,20 @@ use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{data, db, finder, menu_common, paths, runner, tui};
 
-async fn open_map_editor_from_pwad_id(pwad_id: i32) -> Result<String, eyre::Report> {
+fn open_map_editor_from_pwad_id(pwad_id: i32) -> Result<String, eyre::Report> {
     let pwad = db::get_pwad_by_id(pwad_id)
-        .await
         .wrap_err(format!("Unable to get PWAD for id '{}'", pwad_id).to_string())?;
 
     // Use the Active Map Editor if set
-    let app_settings = db::get_app_settings().await?;
+    let app_settings = db::get_app_settings()?;
     if app_settings.active_map_editor_id.is_some() {
         let map_editor = db::get_map_editor_by_id(app_settings.active_map_editor_id.unwrap())
-            .await
             .wrap_err("Unable to get Active Map Editor")?;
         return runner::map_editor(&pwad.path, map_editor);
     }
 
     // Otherwise, try select map editor...
-    let map_editor_list = db::get_map_editors().await?;
+    let map_editor_list = db::get_map_editors()?;
     if map_editor_list.is_empty() {
         return Ok("There are no Map Editors to select from.".red().to_string());
     }
@@ -36,42 +34,40 @@ async fn open_map_editor_from_pwad_id(pwad_id: i32) -> Result<String, eyre::Repo
     }
 }
 
-pub async fn open_from_active_profile() -> Result<String, eyre::Report> {
+pub fn open_from_active_profile() -> Result<String, eyre::Report> {
     let pwad_id =
-        menu_common::get_pwad_id_from_from_active_profile("Cannot open Map Editor.").await?;
+        menu_common::get_pwad_id_from_from_active_profile("Cannot open Map Editor.")?;
 
-    open_map_editor_from_pwad_id(pwad_id).await
+    open_map_editor_from_pwad_id(pwad_id)
 }
 
-pub async fn open_from_last_profile() -> Result<String, eyre::Report> {
+pub fn open_from_last_profile() -> Result<String, eyre::Report> {
     let pwad_id =
-        menu_common::get_pwad_id_from_from_last_profile("Cannot open Map Editor.").await?;
+        menu_common::get_pwad_id_from_from_last_profile("Cannot open Map Editor.")?;
 
-    open_map_editor_from_pwad_id(pwad_id).await
+    open_map_editor_from_pwad_id(pwad_id)
 }
 
-pub async fn open_from_pick_profile() -> Result<String, eyre::Report> {
+pub fn open_from_pick_profile() -> Result<String, eyre::Report> {
     let pwad_id = menu_common::get_pwad_id_from_pick_profile(
         "Pick the Profile to open in Map Editor:",
         "Cancelled opening Map Editor.",
-    )
-    .await?;
+    )?;
 
-    open_map_editor_from_pwad_id(pwad_id).await
+    open_map_editor_from_pwad_id(pwad_id)
 }
 
-pub async fn open_from_pick_pwad() -> Result<String, eyre::Report> {
+pub fn open_from_pick_pwad() -> Result<String, eyre::Report> {
     let pwad_id = menu_common::get_pwad_id_from_pick_pwad(
         "Pick the PWAD to open in Map Editor:",
         "Cancelled opening Map Editor.",
-    )
-    .await?;
+    )?;
 
-    open_map_editor_from_pwad_id(pwad_id).await
+    open_map_editor_from_pwad_id(pwad_id)
 }
 
-pub async fn set_active_map_editor() -> Result<String, eyre::Report> {
-    let map_editor_list = db::get_map_editors().await?;
+pub fn set_active_map_editor() -> Result<String, eyre::Report> {
+    let map_editor_list = db::get_map_editors()?;
     if map_editor_list.is_empty() {
         return Ok(
             "Cannot set Active Map Editor. There are no Map Editors found. Please add one."
@@ -81,7 +77,7 @@ pub async fn set_active_map_editor() -> Result<String, eyre::Report> {
     }
 
     // Try to get the current active map eidtor
-    let mut app_settings = db::get_app_settings().await?;
+    let mut app_settings = db::get_app_settings()?;
     let starting_cursor = match app_settings.active_map_editor_id {
         Some(ref s) => map_editor_list.iter().position(|x| x.id == *s).unwrap(),
         None => 0,
@@ -96,7 +92,6 @@ pub async fn set_active_map_editor() -> Result<String, eyre::Report> {
         Some(map_editor) => {
             app_settings.active_map_editor_id = Some(map_editor.id);
             db::save_app_settings(app_settings)
-                .await
                 .wrap_err("Failed to set Active Map Editor")?;
             Ok(format!("Marked Map Editor '{}' as Active", map_editor))
         }
@@ -104,9 +99,8 @@ pub async fn set_active_map_editor() -> Result<String, eyre::Report> {
     }
 }
 
-pub async fn list_map_editors() -> Result<String, eyre::Report> {
+pub fn list_map_editors() -> Result<String, eyre::Report> {
     let map_editors = db::get_map_editors()
-        .await
         .wrap_err("Unable to generate Map Editor listing".to_string())?;
 
     let table = tabled::Table::new(map_editors)
@@ -116,8 +110,8 @@ pub async fn list_map_editors() -> Result<String, eyre::Report> {
     Ok(table)
 }
 
-pub async fn update_map_editors() -> Result<String, eyre::Report> {
-    let app_settings = db::get_app_settings().await?;
+pub fn update_map_editors() -> Result<String, eyre::Report> {
+    let app_settings = db::get_app_settings()?;
 
     let default_folder = app_settings
         .map_editor_search_folder
@@ -158,7 +152,7 @@ pub async fn update_map_editors() -> Result<String, eyre::Report> {
         .prompt_skippable()?;
 
     // Work out the indexes of what is already selected
-    let db_map_editors = db::get_map_editors().await?;
+    let db_map_editors = db::get_map_editors()?;
     let mut db_defaults = vec![];
     for (index, map_editor) in map_editors.iter().enumerate() {
         if db_map_editors.iter().any(|db| &db.path == map_editor) {
@@ -217,39 +211,38 @@ pub async fn update_map_editors() -> Result<String, eyre::Report> {
                         "Updating Map Editor version from '{}' to '{}'",
                         existing.version, selection.version
                     );
-                    db::update_map_editor_version(existing.id, &selection.version).await?;
+                    db::update_map_editor_version(existing.id, &selection.version)?;
                 }
             }
             None => {
-                db::add_map_editor(&selection).await?;
+                db::add_map_editor(&selection)?;
                 debug!("Added Map Editor: {:?}", selection);
             }
         }
     }
 
     // FIXME: This is getting blanked by menu display...
-    info!("{}", list_map_editors().await?);
+    info!("{}", list_map_editors()?);
 
     // Save the updated app setting
-    let mut app_settings = db::get_app_settings().await?;
+    let mut app_settings = db::get_app_settings()?;
     app_settings.map_editor_search_folder = Some(map_editor_search_folder);
-    db::save_app_settings(app_settings).await?;
+    db::save_app_settings(app_settings)?;
     inquire::Text::new("Press any key to continue...").prompt_skippable()?;
 
     Ok("Successfully updated Map Editors".to_string())
 }
 
-pub async fn delete_map_editor() -> Result<String, eyre::Report> {
-    let map_editor_list = db::get_map_editors().await?;
+pub fn delete_map_editor() -> Result<String, eyre::Report> {
+    let map_editor_list = db::get_map_editors()?;
     if map_editor_list.is_empty() {
         return Ok("There are no Map Editors to delete.".red().to_string());
     }
 
-    let map_editor = inquire::Select::new("Pick the Map Editor to Delete:", map_editor_list)
+    let map_editor_selection = inquire::Select::new("Pick the Map Editor to Delete:", map_editor_list)
         .prompt_skippable()?;
 
-    if map_editor.is_some() {
-        let map_editor = map_editor.unwrap();
+    if let Some(map_editor) = map_editor_selection {
         if inquire::Confirm::new(&format!(
             "Are you sure you want to delete this Map Editor - '{}'? This cannot be undone.",
             map_editor.app_name
@@ -260,7 +253,6 @@ pub async fn delete_map_editor() -> Result<String, eyre::Report> {
         {
             // TODO: Check if "active map editor" and remove link if so
             db::delete_map_editor(map_editor.id)
-                .await
                 .wrap_err(format!("Failed to delete Map Editor - '{}", map_editor))?;
             return Ok(format!("Successfully deleted Map Editor '{}'", map_editor));
         }

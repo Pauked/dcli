@@ -12,33 +12,33 @@ use crate::{
     db, doom_data, files, paths, tui,
 };
 
-pub async fn init() -> Result<String, eyre::Report> {
-    db::create_db().await?;
+pub fn init() -> Result<String, eyre::Report> {
+    db::create_db()?;
 
-    let mut app_settings = db::get_app_settings().await?;
+    let mut app_settings = db::get_app_settings()?;
 
     info!("We'll ask you some questions, and then you'll be ready to go.");
 
     let exe_search_folder =
-        init_engines(&app_settings.exe_search_folder.unwrap_or("".to_string())).await?;
+        init_engines(&app_settings.exe_search_folder.unwrap_or("".to_string()))?;
 
     let iwad_search_folder = match app_settings.iwad_search_folder {
         Some(iwad_search_folder) => iwad_search_folder,
         None => exe_search_folder.clone(),
     };
-    let iwad_search_folder = init_iwads(&iwad_search_folder).await?;
+    let iwad_search_folder = init_iwads(&iwad_search_folder)?;
 
     let pwad_search_folder = match app_settings.pwad_search_folder {
         Some(pwad_search_folder) => pwad_search_folder,
         None => iwad_search_folder.clone(),
     };
-    let pwad_search_folder = init_pwads(&pwad_search_folder).await?;
+    let pwad_search_folder = init_pwads(&pwad_search_folder)?;
 
     // Update app_settings
     app_settings.exe_search_folder = Some(exe_search_folder);
     app_settings.iwad_search_folder = Some(iwad_search_folder);
     app_settings.pwad_search_folder = Some(pwad_search_folder);
-    db::save_app_settings(app_settings).await?;
+    db::save_app_settings(app_settings)?;
 
     // Completed init!
     info!("{}", "Successfully configured!".green());
@@ -47,7 +47,7 @@ pub async fn init() -> Result<String, eyre::Report> {
     Ok("Succesfully configured!".to_string())
 }
 
-pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> {
+pub fn init_engines(default_folder: &str) -> Result<String, eyre::Report> {
     let exe_search_folder: String = inquire::Text::new("Folder to search for Engines:")
         .with_validator(|input: &str| {
             if paths::folder_exists(input) {
@@ -76,7 +76,7 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
     }
 
     // Work out the indexes of what is already selected
-    let db_engines = db::get_engines().await?;
+    let db_engines = db::get_engines()?;
     let mut db_defaults = vec![];
     for (index, engine) in engines.iter().enumerate() {
         if db_engines.iter().any(|db| &db.path == engine) {
@@ -124,7 +124,7 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
     // Remove entries that were not selected but have entries in the database
     for db_engine in &db_engines {
         if !selections.iter().any(|e| e.path == db_engine.path) {
-            db::delete_engine(&db_engine.path).await?;
+            db::delete_engine(&db_engine.path)?;
             debug!("Deleted Engine: {:?}", db_engine);
         }
     }
@@ -140,23 +140,23 @@ pub async fn init_engines(default_folder: &str) -> Result<String, eyre::Report> 
                         "Updating Engine version from '{}' to '{}'",
                         existing.version, selection.version
                     );
-                    db::update_engine_version(existing.id, &selection.version).await?;
+                    db::update_engine_version(existing.id, &selection.version)?;
                 }
             }
             None => {
-                db::add_engine(&selection).await?;
+                db::add_engine(&selection)?;
                 debug!("Added Engine: {:?}", selection);
             }
         }
     }
 
     // FIXME: This is getting blanked by menu display...
-    info!("{}", list_engines().await?);
+    info!("{}", list_engines()?);
 
     Ok(exe_search_folder)
 }
 
-pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
+pub fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     // Search for IWADs
     // Use the same folder as the engines, but given option to change
     // Save to IWADs table
@@ -190,7 +190,7 @@ pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     }
 
     // Work out the indexes of what is already selected
-    let db_iwads = db::get_iwads().await?;
+    let db_iwads = db::get_iwads()?;
     let mut db_defaults = vec![];
     for (index, iwad) in iwads.iter().enumerate() {
         if db_iwads.iter().any(|db| &db.path == iwad) {
@@ -207,7 +207,7 @@ pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     // Remove entries that were not selected but have entries in the database
     for db_iwad in &db_iwads {
         if !selections.contains(&db_iwad.path) {
-            db::delete_iwad(&db_iwad.path).await?;
+            db::delete_iwad(&db_iwad.path)?;
             debug!("Deleted iwad: {:?}", db_iwad)
         }
     }
@@ -231,19 +231,19 @@ pub async fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
                 };
 
                 // TODO: Check iwad doesn't exist
-                db::add_iwad(&iwad).await?;
+                db::add_iwad(&iwad)?;
                 debug!("Added iwad: {:?}", iwad);
             }
         }
     }
 
     // FIXME: This is getting blanked by menu display...
-    info!("{}", list_iwads().await?);
+    info!("{}", list_iwads()?);
 
     Ok(iwad_search_folder)
 }
 
-pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
+pub fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
     let pwad_search_folder: String =
         inquire::Text::new("Folder to search for PWADs (Patch WAD files)")
             .with_validator(|input: &str| {
@@ -269,12 +269,12 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
         )));
     }
 
-    let db_pwads = db::get_pwads().await?;
+    let db_pwads = db::get_pwads()?;
 
     // Remove entries that were not selected but have entries in the database
     for db_pwad in &db_pwads {
         if !pwads.contains(&db_pwad.path) {
-            db::delete_pwad(&db_pwad.path).await?;
+            db::delete_pwad(&db_pwad.path)?;
             debug!("Deleted pwad: {:?}", db_pwad)
         }
     }
@@ -294,7 +294,7 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
                     id: 0,
                 };
 
-                db::add_pwad(&pwad).await?;
+                db::add_pwad(&pwad)?;
                 debug!("Added pwad: {:?}", pwad);
                 info!("Done - {}", pwad.name);
             }
@@ -302,14 +302,13 @@ pub async fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
     }
 
     // FIXME: This is getting blanked by menu display...
-    info!("{}", list_pwads().await?);
+    info!("{}", list_pwads()?);
 
     Ok(pwad_search_folder)
 }
 
-pub async fn list_engines() -> Result<String, eyre::Report> {
+pub fn list_engines() -> Result<String, eyre::Report> {
     let engines = db::get_engines()
-        .await
         .wrap_err("Unable to generate Engine listing".to_string())?;
 
     let table = tabled::Table::new(engines)
@@ -319,9 +318,8 @@ pub async fn list_engines() -> Result<String, eyre::Report> {
     Ok(table)
 }
 
-pub async fn list_iwads() -> Result<String, eyre::Report> {
+pub fn list_iwads() -> Result<String, eyre::Report> {
     let iwads = db::get_iwads()
-        .await
         .wrap_err("Unable to iwad listing".to_string())?;
 
     let table = tabled::Table::new(iwads)
@@ -331,9 +329,8 @@ pub async fn list_iwads() -> Result<String, eyre::Report> {
     Ok(table)
 }
 
-pub async fn list_pwads() -> Result<String, eyre::Report> {
+pub fn list_pwads() -> Result<String, eyre::Report> {
     let pwads = db::get_pwads()
-        .await
         .wrap_err("Unable to iwad listing".to_string())?;
 
     let table = tabled::Table::new(pwads)
@@ -343,9 +340,8 @@ pub async fn list_pwads() -> Result<String, eyre::Report> {
     Ok(table)
 }
 
-pub async fn list_app_settings() -> Result<String, eyre::Report> {
+pub fn list_app_settings() -> Result<String, eyre::Report> {
     let app_settings = db::get_app_settings_display()
-        .await
         .wrap_err("Unable to settings listing".to_string())?;
 
     let table = tabled::Table::new(vec![app_settings])
@@ -355,8 +351,8 @@ pub async fn list_app_settings() -> Result<String, eyre::Report> {
     Ok(table)
 }
 
-pub async fn reset(force: bool) -> Result<String, eyre::Report> {
-    if !db::database_exists().await {
+pub fn reset(force: bool) -> Result<String, eyre::Report> {
+    if !db::database_exists() {
         return Ok("Database does not exist. Nothing to reset.".to_string());
     }
 
