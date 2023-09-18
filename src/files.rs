@@ -31,21 +31,42 @@ pub fn get_map_readme_file_name(pwad: &str) -> Result<Option<String>, eyre::Repo
     Ok(None)
 }
 
-pub fn get_map_name_from_readme(pwad: &str) -> Result<String, eyre::Report> {
+fn check_readme_line(line: &str, key: &str) -> Option<String> {
+    if line.to_lowercase().starts_with(key) {
+        let parts: Vec<&str> = line.split(':').collect();
+        if parts.len() > 1 {
+            return Some(parts[1].trim().to_string());
+        }
+    }
+    None
+}
+
+pub fn get_details_from_readme(pwad: &str) -> Result<(String, String), eyre::Report> {
+    let mut title = paths::extract_file_name(pwad);
+    let mut title_found = false;
+    let mut author = "Unknown".to_string();
+    let mut author_found = false;
+
     if let Some(readme) = get_map_readme_file_name(pwad)? {
         let lines = paths::lines_from_file("readme", &readme)?;
         for line in lines {
-            if line.to_lowercase().starts_with("title") {
-                let parts: Vec<&str> = line.split(':').collect();
-                if parts.len() > 1 {
-                    return Ok(parts[1].trim().to_string());
-                }
+            if let Some(value) = check_readme_line(&line, "title") {
+                title = value;
+                title_found = true;
+            }
+            if let Some(value) = check_readme_line(&line, "author") {
+                author = value;
+                author_found = true;
+            }
+            if title_found && author_found {
+                break;
             }
         }
     }
 
-    Ok(paths::extract_file_name(pwad))
+    Ok((title, author))
 }
+
 
 pub fn get_version_from_exe_name(
     exe_name: &str,

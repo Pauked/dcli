@@ -92,15 +92,17 @@ impl Default for Iwad {
 pub struct Pwad {
     #[tabled(skip)]
     pub id: i32,
-    #[tabled(rename = "Name")]
-    pub name: String,
+    #[tabled(rename = "Title")]
+    pub title: String,
+    #[tabled(rename = "Author")]
+    pub author: String,
     #[tabled(rename = "Path")]
     pub path: String,
 }
 
 impl fmt::Display for Pwad {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} ({})", self.name, self.path)
+        write!(f, "{} by '{}' ({})", self.title, self.author, self.path)
     }
 }
 
@@ -108,7 +110,8 @@ impl Default for Pwad {
     fn default() -> Self {
         Pwad {
             id: 0,
-            name: constants::DEFAULT_NOT_SET.to_string(),
+            title: constants::DEFAULT_NOT_SET.to_string(),
+            author: constants::DEFAULT_NOT_SET.to_string(),
             path: constants::DEFAULT_NOT_SET.to_string(),
         }
     }

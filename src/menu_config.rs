@@ -288,15 +288,17 @@ pub fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
             }
             None => {
                 info!("Getting map name for PWAD: '{}'", pwad);
+                let (title, author) = files::get_details_from_readme(&pwad)?;
                 let pwad = data::Pwad {
-                    name: files::get_map_name_from_readme(&pwad)?,
-                    path: pwad.clone(),
                     id: 0,
+                    title,
+                    author,
+                    path: pwad.clone(),
                 };
 
                 db::add_pwad(&pwad)?;
                 debug!("Added pwad: {:?}", pwad);
-                info!("Done - {}", pwad.name);
+                info!("Done - {}", pwad.title);
             }
         }
     }

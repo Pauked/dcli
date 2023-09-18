@@ -201,7 +201,7 @@ pub fn get_pwads() -> Result<Vec<data::Pwad>, eyre::Report> {
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query_as::<_, data::Pwad>("SELECT * FROM pwads ORDER BY name")
+        sqlx::query_as::<_, data::Pwad>("SELECT * FROM pwads ORDER BY title")
             .fetch_all(&db)
             .await
             .wrap_err("Failed to get list of all patch wads")
@@ -213,8 +213,9 @@ pub fn add_pwad(pwad: &data::Pwad) -> Result<sqlx::sqlite::SqliteQueryResult, ey
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("INSERT INTO pwads (name, path) VALUES (?,?)")
-            .bind(&pwad.name)
+        sqlx::query("INSERT INTO pwads (title, author, path) VALUES (?,?,?)")
+            .bind(&pwad.title)
+            .bind(&pwad.author)
             .bind(&pwad.path)
             .execute(&db)
             .await
