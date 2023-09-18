@@ -337,6 +337,7 @@ pub async fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
         }
 
         let menu_command = menu_prompt(&menu_level).await?;
+
         if let MenuCommand::Back = menu_command {
             return Ok("".to_string());
         }

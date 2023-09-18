@@ -11,7 +11,16 @@ async fn open_map_editor_from_pwad_id(pwad_id: i32) -> Result<String, eyre::Repo
         .await
         .wrap_err(format!("Unable to get PWAD for id '{}'", pwad_id).to_string())?;
 
-    // Select map editor...
+    // Use the Active Map Editor if set
+    let app_settings = db::get_app_settings().await?;
+    if app_settings.active_map_editor_id.is_some() {
+        let map_editor = db::get_map_editor_by_id(app_settings.active_map_editor_id.unwrap())
+            .await
+            .wrap_err("Unable to get Active Map Editor")?;
+        return runner::map_editor(&pwad.path, map_editor);
+    }
+
+    // Otherwise, try select map editor...
     let map_editor_list = db::get_map_editors().await?;
     if map_editor_list.is_empty() {
         return Ok("There are no Map Editors to select from.".red().to_string());
