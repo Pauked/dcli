@@ -6,12 +6,12 @@
 [x] Support for additional arguments
 [x] Support for running a map editor
 [ ] Add --mapeditor and --mapeditorlast
-[ ] Add "active" map editor to game settings
+[x] Add "active" map editor to app settings
 [x] Make the selection of a PWAD optional!
 [x] Open PWAD readme in local text editor
-[x] Add "game settings" menu to be able to config -fastmonster, -nomonsters, etc, switched use for all runs
-[x] Add game settings automatically to play
-[ ] Have a profile switch of "include game settings?"
+[x] Add "play settings" menu to be able to config -fastmonster, -nomonsters, etc, switched use for all runs
+[x] Add app settings automatically to play
+[ ] Have a profile switch of "include play settings?"
 [/] Make menus less crashy if user aborts
 [x] Add a `--version` option to the CLI.
 [ ] Add a `--help` option to the CLI.
@@ -20,7 +20,7 @@
 [ ] Play, do file exists check on Engine/IWAD/PWAD (might have been moved/deleted after config)
 [ ] Write Readme in repo root
 [ ] Add PWAD/IWAD checking of files (read first few bytes to check file identifier)
-[ ] Rename "Game Settings" to "Play Settings". Move to be uder Play options on Main Menu.
+[x] Rename "Game Settings" to "Play Settings". Move to be uder Play options on Main Menu.
 [ ] Get Map Author(s) from map readme.
 
 ## Thoughts

@@ -263,7 +263,7 @@ pub enum CompLevel {
 }
 
 /*
-    TODO: Expand game settings to include additional args.
+    TODO: Expand play settings to include additional args.
     - save games
     - complevels
     - episode
@@ -279,7 +279,7 @@ pub enum CompLevel {
 */
 
 #[derive(Clone, Debug, FromRow, Default)]
-pub struct GameSettings {
+pub struct PlaySettings {
     pub id: i32,
     pub comp_level: Option<CompLevel>,
     pub config_file: Option<String>,

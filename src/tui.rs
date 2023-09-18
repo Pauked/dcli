@@ -9,9 +9,9 @@ use strum_macros::EnumString;
 use crate::data;
 use crate::db;
 use crate::menu_config;
-use crate::menu_game_settings;
 use crate::menu_main;
 use crate::menu_map_editor;
+use crate::menu_play_settings;
 use crate::menu_profiles;
 use crate::menu_view_readme;
 
@@ -49,8 +49,8 @@ pub enum MenuCommand {
     MapEditor,
     #[strum(serialize = "Profiles >>")]
     Profiles,
-    #[strum(serialize = "Game Settings >>")]
-    GameSettings,
+    #[strum(serialize = "Play Settings >>")]
+    PlaySettings,
     #[strum(serialize = "View Map Readme >>")]
     ViewMapReadme,
     #[strum(serialize = "Config App >>")]
@@ -90,7 +90,7 @@ pub enum MenuCommand {
     Init,
     Reset,
 
-    // Game Settings Menu
+    // Play Settings Menu
     #[strum(serialize = "Compatibility Level")]
     CompLevel,
     #[strum(serialize = "Config File")]
@@ -159,9 +159,9 @@ pub fn menu_prompt(menu_level: &MenuLevel) -> Result<MenuCommand, eyre::Report> 
                 MenuCommand::PlayActiveProfile.to_string(),
                 MenuCommand::PlayLastProfile.to_string(),
                 MenuCommand::PickAndPlayProfile.to_string(),
+                MenuCommand::PlaySettings.to_string(),
                 MenuCommand::Profiles.to_string(),
                 MenuCommand::MapEditor.to_string(),
-                MenuCommand::GameSettings.to_string(),
                 MenuCommand::ViewMapReadme.to_string(),
                 MenuCommand::Config.to_string(),
                 MenuCommand::Quit.to_string(),
@@ -180,81 +180,81 @@ pub fn menu_prompt(menu_level: &MenuLevel) -> Result<MenuCommand, eyre::Report> 
             (selections, "Profile".to_string())
         }
         MenuLevel::GameSettings => {
-            let game_settings = db::get_game_settings()?;
+            let play_settings = db::get_play_settings()?;
             let selections = vec![
                 format!(
                     "{} ({})",
                     MenuCommand::CompLevel.to_string(),
-                    data::display_option_comp_level(&game_settings.comp_level)
+                    data::display_option_comp_level(&play_settings.comp_level)
                 ),
                 format!(
                     "{} ({})",
                     MenuCommand::ConfigFile.to_string(),
-                    data::display_option_string(&game_settings.config_file)
+                    data::display_option_string(&play_settings.config_file)
                 ),
                 format!(
                     "{} ({})",
                     MenuCommand::FastMonsters.to_string(),
-                    game_settings.fast_monsters
+                    play_settings.fast_monsters
                 ),
                 format!(
                     "{} ({})",
                     MenuCommand::NoMonsters.to_string(),
-                    game_settings.no_monsters
+                    play_settings.no_monsters
                 ),
                 format!(
                     "{} ({})",
                     MenuCommand::RespawnMonsters.to_string(),
-                    game_settings.respawn_monsters
+                    play_settings.respawn_monsters
                 ),
                 format!(
                     "{} ({})",
                     MenuCommand::WarpToLevel.to_string(),
-                    data::display_option_string(&game_settings.warp)
+                    data::display_option_string(&play_settings.warp)
                 ),
                 format!(
                     "{} ({})",
                     MenuCommand::Skill.to_string(),
-                    data::display_option_u8(&game_settings.skill)
+                    data::display_option_u8(&play_settings.skill)
                 ),
                 format!(
                     "{} ({})",
                     MenuCommand::Turbo.to_string(),
-                    data::display_option_u8(&game_settings.turbo)
+                    data::display_option_u8(&play_settings.turbo)
                 ),
                 format!(
                     "{} ({})",
                     MenuCommand::Timer.to_string(),
-                    data::display_option_u32(&game_settings.timer)
+                    data::display_option_u32(&play_settings.timer)
                 ),
                 format!(
                     "{} ({})",
                     MenuCommand::Width.to_string(),
-                    data::display_option_u32(&game_settings.width)
+                    data::display_option_u32(&play_settings.width)
                 ),
                 format!(
                     "{} ({})",
                     MenuCommand::Height.to_string(),
-                    data::display_option_u32(&game_settings.height)
+                    data::display_option_u32(&play_settings.height)
                 ),
                 format!(
                     "{} ({})",
                     MenuCommand::FullScreen.to_string(),
-                    game_settings.full_screen
+                    play_settings.full_screen
                 ),
                 format!(
                     "{} ({})",
                     MenuCommand::Windowed.to_string(),
-                    game_settings.windowed
+                    play_settings.windowed
                 ),
                 format!(
                     "{} ({})",
                     MenuCommand::AdditionalArguments.to_string(),
-                    data::display_option_string(&game_settings.additional_arguments)
+                    data::display_option_string(&play_settings.additional_arguments)
                 ),
                 MenuCommand::Back.to_string(),
             ];
-            (selections, "Game Settings".to_string())
+            (selections, "Play Settings".to_string())
         }
         MenuLevel::MapEditor => {
             let selections = vec![
@@ -364,7 +364,7 @@ pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Repor
         MenuCommand::PickAndPlayProfile => menu_main::pick_and_play_profile(),
         MenuCommand::MapEditor => menu(MenuLevel::MapEditor),
         MenuCommand::Profiles => menu(MenuLevel::Profiles),
-        MenuCommand::GameSettings => menu(MenuLevel::GameSettings),
+        MenuCommand::PlaySettings => menu(MenuLevel::GameSettings),
         MenuCommand::ViewMapReadme => menu(MenuLevel::ViewReadme),
         MenuCommand::Config => menu(MenuLevel::Config),
 
@@ -415,21 +415,21 @@ pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Repor
         }
         MenuCommand::Reset => menu_config::reset(false),
 
-        // Game Settings Menu
-        MenuCommand::CompLevel => menu_game_settings::update_comp_level(),
-        MenuCommand::ConfigFile => menu_game_settings::update_config_file(),
-        MenuCommand::FastMonsters => menu_game_settings::update_fast_monsters(),
-        MenuCommand::NoMonsters => menu_game_settings::update_no_monsters(),
-        MenuCommand::RespawnMonsters => menu_game_settings::update_respawn_monsters(),
-        MenuCommand::WarpToLevel => menu_game_settings::update_warp_to_level(),
-        MenuCommand::Skill => menu_game_settings::update_skill(),
-        MenuCommand::Turbo => menu_game_settings::update_turbo(),
-        MenuCommand::Timer => menu_game_settings::update_timer(),
-        MenuCommand::Width => menu_game_settings::update_width(),
-        MenuCommand::Height => menu_game_settings::update_height(),
-        MenuCommand::FullScreen => menu_game_settings::update_full_screen(),
-        MenuCommand::Windowed => menu_game_settings::update_windowed(),
-        MenuCommand::AdditionalArguments => menu_game_settings::update_additional_arguments(),
+        // Play Settings Menu
+        MenuCommand::CompLevel => menu_play_settings::update_comp_level(),
+        MenuCommand::ConfigFile => menu_play_settings::update_config_file(),
+        MenuCommand::FastMonsters => menu_play_settings::update_fast_monsters(),
+        MenuCommand::NoMonsters => menu_play_settings::update_no_monsters(),
+        MenuCommand::RespawnMonsters => menu_play_settings::update_respawn_monsters(),
+        MenuCommand::WarpToLevel => menu_play_settings::update_warp_to_level(),
+        MenuCommand::Skill => menu_play_settings::update_skill(),
+        MenuCommand::Turbo => menu_play_settings::update_turbo(),
+        MenuCommand::Timer => menu_play_settings::update_timer(),
+        MenuCommand::Width => menu_play_settings::update_width(),
+        MenuCommand::Height => menu_play_settings::update_height(),
+        MenuCommand::FullScreen => menu_play_settings::update_full_screen(),
+        MenuCommand::Windowed => menu_play_settings::update_windowed(),
+        MenuCommand::AdditionalArguments => menu_play_settings::update_additional_arguments(),
 
         // Map Editor Menu
         MenuCommand::OpenFromActiveProfile => menu_map_editor::open_from_active_profile(),

@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
     FOREIGN KEY (last_profile_id) REFERENCES profiles (id),
     FOREIGN KEY (active_map_editor_id) REFERENCES map_editors (id)
 );
-CREATE TABLE IF NOT EXISTS game_settings (
+CREATE TABLE IF NOT EXISTS play_settings (
     id INTEGER PRIMARY KEY NOT NULL,
     comp_level TEXT NULL,
     config_file TEXT NULL,

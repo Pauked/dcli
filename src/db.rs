@@ -530,97 +530,97 @@ pub fn get_profile_display_by_id(id: i32) -> Result<data::ProfileDisplay, eyre::
     Ok(get_profile_display(profile, engine, iwad, pwad))
 }
 
-pub fn save_game_settings(
-    game_settings: data::GameSettings,
+pub fn save_play_settings(
+    play_settings: data::PlaySettings,
 ) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
-    if game_settings.id == 0 {
-        add_game_settings(game_settings)
+    if play_settings.id == 0 {
+        add_play_settings(play_settings)
     } else {
-        update_game_settings(game_settings)
+        update_play_settings(play_settings)
     }
 }
 
-fn add_game_settings(
-    game_settings: data::GameSettings,
+fn add_play_settings(
+    play_settings: data::PlaySettings,
 ) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let db = get_db().await;
 
         sqlx::query(
-            "INSERT INTO game_settings (comp_level, fast_monsters, no_monsters,
+            "INSERT INTO play_settings (comp_level, fast_monsters, no_monsters,
             respawn_monsters, warp, skill, turbo, timer, width, height, full_screen,
             windowed, additional_arguments) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
         )
-        .bind(&game_settings.comp_level)
-        .bind(game_settings.fast_monsters)
-        .bind(game_settings.no_monsters)
-        .bind(game_settings.respawn_monsters)
-        .bind(&game_settings.warp)
-        .bind(game_settings.skill)
-        .bind(game_settings.turbo)
-        .bind(game_settings.timer)
-        .bind(game_settings.width)
-        .bind(game_settings.height)
-        .bind(game_settings.full_screen)
-        .bind(game_settings.windowed)
-        .bind(&game_settings.additional_arguments)
+        .bind(&play_settings.comp_level)
+        .bind(play_settings.fast_monsters)
+        .bind(play_settings.no_monsters)
+        .bind(play_settings.respawn_monsters)
+        .bind(&play_settings.warp)
+        .bind(play_settings.skill)
+        .bind(play_settings.turbo)
+        .bind(play_settings.timer)
+        .bind(play_settings.width)
+        .bind(play_settings.height)
+        .bind(play_settings.full_screen)
+        .bind(play_settings.windowed)
+        .bind(&play_settings.additional_arguments)
         .execute(&db)
         .await
-        .wrap_err(format!("Failed to add app settings '{:?}", game_settings))
+        .wrap_err(format!("Failed to add app settings '{:?}", play_settings))
     })
 }
 
-fn update_game_settings(
-    game_settings: data::GameSettings,
+fn update_play_settings(
+    play_settings: data::PlaySettings,
 ) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let db = get_db().await;
 
         sqlx::query(
-            "UPDATE game_settings SET comp_level = $1,
+            "UPDATE play_settings SET comp_level = $1,
                 fast_monsters = $2, no_monsters = $3, respawn_monsters = $4,
                 warp = $5, skill = $6, turbo = $7, timer = $8, width = $9, height = $10,
                 full_screen = $11, windowed = $12, additional_arguments = $13
                 WHERE id=$14",
         )
-        .bind(&game_settings.comp_level)
-        .bind(game_settings.fast_monsters)
-        .bind(game_settings.no_monsters)
-        .bind(game_settings.respawn_monsters)
-        .bind(&game_settings.warp)
-        .bind(game_settings.skill)
-        .bind(game_settings.turbo)
-        .bind(game_settings.timer)
-        .bind(game_settings.width)
-        .bind(game_settings.height)
-        .bind(game_settings.full_screen)
-        .bind(game_settings.windowed)
-        .bind(&game_settings.additional_arguments)
-        .bind(game_settings.id)
+        .bind(&play_settings.comp_level)
+        .bind(play_settings.fast_monsters)
+        .bind(play_settings.no_monsters)
+        .bind(play_settings.respawn_monsters)
+        .bind(&play_settings.warp)
+        .bind(play_settings.skill)
+        .bind(play_settings.turbo)
+        .bind(play_settings.timer)
+        .bind(play_settings.width)
+        .bind(play_settings.height)
+        .bind(play_settings.full_screen)
+        .bind(play_settings.windowed)
+        .bind(&play_settings.additional_arguments)
+        .bind(play_settings.id)
         .execute(&db)
         .await
         .wrap_err(format!(
             "Failed to update app settings '{:?}",
-            game_settings
+            play_settings
         ))
     })
 }
 
-pub fn get_game_settings() -> Result<data::GameSettings, eyre::Report> {
+pub fn get_play_settings() -> Result<data::PlaySettings, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let db = get_db().await;
 
-        let result = sqlx::query_as::<_, data::GameSettings>("SELECT * FROM game_settings")
+        let result = sqlx::query_as::<_, data::PlaySettings>("SELECT * FROM play_settings")
             .fetch_one(&db)
             .await
-            .wrap_err("Failed to get game settings".to_string());
+            .wrap_err("Failed to get play settings".to_string());
 
         match result {
-            Ok(game_settings) => Ok(game_settings),
-            Err(_) => Ok(data::GameSettings::default()),
+            Ok(play_settings) => Ok(play_settings),
+            Err(_) => Ok(data::PlaySettings::default()),
         }
     })
 }

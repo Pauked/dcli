@@ -33,56 +33,56 @@ pub fn play(profile_id: i32, update_last_profile: bool) -> Result<String, eyre::
         }
     }
 
-    // Add in shared Game settings
-    let game_settings = db::get_game_settings()?;
-    if game_settings.comp_level.is_some() {
+    // Add in shared play settings
+    let play_settings = db::get_play_settings()?;
+    if play_settings.comp_level.is_some() {
         cmd.arg("-complevel")
-            .arg(game_settings.comp_level.unwrap().to_string());
+            .arg(play_settings.comp_level.unwrap().to_string());
     }
-    if game_settings.config_file.is_some() {
-        cmd.arg("-config").arg(game_settings.config_file.unwrap());
+    if play_settings.config_file.is_some() {
+        cmd.arg("-config").arg(play_settings.config_file.unwrap());
     }
-    if game_settings.fast_monsters {
+    if play_settings.fast_monsters {
         cmd.arg("-fast");
     }
-    if game_settings.no_monsters {
+    if play_settings.no_monsters {
         cmd.arg("-nomonsters");
     }
-    if game_settings.respawn_monsters {
+    if play_settings.respawn_monsters {
         cmd.arg("-respawn");
     }
-    if game_settings.warp.is_some() {
-        cmd.arg("-warp").arg(game_settings.warp.unwrap());
+    if play_settings.warp.is_some() {
+        cmd.arg("-warp").arg(play_settings.warp.unwrap());
     }
-    if game_settings.skill.is_some() {
+    if play_settings.skill.is_some() {
         cmd.arg("-skill")
-            .arg(game_settings.skill.unwrap().to_string());
+            .arg(play_settings.skill.unwrap().to_string());
     }
-    if game_settings.turbo.is_some() {
+    if play_settings.turbo.is_some() {
         cmd.arg("-turbo")
-            .arg(game_settings.turbo.unwrap().to_string());
+            .arg(play_settings.turbo.unwrap().to_string());
     }
-    if game_settings.timer.is_some() {
+    if play_settings.timer.is_some() {
         cmd.arg("-timer")
-            .arg(game_settings.timer.unwrap().to_string());
+            .arg(play_settings.timer.unwrap().to_string());
     }
-    if game_settings.width.is_some() {
+    if play_settings.width.is_some() {
         cmd.arg("-width")
-            .arg(game_settings.width.unwrap().to_string());
+            .arg(play_settings.width.unwrap().to_string());
     }
-    if game_settings.height.is_some() {
+    if play_settings.height.is_some() {
         cmd.arg("-height")
-            .arg(game_settings.height.unwrap().to_string());
+            .arg(play_settings.height.unwrap().to_string());
     }
-    if game_settings.full_screen {
+    if play_settings.full_screen {
         cmd.arg("-fullscreen");
     }
-    if game_settings.windowed {
+    if play_settings.windowed {
         cmd.arg("-window");
     }
-    if game_settings.additional_arguments.is_some() {
+    if play_settings.additional_arguments.is_some() {
         let args: Vec<String> =
-            shlex::split(&game_settings.additional_arguments.unwrap()).unwrap_or_default();
+            shlex::split(&play_settings.additional_arguments.unwrap()).unwrap_or_default();
         for arg in args {
             cmd.arg(arg);
         }
