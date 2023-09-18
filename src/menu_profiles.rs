@@ -1,37 +1,10 @@
 use colored::Colorize;
 use eyre::Context;
-use log::info;
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{data, db, tui};
 
-pub async fn profiles_menu() -> Result<String, eyre::Report> {
-    clearscreen::clear().unwrap();
-    loop {
-        let menu_command = tui::profiles_menu_prompt();
-        if let tui::ProfileCommand::Back = menu_command {
-            return Ok("".to_string());
-        }
-        let result = run_profiles_menu_option(menu_command).await?;
-        clearscreen::clear().unwrap();
-        info!("{}", result)
-    }
-}
-
-pub async fn run_profiles_menu_option(
-    menu_command: tui::ProfileCommand,
-) -> Result<String, eyre::Report> {
-    match menu_command {
-        tui::ProfileCommand::New => new_profile().await,
-        tui::ProfileCommand::Edit => edit_profile().await,
-        tui::ProfileCommand::Delete => delete_profile().await,
-        tui::ProfileCommand::Active => set_active_profile().await,
-        tui::ProfileCommand::List => display_profiles().await,
-        tui::ProfileCommand::Back => Ok("".to_string()),
-    }
-}
-
-async fn new_profile() -> Result<String, eyre::Report> {
+pub async fn new_profile() -> Result<String, eyre::Report> {
     let engines = db::get_engines().await?;
     if engines.is_empty() {
         return Ok("There are no Engines to select. Please run 'init'."
@@ -92,7 +65,7 @@ async fn new_profile() -> Result<String, eyre::Report> {
     Ok("Successfully created a new Profile".to_string())
 }
 
-async fn set_profile_as_active(profile_id: i32) -> Result<String, eyre::Report> {
+pub async fn set_profile_as_active(profile_id: i32) -> Result<String, eyre::Report> {
     if inquire::Confirm::new("Would you like to set this as your Active Profile?")
         .with_default(false)
         .prompt()
@@ -109,7 +82,7 @@ async fn set_profile_as_active(profile_id: i32) -> Result<String, eyre::Report> 
     Ok("No changes made to setting profile as active".to_string())
 }
 
-async fn edit_profile() -> Result<String, eyre::Report> {
+pub async fn edit_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list().await?;
     if profile_list.is_empty() {
         return Ok("There are no profiles to edit.".red().to_string());
@@ -196,7 +169,7 @@ async fn edit_profile() -> Result<String, eyre::Report> {
     Ok(format!("Successfully updated Profile - '{}'", profile_name))
 }
 
-async fn delete_profile() -> Result<String, eyre::Report> {
+pub async fn delete_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list().await?;
     if profile_list.is_empty() {
         return Ok("There are no Profiles to delete.".red().to_string());
@@ -226,7 +199,7 @@ async fn delete_profile() -> Result<String, eyre::Report> {
     Ok("Cancelled Profile deletion.".yellow().to_string())
 }
 
-async fn set_active_profile() -> Result<String, eyre::Report> {
+pub async fn set_active_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list().await?;
     if profile_list.is_empty() {
         return Ok(
@@ -259,7 +232,7 @@ async fn set_active_profile() -> Result<String, eyre::Report> {
     }
 }
 
-pub async fn display_profiles() -> Result<String, eyre::Report> {
+pub async fn list_profiles() -> Result<String, eyre::Report> {
     let profiles = db::get_profile_display_list()
         .await
         .wrap_err("Unable to profile listing".to_string())?;

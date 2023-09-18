@@ -2,47 +2,10 @@ use std::str::FromStr;
 
 use colored::Colorize;
 use inquire::validator::Validation;
-use log::info;
 
-use crate::{constants, data, db, paths, tui};
+use crate::{constants, data, db, paths};
 
-pub async fn game_settings_menu() -> Result<String, eyre::Report> {
-    clearscreen::clear().unwrap();
-    loop {
-        let game_settings = db::get_game_settings().await?;
-        let menu_command = tui::game_settings_menu_prompt(game_settings);
-        if let tui::GameSettingsCommand::Back = menu_command {
-            return Ok("".to_string());
-        }
-        let result = run_game_settings_menu_option(menu_command).await?;
-        clearscreen::clear().unwrap();
-        info!("{}", result)
-    }
-}
-
-pub async fn run_game_settings_menu_option(
-    menu_command: tui::GameSettingsCommand,
-) -> Result<String, eyre::Report> {
-    match menu_command {
-        tui::GameSettingsCommand::CompLevel => update_comp_level().await,
-        tui::GameSettingsCommand::ConfigFile => update_config_file().await,
-        tui::GameSettingsCommand::FastMonsters => update_fast_monsters().await,
-        tui::GameSettingsCommand::NoMonsters => update_no_monsters().await,
-        tui::GameSettingsCommand::RespawnMonsters => update_respawn_monsters().await,
-        tui::GameSettingsCommand::WarpToLevel => update_warp_to_level().await,
-        tui::GameSettingsCommand::Skill => update_skill().await,
-        tui::GameSettingsCommand::Turbo => update_turbo().await,
-        tui::GameSettingsCommand::Timer => update_timer().await,
-        tui::GameSettingsCommand::Width => update_width().await,
-        tui::GameSettingsCommand::Height => update_height().await,
-        tui::GameSettingsCommand::FullScreen => update_full_screen().await,
-        tui::GameSettingsCommand::Windowed => update_windowed().await,
-        tui::GameSettingsCommand::AdditionalArguments => update_additional_arguments().await,
-        tui::GameSettingsCommand::Back => Ok("".to_string()),
-    }
-}
-
-async fn update_comp_level() -> Result<String, eyre::Report> {
+pub async fn update_comp_level() -> Result<String, eyre::Report> {
     let selections = vec![
         constants::MENU_NOT_SET.to_string(),
         data::CompLevel::Default.to_string(),
@@ -76,7 +39,7 @@ async fn update_comp_level() -> Result<String, eyre::Report> {
         .to_string())
 }
 
-async fn update_config_file() -> Result<String, eyre::Error> {
+pub async fn update_config_file() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
     game_settings.config_file = inquire::Text::new("Enter Config File Path:")
         .with_validator(|input: &str| {
@@ -94,7 +57,7 @@ async fn update_config_file() -> Result<String, eyre::Error> {
     Ok("Successfully updated Warp".green().to_string())
 }
 
-async fn update_fast_monsters() -> Result<String, eyre::Error> {
+pub async fn update_fast_monsters() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
     game_settings.fast_monsters = inquire::Confirm::new("Enable Fast Monsters?")
         .with_default(game_settings.fast_monsters)
@@ -105,7 +68,7 @@ async fn update_fast_monsters() -> Result<String, eyre::Error> {
     Ok("Successfully updated Fast Monsters".green().to_string())
 }
 
-async fn update_no_monsters() -> Result<String, eyre::Error> {
+pub async fn update_no_monsters() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
     game_settings.no_monsters = inquire::Confirm::new("Enable No Monsters?")
         .with_default(game_settings.no_monsters)
@@ -116,7 +79,7 @@ async fn update_no_monsters() -> Result<String, eyre::Error> {
     Ok("Successfully updated No Monsters".green().to_string())
 }
 
-async fn update_respawn_monsters() -> Result<String, eyre::Error> {
+pub async fn update_respawn_monsters() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
     game_settings.respawn_monsters = inquire::Confirm::new("Enable Respawn Monsters?")
         .with_default(game_settings.respawn_monsters)
@@ -127,7 +90,7 @@ async fn update_respawn_monsters() -> Result<String, eyre::Error> {
     Ok("Successfully updated Respawn Monsters".green().to_string())
 }
 
-async fn update_warp_to_level() -> Result<String, eyre::Error> {
+pub async fn update_warp_to_level() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
     game_settings.warp = inquire::Text::new("Enter Warp value:")
         .with_default(&game_settings.warp.unwrap_or("".to_string()))
@@ -138,7 +101,7 @@ async fn update_warp_to_level() -> Result<String, eyre::Error> {
     Ok("Successfully updated Warp".green().to_string())
 }
 
-async fn update_skill() -> Result<String, eyre::Error> {
+pub async fn update_skill() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
     game_settings.skill = inquire::CustomType::<u8>::new("Enter Skill value:")
@@ -160,7 +123,7 @@ async fn update_skill() -> Result<String, eyre::Error> {
     Ok("Successfully updated Skill".green().to_string())
 }
 
-async fn update_turbo() -> Result<String, eyre::Error> {
+pub async fn update_turbo() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
     game_settings.turbo = inquire::CustomType::<u8>::new("Enter Turbo value:")
@@ -180,7 +143,7 @@ async fn update_turbo() -> Result<String, eyre::Error> {
     Ok("Successfully updated Turbo".green().to_string())
 }
 
-async fn update_timer() -> Result<String, eyre::Error> {
+pub async fn update_timer() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
     game_settings.timer = inquire::CustomType::<u32>::new("Enter Timer value:")
@@ -200,7 +163,7 @@ async fn update_timer() -> Result<String, eyre::Error> {
     Ok("Successfully updated Timer".green().to_string())
 }
 
-async fn update_height() -> Result<String, eyre::Error> {
+pub async fn update_height() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
     game_settings.height = inquire::CustomType::<u32>::new("Enter Screen Height:")
@@ -222,7 +185,7 @@ async fn update_height() -> Result<String, eyre::Error> {
     Ok("Successfully updated Height".green().to_string())
 }
 
-async fn update_width() -> Result<String, eyre::Error> {
+pub async fn update_width() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
 
     game_settings.width = inquire::CustomType::<u32>::new("Enter Screen Width:")
@@ -242,7 +205,7 @@ async fn update_width() -> Result<String, eyre::Error> {
     Ok("Successfully updated Width".green().to_string())
 }
 
-async fn update_full_screen() -> Result<String, eyre::Error> {
+pub async fn update_full_screen() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
     game_settings.full_screen = inquire::Confirm::new("Enable Full Screen?")
         .with_default(game_settings.full_screen)
@@ -253,7 +216,7 @@ async fn update_full_screen() -> Result<String, eyre::Error> {
     Ok("Successfully updated Fast Monsters".green().to_string())
 }
 
-async fn update_windowed() -> Result<String, eyre::Error> {
+pub async fn update_windowed() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
     game_settings.windowed = inquire::Confirm::new("Enable Windowed Mode?")
         .with_default(game_settings.windowed)
@@ -264,7 +227,7 @@ async fn update_windowed() -> Result<String, eyre::Error> {
     Ok("Successfully updated Windowed Mode".green().to_string())
 }
 
-async fn update_additional_arguments() -> Result<String, eyre::Error> {
+pub async fn update_additional_arguments() -> Result<String, eyre::Error> {
     let mut game_settings = db::get_game_settings().await?;
     game_settings.additional_arguments = inquire::Text::new("Enter any Additional Arguments:")
         .with_default(&game_settings.additional_arguments.unwrap_or("".to_string()))

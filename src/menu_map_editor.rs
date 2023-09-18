@@ -6,41 +6,6 @@ use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{data, db, finder, menu_common, paths, runner, tui};
 
-pub async fn map_editor_menu() -> Result<String, eyre::Report> {
-    clearscreen::clear().unwrap();
-    loop {
-        let menu_command = tui::map_editor_menu_prompt();
-        if let tui::MapEditorCommand::Back = menu_command {
-            return Ok("".to_string());
-        }
-        let result = run_map_editor_menu_option(menu_command).await;
-        clearscreen::clear().unwrap();
-        match result {
-            Ok(result) => info!("{}", result.green()),
-            Err(err) => {
-                debug!("Error: {}", err);
-                info!("{}", err.to_string().red());
-            }
-        }
-    }
-}
-
-pub async fn run_map_editor_menu_option(
-    menu_command: tui::MapEditorCommand,
-) -> Result<String, eyre::Report> {
-    match menu_command {
-        tui::MapEditorCommand::OpenFromActiveProfile => open_from_active_profile().await,
-        tui::MapEditorCommand::OpenFromLastProfile => open_from_last_profile().await,
-        tui::MapEditorCommand::OpenFromPickProfile => open_from_pick_profile().await,
-        tui::MapEditorCommand::OpenFromPickPwad => open_from_pick_pwad().await,
-        tui::MapEditorCommand::Active => set_active_map_editor().await,
-        tui::MapEditorCommand::List => list_map_editors().await,
-        tui::MapEditorCommand::Update => update_map_editors().await,
-        tui::MapEditorCommand::Delete => delete_map_editor().await,
-        tui::MapEditorCommand::Back => Ok("".to_string()),
-    }
-}
-
 async fn open_map_editor_from_pwad_id(pwad_id: i32) -> Result<String, eyre::Report> {
     let pwad = db::get_pwad_by_id(pwad_id)
         .await
@@ -62,21 +27,21 @@ async fn open_map_editor_from_pwad_id(pwad_id: i32) -> Result<String, eyre::Repo
     }
 }
 
-async fn open_from_active_profile() -> Result<String, eyre::Report> {
+pub async fn open_from_active_profile() -> Result<String, eyre::Report> {
     let pwad_id =
         menu_common::get_pwad_id_from_from_active_profile("Cannot open Map Editor.").await?;
 
     open_map_editor_from_pwad_id(pwad_id).await
 }
 
-async fn open_from_last_profile() -> Result<String, eyre::Report> {
+pub async fn open_from_last_profile() -> Result<String, eyre::Report> {
     let pwad_id =
         menu_common::get_pwad_id_from_from_last_profile("Cannot open Map Editor.").await?;
 
     open_map_editor_from_pwad_id(pwad_id).await
 }
 
-async fn open_from_pick_profile() -> Result<String, eyre::Report> {
+pub async fn open_from_pick_profile() -> Result<String, eyre::Report> {
     let pwad_id = menu_common::get_pwad_id_from_pick_profile(
         "Pick the Profile to open in Map Editor:",
         "Cancelled opening Map Editor.",
@@ -86,7 +51,7 @@ async fn open_from_pick_profile() -> Result<String, eyre::Report> {
     open_map_editor_from_pwad_id(pwad_id).await
 }
 
-async fn open_from_pick_pwad() -> Result<String, eyre::Report> {
+pub async fn open_from_pick_pwad() -> Result<String, eyre::Report> {
     let pwad_id = menu_common::get_pwad_id_from_pick_pwad(
         "Pick the PWAD to open in Map Editor:",
         "Cancelled opening Map Editor.",
@@ -96,7 +61,7 @@ async fn open_from_pick_pwad() -> Result<String, eyre::Report> {
     open_map_editor_from_pwad_id(pwad_id).await
 }
 
-async fn set_active_map_editor() -> Result<String, eyre::Report> {
+pub async fn set_active_map_editor() -> Result<String, eyre::Report> {
     let map_editor_list = db::get_map_editors().await?;
     if map_editor_list.is_empty() {
         return Ok(

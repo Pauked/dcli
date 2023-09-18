@@ -9,101 +9,8 @@ use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{
     data::{self},
-    db, doom_data, files, menu_map_editor, paths, tui,
+    db, doom_data, files, paths, tui,
 };
-
-pub async fn config_menu() -> Result<String, eyre::Report> {
-    clearscreen::clear().unwrap();
-    loop {
-        let menu_command = tui::config_menu_prompt();
-        match menu_command {
-            tui::ConfigCommand::List => {
-                config_list_menu().await?;
-            }
-            tui::ConfigCommand::Update => {
-                config_update_menu().await?;
-            }
-            tui::ConfigCommand::Back => {
-                return Ok("".to_string());
-            }
-            _ => {}
-        }
-
-        let result = run_config_menu_option(menu_command).await?;
-        clearscreen::clear().unwrap();
-        info!("{}", result)
-    }
-}
-
-pub async fn config_list_menu() -> Result<String, eyre::Report> {
-    loop {
-        let menu_command = tui::config_list_menu_prompt();
-        if let tui::ConfigCommand::Back = menu_command {
-            return Ok("".to_string());
-        }
-        let result = run_config_menu_option(menu_command).await?;
-        clearscreen::clear().unwrap();
-        info!("{}", result)
-    }
-}
-
-pub async fn config_update_menu() -> Result<String, eyre::Report> {
-    loop {
-        let menu_command = tui::config_update_menu_prompt();
-        if let tui::ConfigCommand::Back = menu_command {
-            return Ok("".to_string());
-        }
-        let result = run_config_menu_option(menu_command).await?;
-        clearscreen::clear().unwrap();
-        info!("{}", result)
-    }
-}
-
-pub async fn run_config_menu_option(
-    menu_command: tui::ConfigCommand,
-) -> Result<String, eyre::Report> {
-    match menu_command {
-        tui::ConfigCommand::List => Ok("".to_string()),
-        tui::ConfigCommand::ListEngines => list_engines().await,
-        tui::ConfigCommand::ListIwads => list_iwads().await,
-        tui::ConfigCommand::ListPwads => list_pwads().await,
-        tui::ConfigCommand::ListMapEditors => menu_map_editor::list_map_editors().await,
-        tui::ConfigCommand::ListAppSettings => list_app_settings().await,
-        tui::ConfigCommand::Init => init().await,
-        tui::ConfigCommand::Update => Ok("".to_string()),
-        tui::ConfigCommand::UpdateEngines => {
-            let mut app_settings = db::get_app_settings().await?;
-            let folder =
-                init_engines(&app_settings.exe_search_folder.unwrap_or("".to_string())).await?;
-            app_settings.exe_search_folder = Some(folder);
-            db::save_app_settings(app_settings).await?;
-            inquire::Text::new("Press any key to continue...").prompt_skippable()?;
-            Ok("Successfully updated Engines".to_string())
-        }
-        tui::ConfigCommand::UpdateIwads => {
-            let mut app_settings = db::get_app_settings().await?;
-            let folder =
-                init_iwads(&app_settings.iwad_search_folder.unwrap_or("".to_string())).await?;
-            app_settings.iwad_search_folder = Some(folder);
-            db::save_app_settings(app_settings).await?;
-            inquire::Text::new("Press any key to continue...").prompt_skippable()?;
-            Ok("Successfully updated IWADs".to_string())
-        }
-        tui::ConfigCommand::UpdatePwads => {
-            let mut app_settings = db::get_app_settings().await?;
-            let folder =
-                init_pwads(&app_settings.pwad_search_folder.unwrap_or("".to_string())).await?;
-            app_settings.pwad_search_folder = Some(folder);
-            db::save_app_settings(app_settings).await?;
-            inquire::Text::new("Press any key to continue...").prompt_skippable()?;
-            Ok("Successfully updated PWADs".to_string())
-        }
-        tui::ConfigCommand::UpdateMapEditors => menu_map_editor::update_map_editors().await,
-        tui::ConfigCommand::Reset => reset(false).await,
-        tui::ConfigCommand::Back => Ok("".to_string()),
-        tui::ConfigCommand::Unknown => Ok("Unknown command".to_string()),
-    }
-}
 
 pub async fn init() -> Result<String, eyre::Report> {
     db::create_db().await?;
@@ -448,7 +355,7 @@ pub async fn list_app_settings() -> Result<String, eyre::Report> {
     Ok(table)
 }
 
-async fn reset(force: bool) -> Result<String, eyre::Report> {
+pub async fn reset(force: bool) -> Result<String, eyre::Report> {
     if !db::database_exists().await {
         return Ok("Database does not exist. Nothing to reset.".to_string());
     }

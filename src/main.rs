@@ -59,32 +59,18 @@ async fn run() -> eyre::Result<String> {
     for arg in args {
         debug!("Running arg: {}", arg);
         // TODO: Refactor to be less bad
-        let main_arg: tui::MainCommand = tui::convert_arg_to_maincommand(&arg);
-        if main_arg != tui::MainCommand::Unknown {
-            menu_main::run_main_menu_option(main_arg).await?;
-        } else {
-            let config_arg = tui::convert_arg_to_configcommand(&arg);
-            if config_arg != tui::ConfigCommand::Unknown {
-                let result = menu_config::run_config_menu_option(config_arg.clone()).await?;
-                if config_arg == tui::ConfigCommand::Reset
-                    && result != *"Database reset not confirmed."
-                {
-                    menu_config::init().await?;
-                }
-            } else {
-                info!("Unknown argument: {}", arg);
+        let main_arg = tui::convert_arg_to_menu_command(&arg);
+        if main_arg != tui::MenuCommand::Ignore {
+            let result = tui::run_menu_command(main_arg).await?;
+            if reset_mode && result != *"Database reset not confirmed." {
+                menu_config::init().await?;
             }
         }
     }
 
     info!("Welcome to {}", constants::APP_NAME.bright_yellow());
-    menu_main::main_menu().await
+    tui::menu(tui::MenuLevel::Main).await
 }
-
-// async fn manage_args() -> eyre::Result<String> {
-
-//     Ok("".to_string())
-// }
 
 fn main() {
     match run() {

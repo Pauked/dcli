@@ -3,45 +3,8 @@ use color_eyre::{
     Result,
 };
 use colored::Colorize;
-use log::info;
 
-use crate::{db, menu_config, menu_game_settings, menu_map_editor, menu_profiles, tui, runner, menu_view_readme};
-
-pub async fn main_menu() -> Result<String, eyre::Report> {
-    clearscreen::clear().unwrap();
-    loop {
-        info!("{}", get_active_profile_text().await?);
-        info!("{}", get_last_profile_text().await?);
-
-        let menu_command = tui::main_menu_prompt();
-        if let tui::MainCommand::Quit = menu_command {
-            return Ok("Quitting...".to_string());
-        }
-
-        let result = run_main_menu_option(menu_command).await?;
-        clearscreen::clear().unwrap();
-        if !result.is_empty() {
-            info!("{}", result)
-        }
-    }
-}
-
-pub async fn run_main_menu_option(command: tui::MainCommand) -> Result<String, eyre::Report> {
-    db::create_db().await?;
-
-    match command {
-        tui::MainCommand::PlayActiveProfile => play_active_profile().await,
-        tui::MainCommand::PlayLastProfile => play_last_profile().await,
-        tui::MainCommand::PickAndPlayProfile => pick_and_play_profile().await,
-        tui::MainCommand::Profiles => menu_profiles::profiles_menu().await,
-        tui::MainCommand::MapEditor => menu_map_editor::map_editor_menu().await,
-        tui::MainCommand::GameSettings => menu_game_settings::game_settings_menu().await,
-        tui::MainCommand::ViewMapReadme => menu_view_readme::view_readme_menu().await,
-        tui::MainCommand::Config => menu_config::config_menu().await,
-        tui::MainCommand::Quit => Ok("Quitting".to_string()),
-        tui::MainCommand::Unknown => Ok("Unknown command".to_string()),
-    }
-}
+use crate::{db, runner};
 
 pub async fn get_active_profile_text() -> Result<String, eyre::Report> {
     if !db::database_exists().await {
