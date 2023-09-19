@@ -238,3 +238,21 @@ pub fn update_additional_arguments() -> Result<String, eyre::Error> {
         .green()
         .to_string())
 }
+
+pub fn reset() -> Result<String, eyre::Error> {
+    if inquire::Confirm::new("Are you sure you want to Reset your Play Settings?")
+        .with_default(false)
+        .prompt()
+        .unwrap()
+    {
+        let play_settings = db::get_play_settings()?;
+        let new_play_settings = data::PlaySettings {
+            id: play_settings.id,
+            ..Default::default()
+        };
+        db::save_play_settings(new_play_settings)?;
+        Ok("Successfully Reset Play Settings".green().to_string())
+    } else {
+        Ok("Reset Play Settings not confirmed.".to_string())
+    }
+}

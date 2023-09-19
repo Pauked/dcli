@@ -325,8 +325,7 @@ pub fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
 }
 
 pub fn list_engines() -> Result<String, eyre::Report> {
-    let engines = db::get_engines()
-        .wrap_err("Unable to generate Engine listing".to_string())?;
+    let engines = db::get_engines().wrap_err("Unable to generate Engine listing".to_string())?;
 
     let table = tabled::Table::new(engines)
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
@@ -336,8 +335,7 @@ pub fn list_engines() -> Result<String, eyre::Report> {
 }
 
 pub fn list_iwads() -> Result<String, eyre::Report> {
-    let iwads = db::get_iwads()
-        .wrap_err("Unable to iwad listing".to_string())?;
+    let iwads = db::get_iwads().wrap_err("Unable to iwad listing".to_string())?;
 
     let table = tabled::Table::new(iwads)
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
@@ -347,8 +345,7 @@ pub fn list_iwads() -> Result<String, eyre::Report> {
 }
 
 pub fn list_pwads() -> Result<String, eyre::Report> {
-    let pwads = db::get_pwads()
-        .wrap_err("Unable to iwad listing".to_string())?;
+    let pwads = db::get_pwads().wrap_err("Unable to iwad listing".to_string())?;
 
     let table = tabled::Table::new(pwads)
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
@@ -358,8 +355,8 @@ pub fn list_pwads() -> Result<String, eyre::Report> {
 }
 
 pub fn list_app_settings() -> Result<String, eyre::Report> {
-    let app_settings = db::get_app_settings_display()
-        .wrap_err("Unable to settings listing".to_string())?;
+    let app_settings =
+        db::get_app_settings_display().wrap_err("Unable to settings listing".to_string())?;
 
     let table = tabled::Table::new(vec![app_settings])
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))

@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use colored::Colorize;
-use log::debug;
+use log::error;
 use log::info;
 use strum_macros::Display;
 use strum_macros::EnumString;
@@ -45,6 +45,8 @@ pub enum MenuCommand {
     PlayLastProfile,
     #[strum(serialize = "Pick & Play Profile")]
     PickAndPlayProfile,
+    #[strum(serialize = "Pick & Play PWAD")]
+    PickAndPlayPwad,
     #[strum(serialize = "Map Editor >>")]
     MapEditor,
     #[strum(serialize = "Profiles >>")]
@@ -115,6 +117,8 @@ pub enum MenuCommand {
     Windowed,
     #[strum(serialize = "Additional Arguments")]
     AdditionalArguments,
+    #[strum(serialize = "Reset Play Settings")]
+    ResetPlaySettings,
 
     // Map Editor Menu
     #[strum(serialize = "Open from Active Profile PWAD")]
@@ -159,6 +163,7 @@ pub fn menu_prompt(menu_level: &MenuLevel) -> Result<MenuCommand, eyre::Report> 
                 MenuCommand::PlayActiveProfile.to_string(),
                 MenuCommand::PlayLastProfile.to_string(),
                 MenuCommand::PickAndPlayProfile.to_string(),
+                MenuCommand::PickAndPlayPwad.to_string(),
                 MenuCommand::PlaySettings.to_string(),
                 MenuCommand::Profiles.to_string(),
                 MenuCommand::MapEditor.to_string(),
@@ -252,6 +257,7 @@ pub fn menu_prompt(menu_level: &MenuLevel) -> Result<MenuCommand, eyre::Report> 
                     MenuCommand::AdditionalArguments.to_string(),
                     data::display_option_string(&play_settings.additional_arguments)
                 ),
+                MenuCommand::ResetPlaySettings.to_string(),
                 MenuCommand::Back.to_string(),
             ];
             (selections, "Play Settings".to_string())
@@ -349,8 +355,7 @@ pub fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
         match result {
             Ok(result) => info!("{}", result.green()),
             Err(err) => {
-                debug!("Error: {}", err);
-                info!("{}", err.to_string().red());
+                error!("Error: {:?}", err);
             }
         }
     }
@@ -362,6 +367,7 @@ pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Repor
         MenuCommand::PlayActiveProfile => menu_main::play_active_profile(),
         MenuCommand::PlayLastProfile => menu_main::play_last_profile(),
         MenuCommand::PickAndPlayProfile => menu_main::pick_and_play_profile(),
+        MenuCommand::PickAndPlayPwad => menu_main::pick_and_play_pwad(),
         MenuCommand::MapEditor => menu(MenuLevel::MapEditor),
         MenuCommand::Profiles => menu(MenuLevel::Profiles),
         MenuCommand::PlaySettings => menu(MenuLevel::GameSettings),
@@ -430,6 +436,7 @@ pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Repor
         MenuCommand::FullScreen => menu_play_settings::update_full_screen(),
         MenuCommand::Windowed => menu_play_settings::update_windowed(),
         MenuCommand::AdditionalArguments => menu_play_settings::update_additional_arguments(),
+        MenuCommand::ResetPlaySettings => menu_play_settings::reset(),
 
         // Map Editor Menu
         MenuCommand::OpenFromActiveProfile => menu_map_editor::open_from_active_profile(),

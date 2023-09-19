@@ -9,10 +9,37 @@ use eyre::Context;
 
 use crate::{constants, data, db, files};
 
-pub fn play(profile_id: i32, update_last_profile: bool) -> Result<String, eyre::Report> {
+pub fn play_from_profile(
+    profile_id: i32,
+    update_last_profile: bool,
+) -> Result<String, eyre::Report> {
+    // Get profile and run it
     let single_profile = db::get_profile_by_id(profile_id)?;
-    let engine = db::get_engine_by_id(single_profile.engine_id.unwrap())?;
-    let iwad = db::get_iwad_by_id(single_profile.iwad_id.unwrap())?;
+    let play_result = play_from_engine_iwad_and_pwad(
+        single_profile.engine_id.unwrap(),
+        single_profile.iwad_id.unwrap(),
+        single_profile.pwad_id,
+        single_profile.additional_arguments,
+    )?;
+
+    // Update last run profile
+    if update_last_profile {
+        let mut app_settings = db::get_app_settings()?;
+        app_settings.last_profile_id = Some(profile_id);
+        db::save_app_settings(app_settings)?;
+    }
+
+    Ok(play_result)
+}
+
+pub fn play_from_engine_iwad_and_pwad(
+    engine_id: i32,
+    iwad_id: i32,
+    pwad_id: Option<i32>,
+    additional_arguments: Option<String>,
+) -> Result<String, eyre::Report> {
+    let engine = db::get_engine_by_id(engine_id)?;
+    let iwad = db::get_iwad_by_id(iwad_id)?;
 
     // TODO: Refactor to be based off selected Doom Engine config (each engine may have different arguments for the same thing)
 
@@ -20,14 +47,13 @@ pub fn play(profile_id: i32, update_last_profile: bool) -> Result<String, eyre::
     let mut cmd = Command::new(&engine.path);
     cmd.arg("-iwad").arg(iwad.path);
 
-    if single_profile.pwad_id.is_some() {
-        let pwad = db::get_pwad_by_id(single_profile.pwad_id.unwrap())?;
+    if pwad_id.is_some() {
+        let pwad = db::get_pwad_by_id(pwad_id.unwrap())?;
         cmd.arg("-file").arg(&pwad.path);
     }
 
-    if single_profile.additional_arguments.is_some() {
-        let args: Vec<String> =
-            shlex::split(&single_profile.additional_arguments.unwrap()).unwrap_or_default();
+    if let Some(additional_arguments_unwrapped) = additional_arguments {
+        let args: Vec<String> = shlex::split(&additional_arguments_unwrapped).unwrap_or_default();
         for arg in args {
             cmd.arg(arg);
         }
@@ -90,8 +116,7 @@ pub fn play(profile_id: i32, update_last_profile: bool) -> Result<String, eyre::
 
     let display_args = get_display_args(&cmd);
     let run_message = format!(
-        "Profile '{}', Engine '{}', Args '{}'",
-        single_profile.name.green(),
+        "Engine '{}', Args '{}'",
         engine.path.magenta(),
         display_args.blue()
     );
@@ -102,16 +127,7 @@ pub fn play(profile_id: i32, update_last_profile: bool) -> Result<String, eyre::
         .spawn()
         .wrap_err(format!("Failed to run {}", run_message))?;
 
-    // Update last run profile
-    if update_last_profile {
-        let mut app_settings = db::get_app_settings()?;
-        app_settings.last_profile_id = Some(profile_id);
-        db::save_app_settings(app_settings)?;
-    }
-
-    // Confirm all good
-    // info!("Successfully opened {}", run_message);
-    inquire::Text::new("Press any key to continue...").prompt_skippable()?;
+    // inquire::Text::new("Press any key to continue...").prompt_skippable()?;
     Ok(format!("Successfully opened {}", run_message))
 }
 

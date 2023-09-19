@@ -73,8 +73,7 @@ pub fn set_profile_as_active(profile_id: i32) -> Result<String, eyre::Report> {
     {
         let mut app_settings = db::get_app_settings()?;
         app_settings.active_profile_id = Some(profile_id);
-        db::save_app_settings(app_settings)
-            .wrap_err("Failed to set Active profile")?;
+        db::save_app_settings(app_settings).wrap_err("Failed to set Active profile")?;
         return Ok("Successfully set profile as active".to_string());
     }
 
@@ -186,7 +185,10 @@ pub fn delete_profile() -> Result<String, eyre::Report> {
         .prompt()
         .unwrap()
         {
-            // TODO: Check if "active profile" and remove link if so
+            // Check if "active profile" and remove link if so
+            remove_profile_from_app_settings(profile.id)?;
+
+            // Now delete the profile
             db::delete_profile(profile.id)
                 .wrap_err(format!("Failed to delete Profile - '{}", profile))?;
             return Ok(format!("Successfully deleted Profile '{}'", profile));
@@ -220,8 +222,7 @@ pub fn set_active_profile() -> Result<String, eyre::Report> {
     match profile {
         Some(profile) => {
             app_settings.active_profile_id = Some(profile.id);
-            db::save_app_settings(app_settings)
-                .wrap_err("Failed to set Active Profile")?;
+            db::save_app_settings(app_settings).wrap_err("Failed to set Active Profile")?;
             Ok(format!("Marked Profile '{}' as Active", profile))
         }
         None => Ok("No changes made to setting Profile as Active".to_string()),
@@ -229,12 +230,36 @@ pub fn set_active_profile() -> Result<String, eyre::Report> {
 }
 
 pub fn list_profiles() -> Result<String, eyre::Report> {
-    let profiles = db::get_profile_display_list()
-        .wrap_err("Unable to profile listing".to_string())?;
+    let profiles =
+        db::get_profile_display_list().wrap_err("Unable to profile listing".to_string())?;
 
     let table = tabled::Table::new(profiles)
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
         .with(Style::modern())
         .to_string();
     Ok(table)
+}
+
+fn remove_profile_from_app_settings(profile_id: i32) -> Result<String, eyre::Report> {
+    // TODO: Make this "profile in use" check less ugly
+    let mut app_settings = db::get_app_settings()?;
+    let mut active_profile_tidied = false;
+    if let Some(active_profile_id) = app_settings.active_profile_id {
+        if active_profile_id == profile_id {
+            app_settings.active_profile_id = None;
+            active_profile_tidied = true;
+        }
+    };
+    let mut last_profile_tidied = false;
+    if let Some(last_profile_id) = app_settings.last_profile_id {
+        if last_profile_id == profile_id {
+            app_settings.last_profile_id = None;
+            last_profile_tidied = true;
+        }
+    }
+    if active_profile_tidied || last_profile_tidied {
+        db::save_app_settings(app_settings).wrap_err("Failed to remove Active Profile")?;
+    }
+
+    Ok("Successfully removed Profile from App Settings".to_string())
 }

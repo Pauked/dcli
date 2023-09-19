@@ -156,6 +156,7 @@ pub struct Profile {
 pub struct ProfileDisplay {
     #[tabled(skip)]
     pub id: i32,
+    #[tabled(rename = "Name")]
     pub name: String,
     #[tabled(skip)]
     pub engine_id: i32,

@@ -30,6 +30,7 @@
 [ ] Add --force option to reset and init so no prompts needed
 [ ] Option to delete PWADs (multi select?)
 [ ] Extend list of engines
+[ ] Colour code menu options
 
 ## Thoughts
 -
