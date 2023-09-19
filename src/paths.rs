@@ -123,7 +123,7 @@ pub fn find_files_with_extensions_in_folders(
         if let Ok(entry) = entry {
             if let Some(ext) = entry.path().extension() {
                 for extension in extensions.clone() {
-                    if ext.to_string_lossy() == extension {
+                    if ext.to_string_lossy().to_lowercase() == extension.to_lowercase() {
                         found_count += 1;
                         results.push(entry.path().display().to_string());
                     }

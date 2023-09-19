@@ -1,16 +1,16 @@
-# DCLI v0.1
+# DCLI v0.3
 
 ## TODO
 [ ] Track usage of options to generate a "most used options menu"
 [ ] Define a quick access menu
 [x] Support for additional arguments
 [x] Support for running a map editor
-[ ] Add --mapeditor and --mapeditorlast
+[x] Add --mapeditor and --mapeditorlast
 [x] Add "active" map editor to app settings
 [x] Make the selection of a PWAD optional!
 [x] Open PWAD readme in local text editor
 [x] Add "play settings" menu to be able to config -fastmonster, -nomonsters, etc, switched use for all runs
-[x] Add app settings automatically to play
+[x] Add play settings automatically to play
 [ ] Have a profile switch of "include play settings?"
 [/] Make menus less crashy if user aborts
 [x] Add a `--version` option to the CLI.
@@ -19,9 +19,17 @@
 [ ] Block deleting of Engine/IWAD/PWAD if linked in Profiles.
 [ ] Play, do file exists check on Engine/IWAD/PWAD (might have been moved/deleted after config)
 [ ] Write Readme in repo root
-[ ] Add PWAD/IWAD checking of files (read first few bytes to check file identifier)
+[X] Add PWAD/IWAD checking of files (read first few bytes to check file identifier)
 [x] Rename "Game Settings" to "Play Settings". Move to be uder Play options on Main Menu.
-[ ] Get Map Author(s) from map readme.
+[x] Get Map Author(s) from map readme.
+[ ] Support multiple PWADs in a profile.
+[ ] Set Default Engine
+[ ] Set Default IWAD
+[ ] Quick Play option that runs default engine, default IWAD, pick PWAD
+[ ] Rename "Active Map Editor" to "Default Map Editor"
+[ ] Add --force option to reset and init so no prompts needed
+[ ] Option to delete PWADs (multi select?)
+[ ] Extend list of engines
 
 ## Thoughts
 -

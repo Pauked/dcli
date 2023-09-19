@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, fs::File, io::Read};
 
 use crate::{data, doom_data, finder, paths};
 
@@ -118,6 +118,20 @@ pub fn get_internal_wad_type_from_file_name(
         "Unable to find internal wad type for file name '{}'",
         file_name
     )))
+}
+
+pub fn is_iwad(path: &str) -> Result<bool, eyre::Report> {
+    let path = Path::new(path);
+    let extension = path.extension().unwrap_or_default();
+
+    if extension.to_ascii_lowercase() == doom_data::EXT_WAD {
+        let mut file = File::open(path)?;
+        let mut identifier = [0u8; 4];
+        file.read_exact(&mut identifier)?;
+        return Ok(identifier == doom_data::IWAD_IDENTIFIER);
+    }
+
+    Ok(false)
 }
 
 // #[cfg(test)]

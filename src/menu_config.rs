@@ -189,17 +189,27 @@ pub fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
         )));
     }
 
+    // Double check it's an IWAD (it should be, it's coming from the hardcoded InternalWad list)
+    let mut confirmed_iwads: Vec<String> = vec![];
+    for iwad in iwads {
+        if !(files::is_iwad(&iwad)?) {
+            info!("Skipping non-IWAD file: {}", iwad);
+            continue;
+        }
+        confirmed_iwads.push(iwad);
+    }
+
     // Work out the indexes of what is already selected
     let db_iwads = db::get_iwads()?;
     let mut db_defaults = vec![];
-    for (index, iwad) in iwads.iter().enumerate() {
+    for (index, iwad) in confirmed_iwads.iter().enumerate() {
         if db_iwads.iter().any(|db| &db.path == iwad) {
             db_defaults.push(index);
         }
     }
 
     // TODO: Mark the IWADs that have been picked previously
-    let selections = inquire::MultiSelect::new("Pick the IWADs you want to save:", iwads)
+    let selections = inquire::MultiSelect::new("Pick the IWADs you want to save:", confirmed_iwads)
         .with_default(&db_defaults)
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
@@ -232,7 +242,8 @@ pub fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
 
                 // TODO: Check iwad doesn't exist
                 db::add_iwad(&iwad)?;
-                debug!("Added iwad: {:?}", iwad);
+                debug!("  IWAD: {:?}", iwad);
+                info!("Added IWAD: {:?}", iwad.internal_wad_type);
             }
         }
     }
@@ -280,6 +291,11 @@ pub fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
     }
 
     for pwad in pwads {
+        if files::is_iwad(&pwad)? {
+            debug!("Skipping IWAD file: {}", &pwad);
+            continue;
+        }
+
         let existing_pwad = db_pwads.iter().find(|e| e.path == pwad);
 
         match existing_pwad {
@@ -287,7 +303,7 @@ pub fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
                 debug!("PWAD already exists, no need to add: {}", pwad);
             }
             None => {
-                info!("Getting map name for PWAD: '{}'", pwad);
+                info!("Getting map title and author for PWAD: '{}'", pwad);
                 let (title, author) = files::get_details_from_readme(&pwad)?;
                 let pwad = data::Pwad {
                     id: 0,
@@ -297,13 +313,12 @@ pub fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
                 };
 
                 db::add_pwad(&pwad)?;
-                debug!("Added pwad: {:?}", pwad);
-                info!("Done - {}", pwad.title);
+                debug!("  PWAD {:?}", pwad);
+                info!("Added PWAD - {}", pwad.title);
             }
         }
     }
 
-    // FIXME: This is getting blanked by menu display...
     info!("{}", list_pwads()?);
 
     Ok(pwad_search_folder)
