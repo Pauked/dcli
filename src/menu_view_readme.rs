@@ -8,16 +8,14 @@ pub fn view_map_readme_from_pwad_id(pwad_id: i32) -> Result<String, eyre::Report
     runner::open_map_readme(&pwad.path)
 }
 
-pub fn view_from_active_profile() -> Result<String, eyre::Report> {
-    let pwad_id =
-        menu_common::get_pwad_id_from_from_active_profile("Cannot view Map Readme.")?;
+pub fn view_from_default_profile() -> Result<String, eyre::Report> {
+    let pwad_id = menu_common::get_pwad_id_from_from_default_profile("Cannot view Map Readme.")?;
 
     view_map_readme_from_pwad_id(pwad_id)
 }
 
 pub fn view_from_last_profile() -> Result<String, eyre::Report> {
-    let pwad_id =
-        menu_common::get_pwad_id_from_from_last_profile("Cannot view Map Readme.")?;
+    let pwad_id = menu_common::get_pwad_id_from_from_last_profile("Cannot view Map Readme.")?;
 
     view_map_readme_from_pwad_id(pwad_id)
 }

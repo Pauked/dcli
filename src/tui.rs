@@ -9,7 +9,7 @@ use strum_macros::EnumString;
 use crate::constants;
 use crate::data;
 use crate::db;
-use crate::menu_config;
+use crate::menu_app_settings;
 use crate::menu_main;
 use crate::menu_map_editor;
 use crate::menu_play_settings;
@@ -32,9 +32,10 @@ pub enum MenuLevel {
     GameSettings,
     MapEditor,
     ViewReadme,
-    Config,
-    ConfigList,
-    ConfigUpdate,
+    AppSettings,
+    AppSettingsDefaults,
+    AppSettingsList,
+    AppSettingsUpdate,
 }
 
 #[derive(Clone, Debug, PartialEq, EnumString, Display, sqlx::Type)]
@@ -46,8 +47,8 @@ pub enum MenuMode {
 #[derive(Debug, PartialEq, EnumString, Display)]
 pub enum MenuCommand {
     // Main Menu
-    #[strum(serialize = "Play Active Profile")]
-    PlayActiveProfile,
+    #[strum(serialize = "Play Default Profile")]
+    PlayDefaultProfile,
     #[strum(serialize = "Play Last Profile")]
     PlayLastProfile,
     #[strum(serialize = "Pick & Play Profile")]
@@ -62,8 +63,8 @@ pub enum MenuCommand {
     PlaySettings,
     #[strum(serialize = "View Map Readme >>")]
     ViewMapReadme,
-    #[strum(serialize = "Config App >>")]
-    Config,
+    #[strum(serialize = "App Settings >>")]
+    AppSettings,
 
     // Profile Menu
     #[strum(serialize = "New Profile")]
@@ -72,14 +73,20 @@ pub enum MenuCommand {
     EditProfile,
     #[strum(serialize = "Delete Profile")]
     DeleteProfile,
-    #[strum(serialize = "Set Active Profile")]
-    ActiveProfile,
+    #[strum(serialize = "Set Default Profile")]
+    SetDefaultProfile,
     #[strum(serialize = "List Profiles")]
     ListProfile,
 
-    // Config Menu
+    // App Settings Menu
     #[strum(serialize = "Menu Mode")]
     MenuMode,
+    #[strum(serialize = "Set Defaults >>")]
+    SetDefaults,
+    #[strum(serialize = "Set Default Engine")]
+    SetDefaultEngine,
+    #[strum(serialize = "Set Default Internal WAD")]
+    SetDefaultIwad,
     #[strum(serialize = "List Stored Data >>")]
     ListStoredData,
     #[strum(serialize = "List Engines")]
@@ -130,16 +137,16 @@ pub enum MenuCommand {
     ResetPlaySettings,
 
     // Map Editor Menu
-    #[strum(serialize = "Open from Active Profile PWAD")]
-    OpenFromActiveProfile,
+    #[strum(serialize = "Open from Default Profile PWAD")]
+    OpenFromDefaultProfile,
     #[strum(serialize = "Open from Last Profile PWAD")]
     OpenFromLastProfile,
     #[strum(serialize = "Open from Pick Profile")]
     OpenFromPickProfile,
     #[strum(serialize = "Open from Pick PWAD")]
     OpenFromPickPwad,
-    #[strum(serialize = "Set Active Map Editor")]
-    ActiveMapEditor,
+    #[strum(serialize = "Set Default Map Editor")]
+    SetDefaultMapEditor,
     #[strum(serialize = "List Map Editors")]
     ListMapEditor,
     #[strum(serialize = "Update Map Editors")]
@@ -148,8 +155,8 @@ pub enum MenuCommand {
     DeleteMapEditor,
 
     // View Readme Menu
-    #[strum(serialize = "View from Active Profile")]
-    ViewFromActiveProfile,
+    #[strum(serialize = "View from Default Profile")]
+    ViewFromDefaultProfile,
     #[strum(serialize = "View from Last Profile")]
     ViewFromLastProfile,
     #[strum(serialize = "View from Pick Profile")]
@@ -172,7 +179,10 @@ pub fn menu_prompt(
     let (selections, menu_name, help_message) = match menu_level {
         MenuLevel::Main => {
             let selections = vec![
-                (MenuCommand::PlayActiveProfile.to_string(), MenuMode::Simple),
+                (
+                    MenuCommand::PlayDefaultProfile.to_string(),
+                    MenuMode::Simple,
+                ),
                 (MenuCommand::PlayLastProfile.to_string(), MenuMode::Full),
                 (MenuCommand::PickAndPlayProfile.to_string(), MenuMode::Full),
                 (MenuCommand::PickAndPlayPwad.to_string(), MenuMode::Simple),
@@ -180,7 +190,7 @@ pub fn menu_prompt(
                 (MenuCommand::Profiles.to_string(), MenuMode::Simple),
                 (MenuCommand::MapEditor.to_string(), MenuMode::Full),
                 (MenuCommand::ViewMapReadme.to_string(), MenuMode::Full),
-                (MenuCommand::Config.to_string(), MenuMode::Simple),
+                (MenuCommand::AppSettings.to_string(), MenuMode::Simple),
                 (MenuCommand::Quit.to_string(), MenuMode::Simple),
             ];
             (
@@ -193,7 +203,7 @@ pub fn menu_prompt(
             let selections = vec![
                 (MenuCommand::NewProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::EditProfile.to_string(), MenuMode::Simple),
-                (MenuCommand::ActiveProfile.to_string(), MenuMode::Simple),
+                (MenuCommand::SetDefaultProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::ListProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::DeleteProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),
@@ -327,13 +337,13 @@ pub fn menu_prompt(
         MenuLevel::MapEditor => {
             let selections = vec![
                 (
-                    MenuCommand::OpenFromActiveProfile.to_string(),
+                    MenuCommand::OpenFromDefaultProfile.to_string(),
                     MenuMode::Full,
                 ),
                 (MenuCommand::OpenFromLastProfile.to_string(), MenuMode::Full),
                 (MenuCommand::OpenFromPickProfile.to_string(), MenuMode::Full),
                 (MenuCommand::OpenFromPickPwad.to_string(), MenuMode::Full),
-                (MenuCommand::ActiveMapEditor.to_string(), MenuMode::Full),
+                (MenuCommand::SetDefaultMapEditor.to_string(), MenuMode::Full),
                 (MenuCommand::UpdateMapEditor.to_string(), MenuMode::Full),
                 (MenuCommand::DeleteMapEditor.to_string(), MenuMode::Full),
                 (MenuCommand::ListMapEditor.to_string(), MenuMode::Full),
@@ -348,7 +358,7 @@ pub fn menu_prompt(
         MenuLevel::ViewReadme => {
             let selections = vec![
                 (
-                    MenuCommand::ViewFromActiveProfile.to_string(),
+                    MenuCommand::ViewFromDefaultProfile.to_string(),
                     MenuMode::Full,
                 ),
                 (MenuCommand::ViewFromLastProfile.to_string(), MenuMode::Full),
@@ -362,13 +372,14 @@ pub fn menu_prompt(
                 "Quickly view the Readme for a PWAD".to_string(),
             )
         }
-        MenuLevel::Config => {
+        MenuLevel::AppSettings => {
             let app_settings = db::get_app_settings()?;
             let selections = vec![
                 (
                     format!("{} ({})", MenuCommand::MenuMode, app_settings.menu_mode,),
                     MenuMode::Simple,
                 ),
+                (MenuCommand::SetDefaults.to_string(), MenuMode::Simple),
                 (MenuCommand::UpdateStoredData.to_string(), MenuMode::Simple),
                 (MenuCommand::ListStoredData.to_string(), MenuMode::Simple),
                 (MenuCommand::Init.to_string(), MenuMode::Simple),
@@ -377,11 +388,25 @@ pub fn menu_prompt(
             ];
             (
                 selections,
-                "Config".to_string(),
+                "App Settings".to_string(),
                 "Tinker with the settings behind the app".to_string(),
             )
         }
-        MenuLevel::ConfigList => {
+        MenuLevel::AppSettingsDefaults => {
+            let selections = vec![
+                (MenuCommand::SetDefaultProfile.to_string(), MenuMode::Simple),
+                (MenuCommand::SetDefaultEngine.to_string(), MenuMode::Simple),
+                (MenuCommand::SetDefaultIwad.to_string(), MenuMode::Simple),
+                (MenuCommand::SetDefaultMapEditor.to_string(), MenuMode::Full),
+                (MenuCommand::Back.to_string(), MenuMode::Simple),
+            ];
+            (
+                selections,
+                "App Settings / Defaults".to_string(),
+                "Defaults to use for Profiles, Pick and Play, Map Editor, etc".to_string(),
+            )
+        }
+        MenuLevel::AppSettingsList => {
             let selections = vec![
                 (MenuCommand::ListEngines.to_string(), MenuMode::Simple),
                 (MenuCommand::ListIwads.to_string(), MenuMode::Simple),
@@ -392,11 +417,11 @@ pub fn menu_prompt(
             ];
             (
                 selections,
-                "Config / List".to_string(),
+                "App Settings / List".to_string(),
                 "List the data stored in the local Sqlite database".to_string(),
             )
         }
-        MenuLevel::ConfigUpdate => {
+        MenuLevel::AppSettingsUpdate => {
             let selections = vec![
                 (MenuCommand::UpdateEngines.to_string(), MenuMode::Simple),
                 (MenuCommand::UpdateIwads.to_string(), MenuMode::Simple),
@@ -406,7 +431,7 @@ pub fn menu_prompt(
             ];
             (
                 selections,
-                "Config / Update".to_string(),
+                "App Settings / Update".to_string(),
                 "Have fun! Don't break anything".to_string(),
             )
         }
@@ -453,7 +478,7 @@ pub fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
         //info!("({} menu mode)", app_settings.menu_mode);
         if let (MenuLevel::Main, MenuMode::Full) = (&menu_level, &app_settings.menu_mode) {
             info!("{}", "Profiles".bright_white());
-            info!("  {}", menu_main::get_active_profile_text()?);
+            info!("  {}", menu_main::get_default_profile_text()?);
             info!("  {}", menu_main::get_last_profile_text()?);
         }
 
@@ -480,7 +505,7 @@ pub fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
 pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Report> {
     match menu_command {
         // Main Menu
-        MenuCommand::PlayActiveProfile => menu_main::play_active_profile(),
+        MenuCommand::PlayDefaultProfile => menu_main::play_default_profile(),
         MenuCommand::PlayLastProfile => menu_main::play_last_profile(),
         MenuCommand::PickAndPlayProfile => menu_main::pick_and_play_profile(),
         MenuCommand::PickAndPlayPwad => menu_main::pick_and_play_pwad(),
@@ -488,27 +513,30 @@ pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Repor
         MenuCommand::Profiles => menu(MenuLevel::Profiles),
         MenuCommand::PlaySettings => menu(MenuLevel::GameSettings),
         MenuCommand::ViewMapReadme => menu(MenuLevel::ViewReadme),
-        MenuCommand::Config => menu(MenuLevel::Config),
+        MenuCommand::AppSettings => menu(MenuLevel::AppSettings),
 
         // Profile Menu
         MenuCommand::NewProfile => menu_profiles::new_profile(),
         MenuCommand::EditProfile => menu_profiles::edit_profile(),
         MenuCommand::DeleteProfile => menu_profiles::delete_profile(),
-        MenuCommand::ActiveProfile => menu_profiles::set_active_profile(),
+        MenuCommand::SetDefaultProfile => menu_profiles::set_default_profile(),
         MenuCommand::ListProfile => menu_profiles::list_profiles(),
 
-        // Config Menu
-        MenuCommand::MenuMode => menu_config::update_menu_mode(),
-        MenuCommand::ListStoredData => menu(MenuLevel::ConfigList),
-        MenuCommand::ListEngines => menu_config::list_engines(),
-        MenuCommand::ListIwads => menu_config::list_iwads(),
-        MenuCommand::ListPwads => menu_config::list_pwads(),
-        MenuCommand::ListAppSettings => menu_config::list_app_settings(),
-        MenuCommand::Init => menu_config::init(),
-        MenuCommand::UpdateStoredData => menu(MenuLevel::ConfigUpdate),
+        // App Settings Menu
+        MenuCommand::MenuMode => menu_app_settings::update_menu_mode(),
+        MenuCommand::SetDefaults => menu(MenuLevel::AppSettingsDefaults),
+        MenuCommand::SetDefaultEngine => menu_app_settings::set_default_engine(),
+        MenuCommand::SetDefaultIwad => menu_app_settings::set_default_iwad(),
+        MenuCommand::ListStoredData => menu(MenuLevel::AppSettingsList),
+        MenuCommand::ListEngines => menu_app_settings::list_engines(),
+        MenuCommand::ListIwads => menu_app_settings::list_iwads(),
+        MenuCommand::ListPwads => menu_app_settings::list_pwads(),
+        MenuCommand::ListAppSettings => menu_app_settings::list_app_settings(),
+        MenuCommand::Init => menu_app_settings::init(),
+        MenuCommand::UpdateStoredData => menu(MenuLevel::AppSettingsUpdate),
         MenuCommand::UpdateEngines => {
             let mut app_settings = db::get_app_settings()?;
-            let folder = menu_config::init_engines(
+            let folder = menu_app_settings::init_engines(
                 &app_settings.exe_search_folder.unwrap_or("".to_string()),
             )?;
             app_settings.exe_search_folder = Some(folder);
@@ -518,7 +546,7 @@ pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Repor
         }
         MenuCommand::UpdateIwads => {
             let mut app_settings = db::get_app_settings()?;
-            let folder = menu_config::init_iwads(
+            let folder = menu_app_settings::init_iwads(
                 &app_settings.iwad_search_folder.unwrap_or("".to_string()),
             )?;
             app_settings.iwad_search_folder = Some(folder);
@@ -528,7 +556,7 @@ pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Repor
         }
         MenuCommand::UpdatePwads => {
             let mut app_settings = db::get_app_settings()?;
-            let folder = menu_config::init_pwads(
+            let folder = menu_app_settings::init_pwads(
                 &app_settings.pwad_search_folder.unwrap_or("".to_string()),
             )?;
             app_settings.pwad_search_folder = Some(folder);
@@ -536,7 +564,7 @@ pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Repor
             inquire::Text::new("Press any key to continue...").prompt_skippable()?;
             Ok("Successfully updated PWADs".to_string())
         }
-        MenuCommand::Reset => menu_config::reset(false),
+        MenuCommand::Reset => menu_app_settings::reset(false),
 
         // Play Settings Menu
         MenuCommand::CompLevel => menu_play_settings::update_comp_level(),
@@ -556,17 +584,17 @@ pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Repor
         MenuCommand::ResetPlaySettings => menu_play_settings::reset(),
 
         // Map Editor Menu
-        MenuCommand::OpenFromActiveProfile => menu_map_editor::open_from_active_profile(),
+        MenuCommand::OpenFromDefaultProfile => menu_map_editor::open_from_default_profile(),
         MenuCommand::OpenFromLastProfile => menu_map_editor::open_from_last_profile(),
         MenuCommand::OpenFromPickProfile => menu_map_editor::open_from_pick_profile(),
         MenuCommand::OpenFromPickPwad => menu_map_editor::open_from_pick_pwad(),
-        MenuCommand::ActiveMapEditor => menu_map_editor::set_active_map_editor(),
+        MenuCommand::SetDefaultMapEditor => menu_map_editor::set_default_map_editor(),
         MenuCommand::ListMapEditor => menu_map_editor::list_map_editors(),
         MenuCommand::UpdateMapEditor => menu_map_editor::update_map_editors(),
         MenuCommand::DeleteMapEditor => menu_map_editor::delete_map_editor(),
 
         // View Readme Menu
-        MenuCommand::ViewFromActiveProfile => menu_view_readme::view_from_active_profile(),
+        MenuCommand::ViewFromDefaultProfile => menu_view_readme::view_from_default_profile(),
         MenuCommand::ViewFromLastProfile => menu_view_readme::view_from_last_profile(),
         MenuCommand::ViewFromPickProfile => menu_view_readme::view_from_pick_profile(),
         MenuCommand::ViewFromPickPwad => menu_view_readme::view_from_pick_pwad(),
@@ -582,9 +610,9 @@ pub fn convert_arg_to_menu_command(arg: &str) -> MenuCommand {
     match arg {
         ARG_INIT => MenuCommand::Init,
         ARG_RESET => MenuCommand::Reset,
-        ARG_PLAY => MenuCommand::PlayActiveProfile,
+        ARG_PLAY => MenuCommand::PlayDefaultProfile,
         ARG_PLAY_LAST => MenuCommand::PlayLastProfile,
-        ARG_MAP_EDITOR => MenuCommand::OpenFromActiveProfile,
+        ARG_MAP_EDITOR => MenuCommand::OpenFromDefaultProfile,
         ARG_MAP_EDITOR_LAST => MenuCommand::OpenFromLastProfile,
         _ => MenuCommand::Ignore,
     }

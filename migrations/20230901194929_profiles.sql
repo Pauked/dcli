@@ -40,17 +40,21 @@ CREATE TABLE IF NOT EXISTS profiles (
 );
 CREATE TABLE IF NOT EXISTS app_settings (
     id INTEGER PRIMARY KEY NOT NULL,
-    active_profile_id INTEGER NULL,
+    default_profile_id INTEGER NULL,
     last_profile_id INTEGER NULL,
-    active_map_editor_id INTEGER NULL,
+    default_engine_id INTEGER NULL,
+    default_iwad_id INTEGER NULL,
+    default_map_editor_id INTEGER NULL,
     exe_search_folder TEXT NULL,
     iwad_search_folder TEXT NULL,
     pwad_search_folder TEXT NULL,
     map_editor_search_folder TEXT NULL,
     menu_mode TEXT NOT NULL,
-    FOREIGN KEY (active_profile_id) REFERENCES profiles (id),
+    FOREIGN KEY (default_profile_id) REFERENCES profiles (id),
     FOREIGN KEY (last_profile_id) REFERENCES profiles (id),
-    FOREIGN KEY (active_map_editor_id) REFERENCES map_editors (id)
+    FOREIGN KEY (default_map_editor_id) REFERENCES map_editors (id),
+    FOREIGN KEY (default_engine_id) REFERENCES engines (id),
+    FOREIGN KEY (default_iwad_id) REFERENCES iwads (id)
 );
 CREATE TABLE IF NOT EXISTS play_settings (
     id INTEGER PRIMARY KEY NOT NULL,

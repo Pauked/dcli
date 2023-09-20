@@ -2,27 +2,37 @@ use colored::Colorize;
 use eyre::Context;
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
-use crate::{data, db, tui, menu_common};
+use crate::{data, db, menu_common, tui};
 
 pub fn new_profile() -> Result<String, eyre::Report> {
     let engines = db::get_engines()?;
     if engines.is_empty() {
-        return Ok("There are no Engines to select. Please run 'init'."
+        return Ok("There are no Engines to select. Please run 'init'"
             .red()
             .to_string());
     }
     let iwads = db::get_iwads()?;
     if iwads.is_empty() {
-        return Ok("There are no IWADs to select. Please run 'init."
+        return Ok("There are no IWADs to select. Please run 'init"
             .red()
             .to_string());
     }
     let pwads = db::get_pwads()?;
     if pwads.is_empty() {
-        return Ok("There are no PWADs to select. Please run 'init'."
+        return Ok("There are no PWADs to select. Please run 'init'"
             .red()
             .to_string());
     }
+
+    let app_settings = db::get_app_settings()?;
+    let engine_starting_cursor = match app_settings.default_engine_id {
+        Some(ref s) => engines.iter().position(|x| x.id == *s).unwrap(),
+        None => 0,
+    };
+    let iwad_starting_cursor = match app_settings.default_iwad_id {
+        Some(ref s) => iwads.iter().position(|x| x.id == *s).unwrap(),
+        None => 0,
+    };
 
     // TODO: Validate if profile_name already exists
     let profile_name = inquire::Text::new("Enter a name for your Profile:")
@@ -30,10 +40,12 @@ pub fn new_profile() -> Result<String, eyre::Report> {
         .prompt()?;
 
     let engine_selection = inquire::Select::new("Pick the Engine you want to use:", engines)
+        .with_starting_cursor(engine_starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
     let iwad_selection = inquire::Select::new("Pick the IWAD you want to use:", iwads)
+        .with_starting_cursor(iwad_starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
@@ -61,24 +73,24 @@ pub fn new_profile() -> Result<String, eyre::Report> {
     };
     let add_result = db::add_profile(profile)?;
     let new_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
-    set_profile_as_active(new_profile_id)?;
+    set_profile_as_default(new_profile_id)?;
 
     Ok("Successfully created a new Profile".to_string())
 }
 
-pub fn set_profile_as_active(profile_id: i32) -> Result<String, eyre::Report> {
-    if inquire::Confirm::new("Would you like to set this as your Active Profile?")
+pub fn set_profile_as_default(profile_id: i32) -> Result<String, eyre::Report> {
+    if inquire::Confirm::new("Would you like to set this as your Default Profile?")
         .with_default(false)
         .prompt()
         .unwrap()
     {
         let mut app_settings = db::get_app_settings()?;
-        app_settings.active_profile_id = Some(profile_id);
-        db::save_app_settings(app_settings).wrap_err("Failed to set Active profile")?;
-        return Ok("Successfully set profile as active".to_string());
+        app_settings.default_profile_id = Some(profile_id);
+        db::save_app_settings(app_settings).wrap_err("Failed to set Default profile")?;
+        return Ok("Successfully set Profile as Default".to_string());
     }
 
-    Ok("No changes made to setting profile as active".to_string())
+    Ok("No changes made to setting Profile as Default".to_string())
 }
 
 pub fn edit_profile() -> Result<String, eyre::Report> {
@@ -88,19 +100,19 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
     }
     let engines = db::get_engines()?;
     if engines.is_empty() {
-        return Ok("There are no Engines to select. Please run 'init'."
+        return Ok("There are no Engines to select. Please run 'init'"
             .red()
             .to_string());
     }
     let iwads = db::get_iwads()?;
     if iwads.is_empty() {
-        return Ok("There are no IWADs to select. Please run 'init."
+        return Ok("There are no IWADs to select. Please run 'init"
             .red()
             .to_string());
     }
     let pwads = db::get_pwads()?;
     if pwads.is_empty() {
-        return Ok("There are no PWADs to select. Please run 'init'."
+        return Ok("There are no PWADs to select. Please run 'init'"
             .red()
             .to_string());
     }
@@ -209,7 +221,7 @@ pub fn delete_profile() -> Result<String, eyre::Report> {
         .prompt()
         .unwrap()
         {
-            // Check if "active profile" and remove link if so
+            // Check if "Default Profile" and remove link if so
             remove_profile_from_app_settings(profile.id)?;
 
             // Now delete the profile
@@ -222,34 +234,34 @@ pub fn delete_profile() -> Result<String, eyre::Report> {
     Ok("Cancelled Profile deletion.".yellow().to_string())
 }
 
-pub fn set_active_profile() -> Result<String, eyre::Report> {
+pub fn set_default_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
         return Ok(
-            "Cannot set Active Profile. There are no Profiles found. Please create one."
+            "Cannot set Default Profile. There are no Profiles found. Please create one."
                 .red()
                 .to_string(),
         );
     }
 
-    // Try to get the current active profile
     let mut app_settings = db::get_app_settings()?;
-    let starting_cursor = match app_settings.active_profile_id {
+    let starting_cursor = match app_settings.default_profile_id {
         Some(ref s) => profile_list.iter().position(|x| x.id == *s).unwrap(),
         None => 0,
     };
 
-    let profile = inquire::Select::new("Pick the Profile to mark as Active:", profile_list)
+    let profile = inquire::Select::new("Pick the Profile to mark as Default:", profile_list)
         .with_starting_cursor(starting_cursor)
+        .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt_skippable()?;
 
     match profile {
         Some(profile) => {
-            app_settings.active_profile_id = Some(profile.id);
-            db::save_app_settings(app_settings).wrap_err("Failed to set Active Profile")?;
-            Ok(format!("Marked Profile '{}' as Active", profile))
+            app_settings.default_profile_id = Some(profile.id);
+            db::save_app_settings(app_settings).wrap_err("Failed to set Default Profile")?;
+            Ok(format!("Marked Profile '{}' as Default", profile))
         }
-        None => Ok("No changes made to setting Profile as Active".to_string()),
+        None => Ok("No changes made to setting Profile as Default".to_string()),
     }
 }
 
@@ -267,11 +279,11 @@ pub fn list_profiles() -> Result<String, eyre::Report> {
 fn remove_profile_from_app_settings(profile_id: i32) -> Result<String, eyre::Report> {
     // TODO: Make this "profile in use" check less ugly
     let mut app_settings = db::get_app_settings()?;
-    let mut active_profile_tidied = false;
-    if let Some(active_profile_id) = app_settings.active_profile_id {
-        if active_profile_id == profile_id {
-            app_settings.active_profile_id = None;
-            active_profile_tidied = true;
+    let mut default_profile_tidied = false;
+    if let Some(default_profile_id) = app_settings.default_profile_id {
+        if default_profile_id == profile_id {
+            app_settings.default_profile_id = None;
+            default_profile_tidied = true;
         }
     };
     let mut last_profile_tidied = false;
@@ -281,8 +293,8 @@ fn remove_profile_from_app_settings(profile_id: i32) -> Result<String, eyre::Rep
             last_profile_tidied = true;
         }
     }
-    if active_profile_tidied || last_profile_tidied {
-        db::save_app_settings(app_settings).wrap_err("Failed to remove Active Profile")?;
+    if default_profile_tidied || last_profile_tidied {
+        db::save_app_settings(app_settings).wrap_err("Failed to remove Default Profile")?;
     }
 
     Ok("Successfully removed Profile from App Settings".to_string())

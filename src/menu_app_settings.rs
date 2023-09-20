@@ -395,3 +395,65 @@ pub fn reset(force: bool) -> Result<String, eyre::Report> {
         Ok("Database reset not confirmed.".to_string())
     }
 }
+
+pub fn set_default_engine() -> Result<String, eyre::Report> {
+    let engine_list = db::get_engines()?;
+    if engine_list.is_empty() {
+        return Ok(
+            "Cannot set Default Engine. There are no Engines found. Please add one."
+                .red()
+                .to_string(),
+        );
+    }
+
+    let mut app_settings = db::get_app_settings()?;
+    let starting_cursor = match app_settings.default_engine_id {
+        Some(ref s) => engine_list.iter().position(|x| x.id == *s).unwrap(),
+        None => 0,
+    };
+
+    let engine = inquire::Select::new("Pick the Engine to mark as Default:", engine_list)
+        .with_starting_cursor(starting_cursor)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt_skippable()?;
+
+    match engine {
+        Some(engine) => {
+            app_settings.default_engine_id = Some(engine.id);
+            db::save_app_settings(app_settings).wrap_err("Failed to set Default Engine")?;
+            Ok(format!("Marked Engine '{}' as Default", engine))
+        }
+        None => Ok("No changes made to setting Engine as Default".to_string()),
+    }
+}
+
+pub fn set_default_iwad() -> Result<String, eyre::Report> {
+    let iwad_list = db::get_iwads()?;
+    if iwad_list.is_empty() {
+        return Ok(
+            "Cannot set Default IWAD. There are no IWADs found. Please add one."
+                .red()
+                .to_string(),
+        );
+    }
+
+    let mut app_settings = db::get_app_settings()?;
+    let starting_cursor = match app_settings.default_iwad_id {
+        Some(ref s) => iwad_list.iter().position(|x| x.id == *s).unwrap(),
+        None => 0,
+    };
+
+    let iwad = inquire::Select::new("Pick the IWAD to mark as Default:", iwad_list)
+        .with_starting_cursor(starting_cursor)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt_skippable()?;
+
+    match iwad {
+        Some(iwad) => {
+            app_settings.default_iwad_id = Some(iwad.id);
+            db::save_app_settings(app_settings).wrap_err("Failed to set Default IWAD")?;
+            Ok(format!("Marked IWAD '{}' as Default", iwad))
+        }
+        None => Ok("No changes made to setting IWAD as Default".to_string()),
+    }
+}

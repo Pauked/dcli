@@ -1,8 +1,6 @@
 # DCLI v0.3
 
 ## TODO
-[ ] Track usage of options to generate a "most used options menu"
-[ ] Define a quick access menu
 [x] Support for additional arguments
 [x] Support for running a map editor
 [x] Add --mapeditor and --mapeditorlast
@@ -15,23 +13,28 @@
 [/] Make menus less crashy if user aborts
 [x] Add a `--version` option to the CLI.
 [ ] Add a `--help` option to the CLI.
-[ ] Remember last position in a given menu!
 [ ] Block deleting of Engine/IWAD/PWAD if linked in Profiles.
-[ ] Play, do file exists check on Engine/IWAD/PWAD (might have been moved/deleted after config)
+[x] Play, do file exists check on Engine/IWAD/PWAD (might have been moved/deleted after config)
 [ ] Write Readme in repo root
-[X] Add PWAD/IWAD checking of files (read first few bytes to check file identifier)
+[x] Add PWAD/IWAD checking of files (read first few bytes to check file identifier)
 [x] Rename "Game Settings" to "Play Settings". Move to be uder Play options on Main Menu.
+[x] Rename "Config App" to "App Settings"
 [x] Get Map Author(s) from map readme.
 [x] Support multiple PWADs in a profile.
-[ ] Set Default Engine
-[ ] Set Default IWAD
-[/] Quick Play option that runs default engine (if set), default IWAD (if set), pick PWAD
-[ ] Rename "Active Map Editor" to "Default Map Editor"
+[x] Set Default Engine
+[x] Set Default IWAD
+[x] Quick Play option that runs default engine (if set), default IWAD (if set), pick PWAD
+[x] Rename "Active Profile/Map Editor" to "Default Profle/Map Editor"
 [ ] Add --force option to reset and init so no prompts needed
 [ ] Option to delete PWADs (multi select?)
-[ ] Extend list of engines
-[ ] Colour code menu options
+[ ] Extend hardcoded list of engines
 [x] Simple menu mode
+
+## TODO Nice to haves
+[ ] Remember last position in a given menu!
+[ ] Colour code menu options
+[ ] Define a quick access menu
+[ ] Track usage of options to generate a "most used options menu"
 
 ## Thoughts
 -

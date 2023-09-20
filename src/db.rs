@@ -279,17 +279,19 @@ fn add_app_settings(
         let db = get_db().await;
 
         sqlx::query(
-            "INSERT INTO app_settings (active_profile_id, last_profile_id, exe_search_folder,
-                iwad_search_folder, pwad_search_folder, map_editor_search_folder, active_map_editor_id,
-                menu_mode) VALUES (?,?,?,?,?,?,?,?)",
+            "INSERT INTO app_settings (default_profile_id, last_profile_id, default_engine_id,
+                default_iwad_id, default_map_editor_id, exe_search_folder, iwad_search_folder,
+                pwad_search_folder, map_editor_search_folder, menu_mode) VALUES (?,?,?,?,?,?,?,?,?,?)",
         )
-        .bind(app_settings.active_profile_id)
+        .bind(app_settings.default_profile_id)
         .bind(app_settings.last_profile_id)
+        .bind(app_settings.default_engine_id)
+        .bind(app_settings.default_iwad_id)
+        .bind(app_settings.default_map_editor_id)
         .bind(&app_settings.exe_search_folder)
         .bind(&app_settings.iwad_search_folder)
         .bind(&app_settings.pwad_search_folder)
         .bind(&app_settings.map_editor_search_folder)
-        .bind(app_settings.active_map_editor_id)
         .bind(&app_settings.menu_mode)
         .execute(&db)
         .await
@@ -304,22 +306,26 @@ fn update_app_settings(
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("UPDATE app_settings SET active_profile_id = $1, last_profile_id = $2, exe_search_folder = $3,
-        iwad_search_folder = $4, pwad_search_folder = $5, map_editor_search_folder = $6, active_map_editor_id = $7,
-        menu_mode = $8 WHERE id = $9 COLLATE NOCASE")
-            .bind(app_settings.active_profile_id)
-            .bind(app_settings.last_profile_id)
-            .bind(&app_settings.exe_search_folder)
-            .bind(&app_settings.iwad_search_folder)
-            .bind(&app_settings.pwad_search_folder)
-            .bind(&app_settings.map_editor_search_folder)
-            .bind(app_settings.active_map_editor_id)
-            .bind(&app_settings.menu_mode)            .bind(app_settings.id)
-            .execute(&db)
-            .await
-            .wrap_err(format!(
-                "Failed to update app settings '{:?}", app_settings
-            ))
+        sqlx::query(
+            "UPDATE app_settings SET default_profile_id = $1, last_profile_id = $2,
+        default_engine_id = $3, default_iwad_id = $4, default_map_editor_id = $5,
+        exe_search_folder = $6, iwad_search_folder = $7, pwad_search_folder = $8,
+        map_editor_search_folder = $9, menu_mode = $10 WHERE id = $11 COLLATE NOCASE",
+        )
+        .bind(app_settings.default_profile_id)
+        .bind(app_settings.last_profile_id)
+        .bind(app_settings.default_engine_id)
+        .bind(app_settings.default_iwad_id)
+        .bind(app_settings.default_map_editor_id)
+        .bind(&app_settings.exe_search_folder)
+        .bind(&app_settings.iwad_search_folder)
+        .bind(&app_settings.pwad_search_folder)
+        .bind(&app_settings.map_editor_search_folder)
+        .bind(&app_settings.menu_mode)
+        .bind(app_settings.id)
+        .execute(&db)
+        .await
+        .wrap_err(format!("Failed to update app settings '{:?}", app_settings))
     })
 }
 
@@ -342,7 +348,7 @@ pub fn get_app_settings() -> Result<data::AppSettings, eyre::Report> {
 
 pub fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre::Report> {
     let app_settings = get_app_settings()?;
-    let active_profile: String = match app_settings.active_profile_id {
+    let default_profile: String = match app_settings.default_profile_id {
         Some(id) => {
             let profile = get_profile_display_by_id(id)?;
             profile.to_string()
@@ -356,7 +362,21 @@ pub fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre::Repo
         }
         None => constants::DEFAULT_NOT_SET.to_string(),
     };
-    let active_map_editor = match app_settings.active_map_editor_id {
+    let default_engine = match app_settings.default_engine_id {
+        Some(id) => {
+            let engine = get_engine_by_id(id)?;
+            engine.to_string()
+        }
+        None => constants::DEFAULT_NOT_SET.to_string(),
+    };
+    let default_iwad = match app_settings.default_iwad_id {
+        Some(id) => {
+            let iwad = get_iwad_by_id(id)?;
+            iwad.to_string()
+        }
+        None => constants::DEFAULT_NOT_SET.to_string(),
+    };
+    let default_map_editor = match app_settings.default_map_editor_id {
         Some(id) => {
             let map_editor = get_map_editor_by_id(id)?;
             map_editor.to_string()
@@ -377,9 +397,11 @@ pub fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre::Repo
         .unwrap_or(constants::DEFAULT_NOT_SET.to_string());
 
     Ok(data::AppSettingsDisplay {
-        active_profile,
+        default_profile,
         last_profile,
-        active_map_editor,
+        default_engine,
+        default_iwad,
+        default_map_editor,
         exe_search_folder,
         iwad_search_folder,
         pwad_search_folder,

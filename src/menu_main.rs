@@ -1,39 +1,42 @@
 use color_eyre::{
     eyre::{self},
+    owo_colors::OwoColorize,
     Result,
 };
 use colored::Colorize;
+use eyre::Context;
+use log::info;
 use uuid::Uuid;
 
 use crate::{data, db, paths, runner, tui};
 
-pub fn get_active_profile_text() -> Result<String, eyre::Report> {
+pub fn get_default_profile_text() -> Result<String, eyre::Report> {
     if !db::database_exists() {
-        return Ok("No database found. Please run 'init'.".red().to_string());
+        return Ok("No database found. Please run 'init'".red().to_string());
     }
 
     if db::is_empty_app_settings_table()? {
-        return Ok("No settings configured. Please run 'init'."
+        return Ok("No settings configured. Please run 'init'"
             .red()
             .to_string());
     }
 
     let app_settings = db::get_app_settings()?;
 
-    if app_settings.active_profile_id.is_none() {
-        return Ok(format!("Active - {}", "Please set one".yellow()));
+    if app_settings.default_profile_id.is_none() {
+        return Ok(format!("Default - {}", "Please set one".yellow()));
     }
 
-    let profile_display = db::get_profile_display_by_id(app_settings.active_profile_id.unwrap())?;
+    let profile_display = db::get_profile_display_by_id(app_settings.default_profile_id.unwrap())?;
     Ok(format!(
-        "Active - {}",
+        "Default - {}",
         profile_display.to_string().green().bold()
     ))
 }
 
 pub fn get_last_profile_text() -> Result<String, eyre::Report> {
     if db::is_empty_app_settings_table()? {
-        return Ok("No settings configured. Please run 'init'."
+        return Ok("No settings configured. Please run 'init'"
             .red()
             .to_string());
     }
@@ -41,26 +44,28 @@ pub fn get_last_profile_text() -> Result<String, eyre::Report> {
     let app_settings = db::get_app_settings()?;
     if app_settings.last_profile_id.is_none() {
         return Ok(format!(
-            "Last   - {}",
-            "Run a profile to set as last run.".yellow()
+            "Last    - {}",
+            "Run a profile to set as last run".yellow()
         ));
     }
 
     let profile_display = db::get_profile_display_by_id(app_settings.last_profile_id.unwrap())?;
     Ok(format!(
-        "Last   - {}",
+        "Last    - {}",
         profile_display.to_string().purple().bold()
     ))
 }
 
-pub fn play_active_profile() -> Result<String, eyre::Report> {
+pub fn play_default_profile() -> Result<String, eyre::Report> {
     let app_settings = db::get_app_settings()?;
 
-    if app_settings.active_profile_id.is_none() {
-        return Ok("No active profile found. Please set one.".red().to_string());
+    if app_settings.default_profile_id.is_none() {
+        return Ok("No Default Profile found. Please set one."
+            .red()
+            .to_string());
     };
 
-    runner::play_from_profile(app_settings.active_profile_id.unwrap(), false)
+    runner::play_from_profile(app_settings.default_profile_id.unwrap(), false)
 }
 
 pub fn play_last_profile() -> Result<String, eyre::Report> {
@@ -68,7 +73,7 @@ pub fn play_last_profile() -> Result<String, eyre::Report> {
 
     if app_settings.last_profile_id.is_none() {
         return Ok(
-            "No last run profile found. Run a profile to make it the last run."
+            "No Last Run Profile found. Run a profile to make it the last run."
                 .red()
                 .to_string(),
         );
@@ -81,7 +86,7 @@ pub fn pick_and_play_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
         return Ok(
-            "Cannot set active profile, there are no profiles found. Please create one."
+            "Cannot set Default Profile, there are no profiles found. Please create one."
                 .red()
                 .to_string(),
         );
@@ -98,30 +103,57 @@ pub fn pick_and_play_profile() -> Result<String, eyre::Report> {
 pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
     let engines = db::get_engines()?;
     if engines.is_empty() {
-        return Ok("There are no Engines to select. Please run 'init'."
+        return Ok("There are no Engines to select. Please run 'init'"
             .red()
             .to_string());
     }
     let iwads = db::get_iwads()?;
     if iwads.is_empty() {
-        return Ok("There are no IWADs to select. Please run 'init."
+        return Ok("There are no IWADs to select. Please run 'init"
             .red()
             .to_string());
     }
     let pwads = db::get_pwads()?;
     if pwads.is_empty() {
-        return Ok("There are no PWADs to select. Please run 'init'."
+        return Ok("There are no PWADs to select. Please run 'init'"
             .red()
             .to_string());
     }
 
-    let engine_selection = inquire::Select::new("Pick the Engine you want to use:", engines)
-        .with_page_size(tui::MENU_PAGE_SIZE)
-        .prompt()?;
+    let app_settings = db::get_app_settings()?;
 
-    let iwad_selection = inquire::Select::new("Pick the IWAD you want to use:", iwads)
-        .with_page_size(tui::MENU_PAGE_SIZE)
-        .prompt()?;
+    let engine_selection = {
+        if let Some(engine_id) = app_settings.default_engine_id {
+            let engine =
+                db::get_engine_by_id(engine_id).wrap_err("Unable to get Default Engine")?;
+            info!("Using Default Engine: {}", engine.blue());
+            engine
+        } else {
+            inquire::Select::new("Pick the Engine you want to use:", engines)
+                .with_page_size(tui::MENU_PAGE_SIZE)
+                .prompt()?
+        }
+    };
+
+    let iwad_selection = {
+        if let Some(iwad_id) = app_settings.default_iwad_id {
+            let iwad = db::get_iwad_by_id(iwad_id).wrap_err("Unable to get Default IWAD")?;
+            info!("Using Default IWAD: {}", iwad.blue());
+            iwad
+        } else {
+            inquire::Select::new("Pick the IWAD you want to use:", iwads)
+                .with_page_size(tui::MENU_PAGE_SIZE)
+                .prompt()?
+        }
+    };
+
+    // let engine_selection = inquire::Select::new("Pick the Engine you want to use:", engines)
+    //     .with_page_size(tui::MENU_PAGE_SIZE)
+    //     .prompt()?;
+
+    // let iwad_selection = inquire::Select::new("Pick the IWAD you want to use:", iwads)
+    //     .with_page_size(tui::MENU_PAGE_SIZE)
+    //     .prompt()?;
 
     // Yes this is ONE PWAD only. Profiles can have up to 5 PWADs, but this is just a quick play option.
     let pwad_selection =
@@ -143,7 +175,11 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
             None => paths::extract_file_name(&iwad_selection.path),
             Some(pwad) => pwad.title,
         };
-        let profile_name = format!("Autosave-{} '{}'", &Uuid::new_v4().to_string()[..8], wad_name);
+        let profile_name = format!(
+            "Autosave-{} '{}'",
+            &Uuid::new_v4().to_string()[..8],
+            wad_name
+        );
 
         let profile = data::Profile {
             id: 0,

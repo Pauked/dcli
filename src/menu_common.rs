@@ -3,9 +3,7 @@ use log::info;
 
 use crate::{data, db, tui};
 
-fn pick_from_pwad_from_profile_tuple(
-    pwad_ids: data::PwadIds,
-) -> Result<i32, eyre::Report> {
+fn pick_from_pwad_from_profile_tuple(pwad_ids: data::PwadIds) -> Result<i32, eyre::Report> {
     let pwad_list = db::get_pwads_by_ids(pwad_ids)?;
     if pwad_list.is_empty() {
         return Err(eyre::eyre!("There are no PWADs to select from."));
@@ -27,17 +25,17 @@ fn pick_from_pwad_from_profile_tuple(
     Err(eyre::eyre!("Cancelled picking PWAD."))
 }
 
-pub fn get_pwad_id_from_from_active_profile(error_str: &str) -> Result<i32, eyre::Report> {
+pub fn get_pwad_id_from_from_default_profile(error_str: &str) -> Result<i32, eyre::Report> {
     let app_settings = db::get_app_settings()?;
 
-    if app_settings.active_profile_id.is_none() {
+    if app_settings.default_profile_id.is_none() {
         return Err(eyre::eyre!(format!(
-            "No Active Profile found. {}",
+            "No Default Profile found. {}",
             error_str
         )));
     };
 
-    let profile = db::get_profile_by_id(app_settings.active_profile_id.unwrap())
+    let profile = db::get_profile_by_id(app_settings.default_profile_id.unwrap())
         .wrap_err("Unable to get Profile".to_string())?;
 
     let pwad_id = pick_from_pwad_from_profile_tuple((
@@ -55,10 +53,7 @@ pub fn get_pwad_id_from_from_last_profile(error_str: &str) -> Result<i32, eyre::
     let app_settings = db::get_app_settings()?;
 
     if app_settings.last_profile_id.is_none() {
-        return Err(eyre::eyre!(format!(
-            "No Active Profile found. {}",
-            error_str
-        )));
+        return Err(eyre::eyre!(format!("No Last Profile found. {}", error_str)));
     };
 
     let profile = db::get_profile_by_id(app_settings.last_profile_id.unwrap())

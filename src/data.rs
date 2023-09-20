@@ -5,7 +5,10 @@ use sqlx::FromRow;
 use strum_macros::{Display, EnumString};
 use tabled::Tabled;
 
-use crate::{constants, doom_data, tui::{MenuMode, self}};
+use crate::{
+    constants, doom_data,
+    tui::{self, MenuMode},
+};
 
 #[derive(Clone, Debug)]
 pub struct FileVersion {
@@ -163,14 +166,14 @@ pub fn pwad_ids_from_options(
     b: Option<i32>,
     c: Option<i32>,
     d: Option<i32>,
-    e: Option<i32>
+    e: Option<i32>,
 ) -> PwadIds {
     (
         a.unwrap_or(0),
         b.unwrap_or(0),
         c.unwrap_or(0),
         d.unwrap_or(0),
-        e.unwrap_or(0)
+        e.unwrap_or(0),
     )
 }
 
@@ -198,9 +201,15 @@ pub struct ProfileDisplay {
     pub iwad_file: String,
     #[tabled(skip)]
     pub pwad_ids: PwadIds,
-    #[tabled(rename = "PWAD Path", display_with = "display_combined_tabled_pwad_strings")]
+    #[tabled(
+        rename = "PWAD Path",
+        display_with = "display_combined_tabled_pwad_strings"
+    )]
     pub pwad_paths: PwadStrings,
-    #[tabled(rename = "PWAD File", display_with = "display_combined_tabled_pwad_strings")]
+    #[tabled(
+        rename = "PWAD File",
+        display_with = "display_combined_tabled_pwad_strings"
+    )]
     pub pwad_files: PwadStrings,
     #[tabled(rename = "Additionl Args")]
     pub additional_arguments: String,
@@ -211,7 +220,11 @@ impl fmt::Display for ProfileDisplay {
         write!(
             f,
             "{} ({}) / {} [{}] / {}",
-            self.name, display_combined_pwad_strings(&self.pwad_files), self.engine_file, self.engine_version, self.iwad_file
+            self.name,
+            display_combined_pwad_strings(&self.pwad_files),
+            self.engine_file,
+            self.engine_version,
+            self.iwad_file
         )
     }
 }
@@ -239,9 +252,11 @@ pub fn display_combined_pwad_strings(data: &PwadStrings) -> String {
 #[derive(Clone, Debug, FromRow)]
 pub struct AppSettings {
     pub id: i32,
-    pub active_profile_id: Option<i32>,
+    pub default_profile_id: Option<i32>,
     pub last_profile_id: Option<i32>,
-    pub active_map_editor_id: Option<i32>,
+    pub default_engine_id: Option<i32>,
+    pub default_iwad_id: Option<i32>,
+    pub default_map_editor_id: Option<i32>,
     pub exe_search_folder: Option<String>,
     pub iwad_search_folder: Option<String>,
     pub pwad_search_folder: Option<String>,
@@ -253,9 +268,11 @@ impl Default for AppSettings {
     fn default() -> Self {
         AppSettings {
             id: 0,
-            active_profile_id: None,
+            default_profile_id: None,
             last_profile_id: None,
-            active_map_editor_id: None,
+            default_engine_id: None,
+            default_iwad_id: None,
+            default_map_editor_id: None,
             exe_search_folder: None,
             iwad_search_folder: None,
             pwad_search_folder: None,
@@ -269,12 +286,16 @@ impl Default for AppSettings {
 pub struct AppSettingsDisplay {
     #[tabled(rename = "Menu Mode")]
     pub menu_mode: String,
-    #[tabled(rename = "Active Profile")]
-    pub active_profile: String,
+    #[tabled(rename = "Default Profile")]
+    pub default_profile: String,
     #[tabled(rename = "Last Run Profile")]
     pub last_profile: String,
-    #[tabled(rename = "Active Map Editor")]
-    pub active_map_editor: String,
+    #[tabled(rename = "Default Engine")]
+    pub default_engine: String,
+    #[tabled(rename = "Default Internal WAD")]
+    pub default_iwad: String,
+    #[tabled(rename = "Default Map Editor")]
+    pub default_map_editor: String,
     #[tabled(rename = "Executable Search Folder")]
     pub exe_search_folder: String,
     #[tabled(rename = "Internal WAD Search Folder")]

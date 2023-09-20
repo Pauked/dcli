@@ -7,7 +7,7 @@ use std::{
 use colored::Colorize;
 use eyre::Context;
 
-use crate::{constants, data, db, files};
+use crate::{constants, data, db, files, paths};
 
 pub fn play_from_profile(
     profile_id: i32,
@@ -47,6 +47,20 @@ pub fn play_from_engine_iwad_and_pwad(
     let engine = db::get_engine_by_id(engine_id)?;
     let iwad = db::get_iwad_by_id(iwad_id)?;
 
+    // Pre-run checks, do the files we want to use exist?
+    if !paths::file_exists(&engine.path) {
+        return Err(eyre::eyre!(
+            "Play aborted, Engine not found - '{}'",
+            engine.path
+        ));
+    }
+    if !paths::file_exists(&iwad.path) {
+        return Err(eyre::eyre!(
+            "Play aborted, IWAD not found - '{}'",
+            iwad.path
+        ));
+    }
+
     // TODO: Refactor to be based off selected Doom Engine config (each engine may have different arguments for the same thing)
 
     // Build up Command based on Profile settings
@@ -60,6 +74,14 @@ pub fn play_from_engine_iwad_and_pwad(
         for &id in &pwad_ids_array {
             if id != 0 {
                 let pwad = db::get_pwad_by_id(id)?;
+
+                if !paths::file_exists(&pwad.path) {
+                    return Err(eyre::eyre!(
+                        "Play aborted, EPWAD not found - '{}'",
+                        pwad.path
+                    ));
+                }
+
                 cmd.arg(&pwad.path);
             }
         }
@@ -166,7 +188,10 @@ pub fn open_map_readme(pwad_path: &str) -> Result<String, eyre::Report> {
                 } else if env::consts::OS == constants::OS_WINDOWS {
                     "cmd"
                 } else {
-                    ""
+                    return Err(eyre::eyre!(format!(
+                        "open_map_readme is only supported on Windows and MacOS, not on '{}'",
+                        env::consts::OS
+                    )));
                 }
             };
 
@@ -187,7 +212,8 @@ pub fn open_map_readme(pwad_path: &str) -> Result<String, eyre::Report> {
 
             Ok(format!(
                 "Opened Map Readme for PWAD - '{}' / '{}'",
-                readme_file_name, pwad_path
+                readme_file_name.magenta(),
+                pwad_path.blue()
             ))
         }
         None => Ok(format!("No Map Readme found for PWAD - '{}'", pwad_path)
@@ -215,7 +241,7 @@ pub fn map_editor(pwad_path: &str, map_editor: data::MapEditor) -> Result<String
     let display_args = get_display_args(&cmd);
     let run_message = format!(
         "Map Editor '{}', Args '{}'",
-        &map_editor.path.green(),
+        &map_editor.path.magenta(),
         display_args.blue()
     );
 

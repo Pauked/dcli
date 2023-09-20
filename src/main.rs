@@ -11,8 +11,8 @@ mod doom_data;
 mod files;
 mod finder;
 mod log_config;
+mod menu_app_settings;
 mod menu_common;
-mod menu_config;
 mod menu_main;
 mod menu_map_editor;
 mod menu_play_settings;
@@ -51,7 +51,7 @@ fn run() -> eyre::Result<String> {
         db::create_db()?;
         if db::is_empty_app_settings_table()? {
             info!("No settings found, running init...");
-            menu_config::init()?;
+            menu_app_settings::init()?;
         }
     }
 
@@ -62,7 +62,7 @@ fn run() -> eyre::Result<String> {
         if main_arg != tui::MenuCommand::Ignore {
             let result = tui::run_menu_command(main_arg)?;
             if reset_mode && result != *"Database reset not confirmed." {
-                menu_config::init()?;
+                menu_app_settings::init()?;
             }
         }
     }
