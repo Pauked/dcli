@@ -2,7 +2,7 @@ use colored::Colorize;
 use eyre::Context;
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
-use crate::{data, db, tui};
+use crate::{data, db, tui, menu_common};
 
 pub fn new_profile() -> Result<String, eyre::Report> {
     let engines = db::get_engines()?;
@@ -37,15 +37,12 @@ pub fn new_profile() -> Result<String, eyre::Report> {
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
-    let pwad_selection =
-        inquire::Select::new("Pick the PWAD you want to use (optional):", pwads.clone())
-            .with_page_size(tui::MENU_PAGE_SIZE)
-            .prompt_skippable()?;
-
-    let pwad_id = match pwad_selection {
-        None => None,
-        Some(pwad) => Some(pwad.id),
-    };
+    let pwad_selection = menu_common::get_pwad_selection(pwads, vec![])?;
+    let pwad_id = Some(pwad_selection[0].id).filter(|&id| id > 0);
+    let pwad_id2 = Some(pwad_selection[1].id).filter(|&id| id > 0);
+    let pwad_id3 = Some(pwad_selection[2].id).filter(|&id| id > 0);
+    let pwad_id4 = Some(pwad_selection[3].id).filter(|&id| id > 0);
+    let pwad_id5 = Some(pwad_selection[4].id).filter(|&id| id > 0);
 
     let additional_arguments =
         inquire::Text::new("Enter any additional arguments (optional):").prompt_skippable()?;
@@ -56,6 +53,10 @@ pub fn new_profile() -> Result<String, eyre::Report> {
         engine_id: Some(engine_selection.id),
         iwad_id: Some(iwad_selection.id),
         pwad_id,
+        pwad_id2,
+        pwad_id3,
+        pwad_id4,
+        pwad_id5,
         additional_arguments,
     };
     let add_result = db::add_profile(profile)?;
@@ -120,8 +121,31 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
 
     let pwad_starting_cursor = pwads
         .iter()
-        .position(|pwad| profile.pwad_id == pwad.id)
+        .position(|pwad| profile.pwad_ids.0 == pwad.id)
         .unwrap_or(0);
+    let pwad_starting_cursor2 = pwads
+        .iter()
+        .position(|pwad| profile.pwad_ids.1 == pwad.id)
+        .unwrap_or(0);
+    let pwad_starting_cursor3 = pwads
+        .iter()
+        .position(|pwad| profile.pwad_ids.2 == pwad.id)
+        .unwrap_or(0);
+    let pwad_starting_cursor4 = pwads
+        .iter()
+        .position(|pwad| profile.pwad_ids.3 == pwad.id)
+        .unwrap_or(0);
+    let pwad_starting_cursor5 = pwads
+        .iter()
+        .position(|pwad| profile.pwad_ids.4 == pwad.id)
+        .unwrap_or(0);
+    let default_pwads = vec![
+        pwad_starting_cursor,
+        pwad_starting_cursor2,
+        pwad_starting_cursor3,
+        pwad_starting_cursor4,
+        pwad_starting_cursor5,
+    ];
 
     // TODO: Validate if profile_name already exists
     let profile_name = inquire::Text::new("Enter a name for your Profile:")
@@ -139,16 +163,12 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
-    let pwad_selection =
-        inquire::Select::new("Pick the PWAD you want to use (optional):", pwads.clone())
-            .with_starting_cursor(pwad_starting_cursor)
-            .with_page_size(tui::MENU_PAGE_SIZE)
-            .prompt_skippable()?;
-
-    let pwad_id = match pwad_selection {
-        None => None,
-        Some(pwad) => Some(pwad.id),
-    };
+    let pwad_selection = menu_common::get_pwad_selection(pwads, default_pwads)?;
+    let pwad_id = Some(pwad_selection[0].id).filter(|&id| id > 0);
+    let pwad_id2 = Some(pwad_selection[1].id).filter(|&id| id > 0);
+    let pwad_id3 = Some(pwad_selection[2].id).filter(|&id| id > 0);
+    let pwad_id4 = Some(pwad_selection[3].id).filter(|&id| id > 0);
+    let pwad_id5 = Some(pwad_selection[4].id).filter(|&id| id > 0);
 
     let additional_arguments = inquire::Text::new("Enter any additional arguments (optional):")
         .with_default(&profile.additional_arguments)
@@ -160,6 +180,10 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
         engine_id: Some(engine_selection.id),
         iwad_id: Some(iwad_selection.id),
         pwad_id,
+        pwad_id2,
+        pwad_id3,
+        pwad_id4,
+        pwad_id5,
         additional_arguments,
     };
     db::update_profile(profile)?;

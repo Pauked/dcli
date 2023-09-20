@@ -149,6 +149,10 @@ pub struct Profile {
     pub engine_id: Option<i32>,
     pub iwad_id: Option<i32>,
     pub pwad_id: Option<i32>,
+    pub pwad_id2: Option<i32>,
+    pub pwad_id3: Option<i32>,
+    pub pwad_id4: Option<i32>,
+    pub pwad_id5: Option<i32>,
     pub additional_arguments: Option<String>,
 }
 
@@ -173,11 +177,11 @@ pub struct ProfileDisplay {
     #[tabled(rename = "IWAD Path")]
     pub iwad_file: String,
     #[tabled(skip)]
-    pub pwad_id: i32,
-    #[tabled(rename = "PWAD Path")]
-    pub pwad_path: String,
-    #[tabled(rename = "PWAD File")]
-    pub pwad_file: String,
+    pub pwad_ids: (i32, i32, i32, i32, i32),
+    #[tabled(rename = "PWAD Path", display_with = "display_combined_table_string")]
+    pub pwad_paths: (String, String, String, String, String),
+    #[tabled(rename = "PWAD File", display_with = "display_combined_table_string")]
+    pub pwad_files: (String, String, String, String, String),
     #[tabled(rename = "Additionl Args")]
     pub additional_arguments: String,
 }
@@ -187,9 +191,29 @@ impl fmt::Display for ProfileDisplay {
         write!(
             f,
             "{} ({}) / {} [{}] / {}",
-            self.name, self.pwad_file, self.engine_file, self.engine_version, self.iwad_file
+            self.name, display_combined_string(&self.pwad_files), self.engine_file, self.engine_version, self.iwad_file
         )
     }
+}
+
+pub fn display_combined_table_string(data: &(String, String, String, String, String)) -> String {
+    let vec = [&data.0, &data.1, &data.2, &data.3, &data.4]
+        .iter()
+        .filter(|&&s| !s.is_empty() && s != constants::DEFAULT_NOT_SET)
+        .map(|&s| s.as_str())
+        .collect::<Vec<&str>>();
+
+    vec.join("\n")
+}
+
+pub fn display_combined_string(data: &(String, String, String, String, String)) -> String {
+    let vec = [&data.0, &data.1, &data.2, &data.3, &data.4]
+        .iter()
+        .filter(|&&s| !s.is_empty() && s != constants::DEFAULT_NOT_SET)
+        .map(|&s| s.as_str())
+        .collect::<Vec<&str>>();
+
+    vec.join(", ")
 }
 
 #[derive(Clone, Debug, FromRow, Default)]

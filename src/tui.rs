@@ -337,8 +337,9 @@ pub fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
     clearscreen::clear().unwrap();
     loop {
         if let MenuLevel::Main = menu_level {
-            info!("{}", menu_main::get_active_profile_text()?);
-            info!("{}", menu_main::get_last_profile_text()?);
+            info!("{}", "Profiles".bold());
+            info!("  {}", menu_main::get_active_profile_text()?);
+            info!("  {}", menu_main::get_last_profile_text()?);
         }
 
         let menu_command = menu_prompt(&menu_level)?;

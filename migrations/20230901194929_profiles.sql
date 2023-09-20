@@ -27,13 +27,16 @@ CREATE TABLE IF NOT EXISTS map_editors (
 CREATE TABLE IF NOT EXISTS profiles (
     id INTEGER PRIMARY KEY NOT NULL,
     name TEXT NOT NULL UNIQUE,
-    engine_id INTEGER NULL,
-    iwad_id INTEGER NULL,
+    engine_id INTEGER NOT NULL,
+    iwad_id INTEGER NOT NULL,
     pwad_id INTEGER NULL,
+    pwad_id2 INTEGER NULL,
+    pwad_id3 INTEGER NULL,
+    pwad_id4 INTEGER NULL,
+    pwad_id5 INTEGER NULL,
     additional_arguments TEXT NULL,
     FOREIGN KEY (engine_id) REFERENCES engines (id),
-    FOREIGN KEY (iwad_id) REFERENCES iwads (id),
-    FOREIGN KEY (pwad_id) REFERENCES pwads (id)
+    FOREIGN KEY (iwad_id) REFERENCES iwads (id)
 );
 CREATE TABLE IF NOT EXISTS app_settings (
     id INTEGER PRIMARY KEY NOT NULL,

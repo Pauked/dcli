@@ -21,14 +21,12 @@ pub fn get_active_profile_text() -> Result<String, eyre::Report> {
     let app_settings = db::get_app_settings()?;
 
     if app_settings.active_profile_id.is_none() {
-        return Ok("No active profile found. Please set one."
-            .yellow()
-            .to_string());
+        return Ok(format!("Active - {}", "Please set one".yellow()));
     }
 
     let profile_display = db::get_profile_display_by_id(app_settings.active_profile_id.unwrap())?;
     Ok(format!(
-        "Active profile: {}",
+        "Active - {}",
         profile_display.to_string().green().bold()
     ))
 }
@@ -42,16 +40,12 @@ pub fn get_last_profile_text() -> Result<String, eyre::Report> {
 
     let app_settings = db::get_app_settings()?;
     if app_settings.last_profile_id.is_none() {
-        return Ok(
-            "No last run profile found. Run a profile to make it the last run."
-                .yellow()
-                .to_string(),
-        );
+        return Ok(format!("Last   - {}", "Run a profile to set as last run.".yellow()));
     }
 
     let profile_display = db::get_profile_display_by_id(app_settings.last_profile_id.unwrap())?;
     Ok(format!(
-        "Last profile: {}",
+        "Last   - {}",
         profile_display.to_string().purple().bold()
     ))
 }
@@ -158,6 +152,10 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
             engine_id: Some(engine_selection.id),
             iwad_id: Some(iwad_selection.id),
             pwad_id,
+            pwad_id2: None,
+            pwad_id3: None,
+            pwad_id4: None,
+            pwad_id5: None,
             additional_arguments,
         };
         let add_result = db::add_profile(profile)?;

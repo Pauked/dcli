@@ -249,6 +249,27 @@ pub fn get_pwad_by_id(id: i32) -> Result<data::Pwad, eyre::Report> {
     })
 }
 
+pub fn get_pwads_by_ids(id: (i32, i32, i32, i32, i32)) -> Result<Vec<data::Pwad>, eyre::Report> {
+    let mut result = vec![];
+    if id.0 > 0 {
+        result.push(get_pwad_by_id(id.0)?);
+    }
+    if id.1 > 0 {
+        result.push(get_pwad_by_id(id.1)?);
+    }
+    if id.2 > 0 {
+        result.push(get_pwad_by_id(id.2)?);
+    }
+    if id.3 > 0 {
+        result.push(get_pwad_by_id(id.3)?);
+    }
+    if id.4 > 0 {
+        result.push(get_pwad_by_id(id.4)?);
+    }
+
+    Ok(result)
+}
+
 pub fn save_app_settings(
     app_settings: data::AppSettings,
 ) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
@@ -380,15 +401,23 @@ pub fn add_profile(
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("INSERT INTO profiles (name, engine_id, iwad_id, pwad_id, additional_arguments) VALUES (?,?,?,?,?)")
-            .bind(&profile.name)
-            .bind(profile.engine_id)
-            .bind(profile.iwad_id)
-            .bind(profile.pwad_id)
-            .bind(&profile.additional_arguments)
-            .execute(&db)
-            .await
-            .wrap_err(format!("Failed to add profile '{:?}", profile))
+        sqlx::query(
+            "INSERT INTO profiles (name, engine_id, iwad_id,
+            pwad_id, pwad_id2, pwad_id3, pwad_id4, pwad_id5, additional_arguments)
+            VALUES (?,?,?,?,?,?,?,?,?)",
+        )
+        .bind(&profile.name)
+        .bind(profile.engine_id)
+        .bind(profile.iwad_id)
+        .bind(profile.pwad_id)
+        .bind(profile.pwad_id2)
+        .bind(profile.pwad_id3)
+        .bind(profile.pwad_id4)
+        .bind(profile.pwad_id5)
+        .bind(&profile.additional_arguments)
+        .execute(&db)
+        .await
+        .wrap_err(format!("Failed to add profile '{:?}", profile))
     })
 }
 
@@ -397,13 +426,21 @@ pub fn update_profile(
 ) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
-    let db = get_db().await;
+        let db = get_db().await;
 
-    sqlx::query("UPDATE profiles SET name = $1, engine_id = $2, iwad_id = $3, pwad_id = $4, additional_arguments = $5 WHERE id=$6 COLLATE NOCASE")
+        sqlx::query(
+            "UPDATE profiles SET name = $1, engine_id = $2, iwad_id = $3,
+    pwad_id = $4, pwad_id2 = $5, pwad_id3 = $6, pwad_id4 = $7, pwad_id5 = $8,
+    additional_arguments = $9 WHERE id=$10 COLLATE NOCASE",
+        )
         .bind(&profile.name)
         .bind(profile.engine_id)
         .bind(profile.iwad_id)
         .bind(profile.pwad_id)
+        .bind(profile.pwad_id2)
+        .bind(profile.pwad_id3)
+        .bind(profile.pwad_id4)
+        .bind(profile.pwad_id5)
         .bind(profile.additional_arguments)
         .bind(profile.id)
         .execute(&db)
@@ -457,7 +494,7 @@ fn get_profile_display(
     profile: data::Profile,
     engine: data::Engine,
     iwad: data::Iwad,
-    pwad: data::Pwad,
+    pwads: Vec<data::Pwad>,
 ) -> data::ProfileDisplay {
     data::ProfileDisplay {
         id: profile.id,
@@ -469,9 +506,27 @@ fn get_profile_display(
         iwad_id: profile.iwad_id.unwrap_or(0),
         iwad_path: paths::extract_path(&iwad.path),
         iwad_file: paths::extract_file_name(&iwad.path),
-        pwad_id: profile.pwad_id.unwrap_or(0),
-        pwad_path: paths::extract_path(&pwad.path),
-        pwad_file: paths::extract_file_name(&pwad.path),
+        pwad_ids: (
+            profile.pwad_id.unwrap_or(0),
+            profile.pwad_id2.unwrap_or(0),
+            profile.pwad_id3.unwrap_or(0),
+            profile.pwad_id4.unwrap_or(0),
+            profile.pwad_id5.unwrap_or(0),
+        ),
+        pwad_paths: (
+            paths::extract_path(&pwads[0].path),
+            paths::extract_path(&pwads[1].path),
+            paths::extract_path(&pwads[2].path),
+            paths::extract_path(&pwads[3].path),
+            paths::extract_path(&pwads[4].path),
+        ),
+        pwad_files: (
+            paths::extract_file_name(&pwads[0].path),
+            paths::extract_file_name(&pwads[1].path),
+            paths::extract_file_name(&pwads[2].path),
+            paths::extract_file_name(&pwads[3].path),
+            paths::extract_file_name(&pwads[4].path),
+        ),
         additional_arguments: profile.additional_arguments.unwrap_or_default(),
     }
 }
@@ -500,12 +555,34 @@ pub fn get_profile_display_list() -> Result<Vec<data::ProfileDisplay>, eyre::Rep
             .iter()
             .find(|p| p.id == profile.pwad_id.unwrap_or(0))
             .unwrap_or(&default_pwad);
+        let pwad2 = pwads
+            .iter()
+            .find(|p| p.id == profile.pwad_id2.unwrap_or(0))
+            .unwrap_or(&default_pwad);
+        let pwad3 = pwads
+            .iter()
+            .find(|p| p.id == profile.pwad_id3.unwrap_or(0))
+            .unwrap_or(&default_pwad);
+        let pwad4 = pwads
+            .iter()
+            .find(|p| p.id == profile.pwad_id4.unwrap_or(0))
+            .unwrap_or(&default_pwad);
+        let pwad5 = pwads
+            .iter()
+            .find(|p| p.id == profile.pwad_id5.unwrap_or(0))
+            .unwrap_or(&default_pwad);
 
         profile_list.push(get_profile_display(
             profile.clone(),
             engine.clone(),
             iwad.clone(),
-            pwad.clone(),
+            vec![
+                pwad.clone(),
+                pwad2.clone(),
+                pwad3.clone(),
+                pwad4.clone(),
+                pwad5.clone(),
+            ],
         ));
     }
 
@@ -527,8 +604,29 @@ pub fn get_profile_display_by_id(id: i32) -> Result<data::ProfileDisplay, eyre::
         Some(id) => get_pwad_by_id(id)?,
         None => data::Pwad::default(),
     };
+    let pwad2 = match profile.pwad_id2 {
+        Some(id) => get_pwad_by_id(id)?,
+        None => data::Pwad::default(),
+    };
+    let pwad3 = match profile.pwad_id3 {
+        Some(id) => get_pwad_by_id(id)?,
+        None => data::Pwad::default(),
+    };
+    let pwad4 = match profile.pwad_id4 {
+        Some(id) => get_pwad_by_id(id)?,
+        None => data::Pwad::default(),
+    };
+    let pwad5 = match profile.pwad_id5 {
+        Some(id) => get_pwad_by_id(id)?,
+        None => data::Pwad::default(),
+    };
 
-    Ok(get_profile_display(profile, engine, iwad, pwad))
+    Ok(get_profile_display(
+        profile,
+        engine,
+        iwad,
+        vec![pwad, pwad2, pwad3, pwad4, pwad5],
+    ))
 }
 
 pub fn save_play_settings(
