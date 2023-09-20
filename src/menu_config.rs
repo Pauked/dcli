@@ -12,6 +12,18 @@ use crate::{
     db, doom_data, files, paths, tui,
 };
 
+pub fn update_menu_mode() -> Result<String, eyre::Report> {
+    let mut app_settings = db::get_app_settings()?;
+    if app_settings.menu_mode == tui::MenuMode::Full {
+        app_settings.menu_mode = tui::MenuMode::Simple;
+    } else {
+        app_settings.menu_mode = tui::MenuMode::Full;
+    }
+
+    db::save_app_settings(app_settings.clone())?;
+    Ok(format!("Menu mode set to: {}", app_settings.menu_mode))
+}
+
 pub fn init() -> Result<String, eyre::Report> {
     db::create_db()?;
 

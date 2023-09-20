@@ -22,15 +22,16 @@
 [X] Add PWAD/IWAD checking of files (read first few bytes to check file identifier)
 [x] Rename "Game Settings" to "Play Settings". Move to be uder Play options on Main Menu.
 [x] Get Map Author(s) from map readme.
-[ ] Support multiple PWADs in a profile.
+[x] Support multiple PWADs in a profile.
 [ ] Set Default Engine
 [ ] Set Default IWAD
-[ ] Quick Play option that runs default engine, default IWAD, pick PWAD
+[/] Quick Play option that runs default engine (if set), default IWAD (if set), pick PWAD
 [ ] Rename "Active Map Editor" to "Default Map Editor"
 [ ] Add --force option to reset and init so no prompts needed
 [ ] Option to delete PWADs (multi select?)
 [ ] Extend list of engines
 [ ] Colour code menu options
+[x] Simple menu mode
 
 ## Thoughts
 -

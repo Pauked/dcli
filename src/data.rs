@@ -5,7 +5,7 @@ use sqlx::FromRow;
 use strum_macros::{Display, EnumString};
 use tabled::Tabled;
 
-use crate::{constants, doom_data};
+use crate::{constants, doom_data, tui::{MenuMode, self}};
 
 #[derive(Clone, Debug)]
 pub struct FileVersion {
@@ -236,7 +236,7 @@ pub fn display_combined_pwad_strings(data: &PwadStrings) -> String {
     vec.join(", ")
 }
 
-#[derive(Clone, Debug, FromRow, Default)]
+#[derive(Clone, Debug, FromRow)]
 pub struct AppSettings {
     pub id: i32,
     pub active_profile_id: Option<i32>,
@@ -246,10 +246,29 @@ pub struct AppSettings {
     pub iwad_search_folder: Option<String>,
     pub pwad_search_folder: Option<String>,
     pub map_editor_search_folder: Option<String>,
+    pub menu_mode: tui::MenuMode,
+}
+
+impl Default for AppSettings {
+    fn default() -> Self {
+        AppSettings {
+            id: 0,
+            active_profile_id: None,
+            last_profile_id: None,
+            active_map_editor_id: None,
+            exe_search_folder: None,
+            iwad_search_folder: None,
+            pwad_search_folder: None,
+            map_editor_search_folder: None,
+            menu_mode: MenuMode::Full,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Tabled)]
 pub struct AppSettingsDisplay {
+    #[tabled(rename = "Menu Mode")]
+    pub menu_mode: String,
     #[tabled(rename = "Active Profile")]
     pub active_profile: String,
     #[tabled(rename = "Last Run Profile")]

@@ -280,7 +280,8 @@ fn add_app_settings(
 
         sqlx::query(
             "INSERT INTO app_settings (active_profile_id, last_profile_id, exe_search_folder,
-                iwad_search_folder, pwad_search_folder, map_editor_search_folder, active_map_editor_id) VALUES (?,?,?,?,?,?,?)",
+                iwad_search_folder, pwad_search_folder, map_editor_search_folder, active_map_editor_id,
+                menu_mode) VALUES (?,?,?,?,?,?,?,?)",
         )
         .bind(app_settings.active_profile_id)
         .bind(app_settings.last_profile_id)
@@ -289,6 +290,7 @@ fn add_app_settings(
         .bind(&app_settings.pwad_search_folder)
         .bind(&app_settings.map_editor_search_folder)
         .bind(app_settings.active_map_editor_id)
+        .bind(&app_settings.menu_mode)
         .execute(&db)
         .await
         .wrap_err(format!("Failed to add app settings '{:?}", app_settings))
@@ -303,8 +305,8 @@ fn update_app_settings(
         let db = get_db().await;
 
         sqlx::query("UPDATE app_settings SET active_profile_id = $1, last_profile_id = $2, exe_search_folder = $3,
-        iwad_search_folder = $4, pwad_search_folder = $5, map_editor_search_folder = $6, active_map_editor_id = $7
-        WHERE id = $8 COLLATE NOCASE")
+        iwad_search_folder = $4, pwad_search_folder = $5, map_editor_search_folder = $6, active_map_editor_id = $7,
+        menu_mode = $8 WHERE id = $9 COLLATE NOCASE")
             .bind(app_settings.active_profile_id)
             .bind(app_settings.last_profile_id)
             .bind(&app_settings.exe_search_folder)
@@ -312,7 +314,7 @@ fn update_app_settings(
             .bind(&app_settings.pwad_search_folder)
             .bind(&app_settings.map_editor_search_folder)
             .bind(app_settings.active_map_editor_id)
-            .bind(app_settings.id)
+            .bind(&app_settings.menu_mode)            .bind(app_settings.id)
             .execute(&db)
             .await
             .wrap_err(format!(
@@ -382,6 +384,7 @@ pub fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre::Repo
         iwad_search_folder,
         pwad_search_folder,
         map_editor_search_folder,
+        menu_mode: app_settings.menu_mode.to_string(),
     })
 }
 

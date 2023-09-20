@@ -66,7 +66,7 @@ pub fn play_active_profile() -> Result<String, eyre::Report> {
 pub fn play_last_profile() -> Result<String, eyre::Report> {
     let app_settings = db::get_app_settings()?;
 
-    if app_settings.active_profile_id.is_none() {
+    if app_settings.last_profile_id.is_none() {
         return Ok(
             "No last run profile found. Run a profile to make it the last run."
                 .red()
@@ -143,7 +143,7 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
             None => paths::extract_file_name(&iwad_selection.path),
             Some(pwad) => pwad.title,
         };
-        let profile_name = format!("Autosave - '{}' {}", wad_name, Uuid::new_v4());
+        let profile_name = format!("Autosave-{} '{}'", &Uuid::new_v4().to_string()[..8], wad_name);
 
         let profile = data::Profile {
             id: 0,

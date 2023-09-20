@@ -51,7 +51,7 @@ fn run() -> eyre::Result<String> {
         db::create_db()?;
         if db::is_empty_app_settings_table()? {
             info!("No settings found, running init...");
-            //menu_config::init()?;
+            menu_config::init()?;
         }
     }
 

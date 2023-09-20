@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
     iwad_search_folder TEXT NULL,
     pwad_search_folder TEXT NULL,
     map_editor_search_folder TEXT NULL,
+    menu_mode TEXT NOT NULL,
     FOREIGN KEY (active_profile_id) REFERENCES profiles (id),
     FOREIGN KEY (last_profile_id) REFERENCES profiles (id),
     FOREIGN KEY (active_map_editor_id) REFERENCES map_editors (id)
