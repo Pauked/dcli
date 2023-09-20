@@ -4,7 +4,7 @@ use log::info;
 use crate::{data, db, tui};
 
 fn pick_from_pwad_from_profile_tuple(
-    pwad_ids: (i32, i32, i32, i32, i32),
+    pwad_ids: data::PwadIds,
 ) -> Result<i32, eyre::Report> {
     let pwad_list = db::get_pwads_by_ids(pwad_ids)?;
     if pwad_list.is_empty() {

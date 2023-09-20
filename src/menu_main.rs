@@ -40,7 +40,10 @@ pub fn get_last_profile_text() -> Result<String, eyre::Report> {
 
     let app_settings = db::get_app_settings()?;
     if app_settings.last_profile_id.is_none() {
-        return Ok(format!("Last   - {}", "Run a profile to set as last run.".yellow()));
+        return Ok(format!(
+            "Last   - {}",
+            "Run a profile to set as last run.".yellow()
+        ));
     }
 
     let profile_display = db::get_profile_display_by_id(app_settings.last_profile_id.unwrap())?;
@@ -120,13 +123,13 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
+    // Yes this is ONE PWAD only. Profiles can have up to 5 PWADs, but this is just a quick play option.
     let pwad_selection =
         inquire::Select::new("Pick the PWAD you want to use (optional):", pwads.clone())
             .with_page_size(tui::MENU_PAGE_SIZE)
             .prompt_skippable()?;
     let pwad_id = pwad_selection.as_ref().map(|pwad| pwad.id);
 
-    // TODO: Enter Additional Arguments
     let additional_arguments =
         inquire::Text::new("Enter any additional arguments (optional):").prompt_skippable()?;
 
@@ -141,10 +144,6 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
             Some(pwad) => pwad.title,
         };
         let profile_name = format!("Autosave - '{}' {}", wad_name, Uuid::new_v4());
-
-        // let profile_name = inquire::Text::new("Enter a name for your Profile:")
-        //     .with_validator(inquire::min_length!(5))
-        //     .prompt()?;
 
         let profile = data::Profile {
             id: 0,
@@ -166,7 +165,7 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
         runner::play_from_engine_iwad_and_pwad(
             engine_selection.id,
             iwad_selection.id,
-            pwad_id,
+            data::pwad_ids_from_options(pwad_id, None, None, None, None),
             additional_arguments,
         )
     }

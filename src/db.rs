@@ -249,22 +249,13 @@ pub fn get_pwad_by_id(id: i32) -> Result<data::Pwad, eyre::Report> {
     })
 }
 
-pub fn get_pwads_by_ids(id: (i32, i32, i32, i32, i32)) -> Result<Vec<data::Pwad>, eyre::Report> {
+pub fn get_pwads_by_ids(pwad_ids: data::PwadIds) -> Result<Vec<data::Pwad>, eyre::Report> {
     let mut result = vec![];
-    if id.0 > 0 {
-        result.push(get_pwad_by_id(id.0)?);
-    }
-    if id.1 > 0 {
-        result.push(get_pwad_by_id(id.1)?);
-    }
-    if id.2 > 0 {
-        result.push(get_pwad_by_id(id.2)?);
-    }
-    if id.3 > 0 {
-        result.push(get_pwad_by_id(id.3)?);
-    }
-    if id.4 > 0 {
-        result.push(get_pwad_by_id(id.4)?);
+    let pwad_ids_array = [pwad_ids.0, pwad_ids.1, pwad_ids.2, pwad_ids.3, pwad_ids.4];
+    for &id in &pwad_ids_array {
+        if id != 0 {
+            result.push(get_pwad_by_id(id)?);
+        }
     }
 
     Ok(result)

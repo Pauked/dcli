@@ -156,6 +156,26 @@ pub struct Profile {
     pub additional_arguments: Option<String>,
 }
 
+pub type PwadIds = (i32, i32, i32, i32, i32);
+
+pub fn pwad_ids_from_options(
+    a: Option<i32>,
+    b: Option<i32>,
+    c: Option<i32>,
+    d: Option<i32>,
+    e: Option<i32>
+) -> PwadIds {
+    (
+        a.unwrap_or(0),
+        b.unwrap_or(0),
+        c.unwrap_or(0),
+        d.unwrap_or(0),
+        e.unwrap_or(0)
+    )
+}
+
+pub type PwadStrings = (String, String, String, String, String);
+
 #[derive(Clone, Debug, Tabled)]
 pub struct ProfileDisplay {
     #[tabled(skip)]
@@ -177,11 +197,11 @@ pub struct ProfileDisplay {
     #[tabled(rename = "IWAD Path")]
     pub iwad_file: String,
     #[tabled(skip)]
-    pub pwad_ids: (i32, i32, i32, i32, i32),
-    #[tabled(rename = "PWAD Path", display_with = "display_combined_table_string")]
-    pub pwad_paths: (String, String, String, String, String),
-    #[tabled(rename = "PWAD File", display_with = "display_combined_table_string")]
-    pub pwad_files: (String, String, String, String, String),
+    pub pwad_ids: PwadIds,
+    #[tabled(rename = "PWAD Path", display_with = "display_combined_tabled_pwad_strings")]
+    pub pwad_paths: PwadStrings,
+    #[tabled(rename = "PWAD File", display_with = "display_combined_tabled_pwad_strings")]
+    pub pwad_files: PwadStrings,
     #[tabled(rename = "Additionl Args")]
     pub additional_arguments: String,
 }
@@ -191,12 +211,12 @@ impl fmt::Display for ProfileDisplay {
         write!(
             f,
             "{} ({}) / {} [{}] / {}",
-            self.name, display_combined_string(&self.pwad_files), self.engine_file, self.engine_version, self.iwad_file
+            self.name, display_combined_pwad_strings(&self.pwad_files), self.engine_file, self.engine_version, self.iwad_file
         )
     }
 }
 
-pub fn display_combined_table_string(data: &(String, String, String, String, String)) -> String {
+pub fn display_combined_tabled_pwad_strings(data: &PwadStrings) -> String {
     let vec = [&data.0, &data.1, &data.2, &data.3, &data.4]
         .iter()
         .filter(|&&s| !s.is_empty() && s != constants::DEFAULT_NOT_SET)
@@ -206,7 +226,7 @@ pub fn display_combined_table_string(data: &(String, String, String, String, Str
     vec.join("\n")
 }
 
-pub fn display_combined_string(data: &(String, String, String, String, String)) -> String {
+pub fn display_combined_pwad_strings(data: &PwadStrings) -> String {
     let vec = [&data.0, &data.1, &data.2, &data.3, &data.4]
         .iter()
         .filter(|&&s| !s.is_empty() && s != constants::DEFAULT_NOT_SET)

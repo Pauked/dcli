@@ -14,12 +14,18 @@ pub fn play_from_profile(
     update_last_profile: bool,
 ) -> Result<String, eyre::Report> {
     // Get profile and run it
-    let single_profile = db::get_profile_by_id(profile_id)?;
+    let profile = db::get_profile_by_id(profile_id)?;
     let play_result = play_from_engine_iwad_and_pwad(
-        single_profile.engine_id.unwrap(),
-        single_profile.iwad_id.unwrap(),
-        single_profile.pwad_id,
-        single_profile.additional_arguments,
+        profile.engine_id.unwrap(),
+        profile.iwad_id.unwrap(),
+        data::pwad_ids_from_options(
+            profile.pwad_id,
+            profile.pwad_id2,
+            profile.pwad_id3,
+            profile.pwad_id4,
+            profile.pwad_id5,
+        ),
+        profile.additional_arguments,
     )?;
 
     // Update last run profile
@@ -35,7 +41,7 @@ pub fn play_from_profile(
 pub fn play_from_engine_iwad_and_pwad(
     engine_id: i32,
     iwad_id: i32,
-    pwad_id: Option<i32>,
+    pwad_ids: data::PwadIds,
     additional_arguments: Option<String>,
 ) -> Result<String, eyre::Report> {
     let engine = db::get_engine_by_id(engine_id)?;
@@ -47,17 +53,20 @@ pub fn play_from_engine_iwad_and_pwad(
     let mut cmd = Command::new(&engine.path);
     cmd.arg("-iwad").arg(iwad.path);
 
-    if pwad_id.is_some() {
-        let pwad = db::get_pwad_by_id(pwad_id.unwrap())?;
-        cmd.arg("-file").arg(&pwad.path);
-    }
-
-    if let Some(additional_arguments_unwrapped) = additional_arguments {
-        let args: Vec<String> = shlex::split(&additional_arguments_unwrapped).unwrap_or_default();
-        for arg in args {
-            cmd.arg(arg);
+    // Multiple PWADs may be selected, so we need to add them all
+    if pwad_ids.0 != 0 {
+        cmd.arg("-file");
+        let pwad_ids_array = [pwad_ids.0, pwad_ids.1, pwad_ids.2, pwad_ids.3, pwad_ids.4];
+        for &id in &pwad_ids_array {
+            if id != 0 {
+                let pwad = db::get_pwad_by_id(id)?;
+                cmd.arg(&pwad.path);
+            }
         }
     }
+
+    // Add in additional arguments
+    add_arguments_to_command(&mut cmd, additional_arguments);
 
     // Add in shared play settings
     let play_settings = db::get_play_settings()?;
@@ -106,13 +115,7 @@ pub fn play_from_engine_iwad_and_pwad(
     if play_settings.windowed {
         cmd.arg("-window");
     }
-    if play_settings.additional_arguments.is_some() {
-        let args: Vec<String> =
-            shlex::split(&play_settings.additional_arguments.unwrap()).unwrap_or_default();
-        for arg in args {
-            cmd.arg(arg);
-        }
-    }
+    add_arguments_to_command(&mut cmd, play_settings.additional_arguments);
 
     let display_args = get_display_args(&cmd);
     let run_message = format!(
@@ -129,6 +132,16 @@ pub fn play_from_engine_iwad_and_pwad(
 
     // inquire::Text::new("Press any key to continue...").prompt_skippable()?;
     Ok(format!("Successfully opened {}", run_message))
+}
+
+fn add_arguments_to_command(cmd: &mut Command, additional_arguments: Option<String>) {
+    if let Some(additional_arguments_unwrapped) = additional_arguments {
+        let escaped_arguments = additional_arguments_unwrapped.replace('\\', r"\\");
+        let args: Vec<String> = shlex::split(&escaped_arguments).unwrap_or_default();
+        for arg in args {
+            cmd.arg(arg);
+        }
+    }
 }
 
 fn get_display_args(cmd: &Command) -> String {
