@@ -29,6 +29,9 @@
 [ ] Option to delete PWADs (multi select?)
 [ ] Extend hardcoded list of engines
 [x] Simple menu mode
+[x] Add dates to profile to track last played/last updated/added
+[x] Init method, add prompts to set default Engine and default IWAD!
+[x] Default menu mode to Simple
 
 ## TODO Nice to haves
 [ ] Remember last position in a given menu!

@@ -184,8 +184,8 @@ pub fn menu_prompt(
                     MenuMode::Simple,
                 ),
                 (MenuCommand::PlayLastProfile.to_string(), MenuMode::Full),
-                (MenuCommand::PickAndPlayProfile.to_string(), MenuMode::Full),
                 (MenuCommand::PickAndPlayPwad.to_string(), MenuMode::Simple),
+                (MenuCommand::PickAndPlayProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::PlaySettings.to_string(), MenuMode::Simple),
                 (MenuCommand::Profiles.to_string(), MenuMode::Simple),
                 (MenuCommand::MapEditor.to_string(), MenuMode::Full),
@@ -211,7 +211,7 @@ pub fn menu_prompt(
             (
                 selections,
                 "Profile".to_string(),
-                "Profiles group together Engines, IWADs and PWADs".to_string(),
+                "Profiles group together Engines, IWADs and PWADs for quick play".to_string(),
             )
         }
         MenuLevel::GameSettings => {
@@ -411,6 +411,7 @@ pub fn menu_prompt(
                 (MenuCommand::ListEngines.to_string(), MenuMode::Simple),
                 (MenuCommand::ListIwads.to_string(), MenuMode::Simple),
                 (MenuCommand::ListPwads.to_string(), MenuMode::Simple),
+                (MenuCommand::ListProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::ListMapEditor.to_string(), MenuMode::Full),
                 (MenuCommand::ListAppSettings.to_string(), MenuMode::Simple),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),

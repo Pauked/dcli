@@ -52,6 +52,10 @@ pub fn init() -> Result<String, eyre::Report> {
     app_settings.pwad_search_folder = Some(pwad_search_folder);
     db::save_app_settings(app_settings)?;
 
+    // Set default engine and iwad for quick play
+    set_default_engine()?;
+    set_default_iwad()?;
+
     // Completed init!
     info!("{}", "Successfully configured!".green());
     inquire::Text::new("Press any key to continue...").prompt_skippable()?;

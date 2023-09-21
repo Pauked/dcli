@@ -28,7 +28,10 @@ pub fn play_from_profile(
         profile.additional_arguments,
     )?;
 
-    // Update last run profile
+    // Update the profile's last run date
+    db::update_profile_date_last_run(profile_id)?;
+
+    // Update last run profile on the app settings
     if update_last_profile {
         let mut app_settings = db::get_app_settings()?;
         app_settings.last_profile_id = Some(profile_id);

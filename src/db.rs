@@ -1,5 +1,6 @@
 use std::{fs, io};
 
+use chrono::Utc;
 use color_eyre::eyre::{self, Context};
 use log::debug;
 use sqlx::{
@@ -17,6 +18,7 @@ static MIGRATOR: Migrator = sqlx::migrate!(); // this will pick up migrations fr
 async fn get_db() -> sqlx::Pool<Sqlite> {
     SqlitePool::connect(DB_URL).await.unwrap()
 }
+
 pub fn database_exists() -> bool {
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
@@ -419,8 +421,9 @@ pub fn add_profile(
 
         sqlx::query(
             "INSERT INTO profiles (name, engine_id, iwad_id,
-            pwad_id, pwad_id2, pwad_id3, pwad_id4, pwad_id5, additional_arguments)
-            VALUES (?,?,?,?,?,?,?,?,?)",
+            pwad_id, pwad_id2, pwad_id3, pwad_id4, pwad_id5, additional_arguments,
+            date_created, date_edited, date_last_run)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(&profile.name)
         .bind(profile.engine_id)
@@ -431,6 +434,9 @@ pub fn add_profile(
         .bind(profile.pwad_id4)
         .bind(profile.pwad_id5)
         .bind(&profile.additional_arguments)
+        .bind(profile.date_created)
+        .bind(profile.date_edited)
+        .bind(profile.date_last_run)
         .execute(&db)
         .await
         .wrap_err(format!("Failed to add profile '{:?}", profile))
@@ -445,10 +451,12 @@ pub fn update_profile(
         let db = get_db().await;
 
         sqlx::query(
-            "UPDATE profiles SET name = $1, engine_id = $2, iwad_id = $3,
-    pwad_id = $4, pwad_id2 = $5, pwad_id3 = $6, pwad_id4 = $7, pwad_id5 = $8,
-    additional_arguments = $9 WHERE id=$10 COLLATE NOCASE",
+            "UPDATE profiles SET name = $2, engine_id = $3, iwad_id = $4,
+    pwad_id = $5, pwad_id2 = $6, pwad_id3 = $7, pwad_id4 = $8, pwad_id5 = $9,
+    additional_arguments = $10, date_created = $11, date_edited = $12,
+    date_last_run = $13 WHERE id=$1 COLLATE NOCASE",
         )
+        .bind(profile.id)
         .bind(&profile.name)
         .bind(profile.engine_id)
         .bind(profile.iwad_id)
@@ -458,7 +466,9 @@ pub fn update_profile(
         .bind(profile.pwad_id4)
         .bind(profile.pwad_id5)
         .bind(profile.additional_arguments)
-        .bind(profile.id)
+        .bind(profile.date_created)
+        .bind(profile.date_edited)
+        .bind(profile.date_last_run)
         .execute(&db)
         .await
         .wrap_err(format!(
@@ -478,6 +488,25 @@ pub fn delete_profile(id: i32) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::
             .execute(&db)
             .await
             .wrap_err(format!("Failed to delete profile with id '{}'", id))
+    })
+}
+
+pub fn update_profile_date_last_run(
+    id: i32,
+) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query("UPDATE profiles SET date_last_run = $1 WHERE id=$2 COLLATE NOCASE")
+            .bind(Utc::now())
+            .bind(id)
+            .execute(&db)
+            .await
+            .wrap_err(format!(
+                "Failed to update last run for profile with id '{}'",
+                id
+            ))
     })
 }
 
@@ -544,6 +573,9 @@ fn get_profile_display(
             paths::extract_file_name(&pwads[4].path),
         ),
         additional_arguments: profile.additional_arguments.unwrap_or_default(),
+        date_created: profile.date_created,
+        date_edited: profile.date_edited,
+        date_last_run: profile.date_last_run,
     }
 }
 

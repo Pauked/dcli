@@ -13,8 +13,8 @@ fn open_map_editor_from_pwad_id(pwad_id: i32) -> Result<String, eyre::Report> {
     // Use the Default Map Editor if set
     let app_settings = db::get_app_settings()?;
     if let Some(map_editor_id) = app_settings.default_map_editor_id {
-        let map_editor = db::get_map_editor_by_id(map_editor_id)
-            .wrap_err("Unable to get Default Map Editor")?;
+        let map_editor =
+            db::get_map_editor_by_id(map_editor_id).wrap_err("Unable to get Default Map Editor")?;
         return runner::map_editor(&pwad.path, map_editor);
     }
 

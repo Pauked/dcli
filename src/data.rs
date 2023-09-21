@@ -1,5 +1,6 @@
 use core::fmt;
 
+use chrono::{DateTime, Datelike, Local, Timelike, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use strum_macros::{Display, EnumString};
@@ -156,6 +157,9 @@ pub struct Profile {
     pub pwad_id3: Option<i32>,
     pub pwad_id4: Option<i32>,
     pub pwad_id5: Option<i32>,
+    pub date_created: DateTime<Utc>,
+    pub date_edited: DateTime<Utc>,
+    pub date_last_run: Option<DateTime<Utc>>,
     pub additional_arguments: Option<String>,
 }
 
@@ -213,6 +217,18 @@ pub struct ProfileDisplay {
     pub pwad_files: PwadStrings,
     #[tabled(rename = "Additionl Args")]
     pub additional_arguments: String,
+    #[tabled(
+        rename = "Date Created",
+        display_with = "display_utc_datetime_to_local"
+    )]
+    pub date_created: DateTime<Utc>,
+    #[tabled(rename = "Date Edited", display_with = "display_utc_datetime_to_local")]
+    pub date_edited: DateTime<Utc>,
+    #[tabled(
+        rename = "Date Last Run",
+        display_with = "display_option_utc_datetime_to_local"
+    )]
+    pub date_last_run: Option<DateTime<Utc>>,
 }
 
 impl fmt::Display for ProfileDisplay {
@@ -227,26 +243,6 @@ impl fmt::Display for ProfileDisplay {
             self.iwad_file
         )
     }
-}
-
-pub fn display_combined_tabled_pwad_strings(data: &PwadStrings) -> String {
-    let vec = [&data.0, &data.1, &data.2, &data.3, &data.4]
-        .iter()
-        .filter(|&&s| !s.is_empty() && s != constants::DEFAULT_NOT_SET)
-        .map(|&s| s.as_str())
-        .collect::<Vec<&str>>();
-
-    vec.join("\n")
-}
-
-pub fn display_combined_pwad_strings(data: &PwadStrings) -> String {
-    let vec = [&data.0, &data.1, &data.2, &data.3, &data.4]
-        .iter()
-        .filter(|&&s| !s.is_empty() && s != constants::DEFAULT_NOT_SET)
-        .map(|&s| s.as_str())
-        .collect::<Vec<&str>>();
-
-    vec.join(", ")
 }
 
 #[derive(Clone, Debug, FromRow)]
@@ -277,7 +273,7 @@ impl Default for AppSettings {
             iwad_search_folder: None,
             pwad_search_folder: None,
             map_editor_search_folder: None,
-            menu_mode: MenuMode::Full,
+            menu_mode: MenuMode::Simple,
         }
     }
 }
@@ -383,4 +379,51 @@ pub struct PlaySettings {
     pub full_screen: bool,
     pub windowed: bool,
     pub additional_arguments: Option<String>,
+}
+
+// Helper methods for display
+pub fn display_combined_tabled_pwad_strings(data: &PwadStrings) -> String {
+    let vec = [&data.0, &data.1, &data.2, &data.3, &data.4]
+        .iter()
+        .filter(|&&s| !s.is_empty() && s != constants::DEFAULT_NOT_SET)
+        .map(|&s| s.as_str())
+        .collect::<Vec<&str>>();
+
+    vec.join("\n")
+}
+
+pub fn display_combined_pwad_strings(data: &PwadStrings) -> String {
+    let vec = [&data.0, &data.1, &data.2, &data.3, &data.4]
+        .iter()
+        .filter(|&&s| !s.is_empty() && s != constants::DEFAULT_NOT_SET)
+        .map(|&s| s.as_str())
+        .collect::<Vec<&str>>();
+
+    vec.join(", ")
+}
+
+pub fn display_utc_datetime_to_local(value: &DateTime<Utc>) -> String {
+    let converted: DateTime<Local> = DateTime::from(*value);
+    format_local_datetime(&converted)
+}
+
+pub fn display_option_utc_datetime_to_local(value: &Option<DateTime<Utc>>) -> String {
+    if let Some(d) = value {
+        let converted: DateTime<Local> = DateTime::from(*d);
+        return format_local_datetime(&converted);
+    }
+
+    "N/A".to_string()
+}
+
+fn format_local_datetime(local_datetime: &DateTime<Local>) -> String {
+    format!(
+        "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+        local_datetime.year(),
+        local_datetime.month(),
+        local_datetime.day(),
+        local_datetime.hour(),
+        local_datetime.minute(),
+        local_datetime.second()
+    )
 }

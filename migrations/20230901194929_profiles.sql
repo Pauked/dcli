@@ -35,6 +35,9 @@ CREATE TABLE IF NOT EXISTS profiles (
     pwad_id4 INTEGER NULL,
     pwad_id5 INTEGER NULL,
     additional_arguments TEXT NULL,
+    date_created DATETIME NOT NULL,
+    date_edited DATETIME NOT NULL,
+    date_last_run DATETIME NULL,
     FOREIGN KEY (engine_id) REFERENCES engines (id),
     FOREIGN KEY (iwad_id) REFERENCES iwads (id)
 );

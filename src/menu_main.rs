@@ -1,3 +1,4 @@
+use chrono::Utc;
 use color_eyre::{
     eyre::{self},
     owo_colors::OwoColorize,
@@ -86,7 +87,7 @@ pub fn pick_and_play_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
         return Ok(
-            "Cannot set Default Profile, there are no profiles found. Please create one."
+            "Cannot Play Profile, there are no profiles found. Please create one."
                 .red()
                 .to_string(),
         );
@@ -147,14 +148,6 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
         }
     };
 
-    // let engine_selection = inquire::Select::new("Pick the Engine you want to use:", engines)
-    //     .with_page_size(tui::MENU_PAGE_SIZE)
-    //     .prompt()?;
-
-    // let iwad_selection = inquire::Select::new("Pick the IWAD you want to use:", iwads)
-    //     .with_page_size(tui::MENU_PAGE_SIZE)
-    //     .prompt()?;
-
     // Yes this is ONE PWAD only. Profiles can have up to 5 PWADs, but this is just a quick play option.
     let pwad_selection =
         inquire::Select::new("Pick the PWAD you want to use (optional):", pwads.clone())
@@ -165,7 +158,6 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
     let additional_arguments =
         inquire::Text::new("Enter any additional arguments (optional):").prompt_skippable()?;
 
-    // TODO: Offer to create profile?
     if inquire::Confirm::new("Autosave this options as a Profile?")
         .with_default(false)
         .prompt()
@@ -192,6 +184,9 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
             pwad_id4: None,
             pwad_id5: None,
             additional_arguments,
+            date_created: Utc::now(),
+            date_edited: Utc::now(),
+            date_last_run: None,
         };
         let add_result = db::add_profile(profile)?;
         let new_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();

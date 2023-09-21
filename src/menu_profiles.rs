@@ -1,3 +1,4 @@
+use chrono::Utc;
 use colored::Colorize;
 use eyre::Context;
 use tabled::settings::{object::Rows, Modify, Style, Width};
@@ -70,6 +71,9 @@ pub fn new_profile() -> Result<String, eyre::Report> {
         pwad_id4,
         pwad_id5,
         additional_arguments,
+        date_created: Utc::now(),
+        date_edited: Utc::now(),
+        date_last_run: None,
     };
     let add_result = db::add_profile(profile)?;
     let new_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
@@ -117,39 +121,39 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
             .to_string());
     }
 
-    let profile = inquire::Select::new("Pick the Profile to Edit:", profile_list)
+    let profile_display = inquire::Select::new("Pick the Profile to Edit:", profile_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
     let engine_starting_cursor = engines
         .iter()
-        .position(|engine| profile.engine_id == engine.id)
+        .position(|engine| profile_display.engine_id == engine.id)
         .unwrap_or(0);
 
     let iwad_starting_cursor = iwads
         .iter()
-        .position(|iwad| profile.iwad_id == iwad.id)
+        .position(|iwad| profile_display.iwad_id == iwad.id)
         .unwrap_or(0);
 
     let pwad_starting_cursor = pwads
         .iter()
-        .position(|pwad| profile.pwad_ids.0 == pwad.id)
+        .position(|pwad| profile_display.pwad_ids.0 == pwad.id)
         .unwrap_or(0);
     let pwad_starting_cursor2 = pwads
         .iter()
-        .position(|pwad| profile.pwad_ids.1 == pwad.id)
+        .position(|pwad| profile_display.pwad_ids.1 == pwad.id)
         .unwrap_or(0);
     let pwad_starting_cursor3 = pwads
         .iter()
-        .position(|pwad| profile.pwad_ids.2 == pwad.id)
+        .position(|pwad| profile_display.pwad_ids.2 == pwad.id)
         .unwrap_or(0);
     let pwad_starting_cursor4 = pwads
         .iter()
-        .position(|pwad| profile.pwad_ids.3 == pwad.id)
+        .position(|pwad| profile_display.pwad_ids.3 == pwad.id)
         .unwrap_or(0);
     let pwad_starting_cursor5 = pwads
         .iter()
-        .position(|pwad| profile.pwad_ids.4 == pwad.id)
+        .position(|pwad| profile_display.pwad_ids.4 == pwad.id)
         .unwrap_or(0);
     let default_pwads = vec![
         pwad_starting_cursor,
@@ -162,7 +166,7 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
     // TODO: Validate if profile_name already exists
     let profile_name = inquire::Text::new("Enter a name for your Profile:")
         .with_validator(inquire::min_length!(5))
-        .with_default(&profile.name)
+        .with_default(&profile_display.name)
         .prompt()?;
 
     let engine_selection = inquire::Select::new("Pick the Engine you want to use:", engines)
@@ -183,11 +187,11 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
     let pwad_id5 = Some(pwad_selection[4].id).filter(|&id| id > 0);
 
     let additional_arguments = inquire::Text::new("Enter any additional arguments (optional):")
-        .with_default(&profile.additional_arguments)
+        .with_default(&profile_display.additional_arguments)
         .prompt_skippable()?;
 
     let profile = data::Profile {
-        id: profile.id,
+        id: profile_display.id,
         name: profile_name.clone(),
         engine_id: Some(engine_selection.id),
         iwad_id: Some(iwad_selection.id),
@@ -197,6 +201,9 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
         pwad_id4,
         pwad_id5,
         additional_arguments,
+        date_created: profile_display.date_created,
+        date_edited: Utc::now(),
+        date_last_run: profile_display.date_last_run,
     };
     db::update_profile(profile)?;
 
