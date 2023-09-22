@@ -16,14 +16,6 @@ use crate::menu_play_settings;
 use crate::menu_profiles;
 use crate::menu_view_readme;
 
-const ARG_PLAY: &str = "--play";
-const ARG_PLAY_LAST: &str = "--playlast";
-const ARG_MAP_EDITOR: &str = "--mapeditor";
-const ARG_MAP_EDITOR_LAST: &str = "--mapeditorlast";
-const ARG_INIT: &str = "--init";
-pub const ARG_RESET: &str = "--reset";
-pub const ARG_VERSION: &str = "--version";
-
 pub const MENU_PAGE_SIZE: usize = 15;
 
 pub enum MenuLevel {
@@ -504,6 +496,10 @@ pub fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
 }
 
 pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Report> {
+    run_menu_command_with_force(menu_command, false)
+}
+
+pub fn run_menu_command_with_force(menu_command: MenuCommand, force: bool) -> Result<String, eyre::Report> {
     match menu_command {
         // Main Menu
         MenuCommand::PlayDefaultProfile => menu_main::play_default_profile(),
@@ -565,7 +561,7 @@ pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Repor
             inquire::Text::new("Press any key to continue...").prompt_skippable()?;
             Ok("Successfully updated PWADs".to_string())
         }
-        MenuCommand::Reset => menu_app_settings::reset(false),
+        MenuCommand::Reset => menu_app_settings::reset(force),
 
         // Play Settings Menu
         MenuCommand::CompLevel => menu_play_settings::update_comp_level(),
@@ -604,17 +600,5 @@ pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Repor
         MenuCommand::Ignore => Ok("".to_string()),
         MenuCommand::Back => Ok("".to_string()),
         MenuCommand::Quit => Ok("Quitting".to_string()),
-    }
-}
-
-pub fn convert_arg_to_menu_command(arg: &str) -> MenuCommand {
-    match arg {
-        ARG_INIT => MenuCommand::Init,
-        ARG_RESET => MenuCommand::Reset,
-        ARG_PLAY => MenuCommand::PlayDefaultProfile,
-        ARG_PLAY_LAST => MenuCommand::PlayLastProfile,
-        ARG_MAP_EDITOR => MenuCommand::OpenFromDefaultProfile,
-        ARG_MAP_EDITOR_LAST => MenuCommand::OpenFromLastProfile,
-        _ => MenuCommand::Ignore,
     }
 }

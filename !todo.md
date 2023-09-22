@@ -9,13 +9,13 @@
 [x] Open PWAD readme in local text editor
 [x] Add "play settings" menu to be able to config -fastmonster, -nomonsters, etc, switched use for all runs
 [x] Add play settings automatically to play
-[ ] Have a profile switch of "include play settings?"
+[ ] Have a profile switch of "include play settings?", default to on.
 [/] Make menus less crashy if user aborts
 [x] Add a `--version` option to the CLI.
-[ ] Add a `--help` option to the CLI.
+[x] Add a `--help` option to the CLI (using clap does this for us!)
 [ ] Block deleting of Engine/IWAD/PWAD if linked in Profiles.
 [x] Play, do file exists check on Engine/IWAD/PWAD (might have been moved/deleted after config)
-[ ] Write Readme in repo root
+[/] Write Readme in repo root
 [x] Add PWAD/IWAD checking of files (read first few bytes to check file identifier)
 [x] Rename "Game Settings" to "Play Settings". Move to be uder Play options on Main Menu.
 [x] Rename "Config App" to "App Settings"
@@ -25,13 +25,16 @@
 [x] Set Default IWAD
 [x] Quick Play option that runs default engine (if set), default IWAD (if set), pick PWAD
 [x] Rename "Active Profile/Map Editor" to "Default Profle/Map Editor"
-[ ] Add --force option to reset and init so no prompts needed
+[x] Add --force option to reset so no prompts needed
 [ ] Option to delete PWADs (multi select?)
+[ ] Option to delete Engines
+[ ] Option to delete IWADs
 [ ] Extend hardcoded list of engines
 [x] Simple menu mode
 [x] Add dates to profile to track last played/last updated/added
 [x] Init method, add prompts to set default Engine and default IWAD!
 [x] Default menu mode to Simple
+[x] Replace arg code with clap
 
 ## TODO Nice to haves
 [ ] Remember last position in a given menu!

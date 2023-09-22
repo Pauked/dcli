@@ -1,6 +1,6 @@
 pub const APP_NAME: &str = "dcli";
 
-// pub const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
+pub const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub const OS_MACOS: &str = "macos";

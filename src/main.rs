@@ -1,9 +1,11 @@
-use std::{env, process};
+use std::process;
 
+use clap::Parser;
 use color_eyre::eyre;
 use colored::Colorize;
 use log::{debug, info};
 
+mod cli;
 mod constants;
 mod data;
 mod db;
@@ -34,41 +36,19 @@ fn run() -> eyre::Result<String> {
         constants::CRATE_VERSION,
     );
 
-    // Attempt to run from arguments
-    // We don't want the full exe path, just the args
-    let args: Vec<String> = env::args().skip(1).collect();
+    let args = cli::Args::parse();
+    log::debug!("Args {:?}", args);
 
-    if args.len() == 1 && args.contains(&tui::ARG_VERSION.to_string()) {
-        return Ok(format!(
-            "{} {}",
-            constants::APP_NAME,
-            constants::CRATE_VERSION
-        ));
-    }
-
-    let reset_mode = args.len() == 1 && args.contains(&tui::ARG_RESET.to_string());
-    if !reset_mode {
-        db::create_db()?;
-        if db::is_empty_app_settings_table()? {
-            info!("No settings found, running init...");
-            menu_app_settings::init()?;
+    let (cli_result, cli_run_mode) = cli::run_cli_action(args)?;
+    match cli_run_mode {
+        cli::CliRunMode::Tui => {
+            info!("Welcome to {}", constants::APP_NAME.bright_yellow());
+            tui::menu(tui::MenuLevel::Main)
+        }
+        cli::CliRunMode::Quit => {
+            Ok(cli_result)
         }
     }
-
-    for arg in args {
-        debug!("Running arg: {}", arg);
-        // TODO: Refactor to be less bad
-        let main_arg = tui::convert_arg_to_menu_command(&arg);
-        if main_arg != tui::MenuCommand::Ignore {
-            let result = tui::run_menu_command(main_arg)?;
-            if reset_mode && result != *"Database reset not confirmed." {
-                menu_app_settings::init()?;
-            }
-        }
-    }
-
-    info!("Welcome to {}", constants::APP_NAME.bright_yellow());
-    tui::menu(tui::MenuLevel::Main)
 }
 
 fn main() {

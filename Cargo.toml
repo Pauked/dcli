@@ -37,6 +37,7 @@ clearscreen = "2"
 plist = "1.5"
 shlex = "1.2"
 chrono = "0.4"
+clap = { version = "4", features = ["derive", "cargo"] }
 
 [dependencies.uuid]
 version = "1.4"
