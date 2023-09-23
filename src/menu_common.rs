@@ -123,6 +123,16 @@ pub fn get_pwad_selection(
             .prompt_skippable()?;
 
     if let Some(unwrapped_selected_items) = selected_items {
+        // No ordering need if nothing is selected
+        if unwrapped_selected_items.is_empty() {
+            return Ok(vec![
+                data::Pwad::default(),
+                data::Pwad::default(),
+                data::Pwad::default(),
+                data::Pwad::default(),
+                data::Pwad::default(),
+            ]);
+        }
         // No ordering need if they just pick one
         if unwrapped_selected_items.len() == 1 {
             return Ok(vec![

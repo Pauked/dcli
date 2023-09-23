@@ -383,20 +383,20 @@ pub fn list_app_settings() -> Result<String, eyre::Report> {
 
 pub fn reset(force: bool) -> Result<String, eyre::Report> {
     if !db::database_exists() {
-        return Ok("Database does not exist. Nothing to reset.".to_string());
+        return Ok("Database does not exist. Nothing to reset".to_string());
     }
 
-    // Prompt the user for confirmation to delete the file
+    // Prompt the user for confirmation the reset, unless force is set
     if force
-        || inquire::Confirm::new("Do you want to reset the database? All data will be deleted.")
+        || inquire::Confirm::new("Do you want to reset the database? All data will be deleted")
             .with_default(false)
             .prompt()
             .unwrap()
     {
-        db::reset_db().wrap_err("Failed to reset database.")?;
-        Ok("Successfully reset database.".green().to_string())
+        db::reset_db().wrap_err("Failed to reset database")?;
+        Ok("Successfully reset database".green().to_string())
     } else {
-        Ok("Database reset not confirmed.".to_string())
+        Ok("Database reset not confirmed".to_string())
     }
 }
 

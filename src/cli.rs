@@ -20,28 +20,26 @@ pub struct Args {
 
 #[derive(Parser, Debug, PartialEq)]
 pub enum Action {
-    /// Play Doom with the default profile
-    #[clap(short_flag = 'p', long_flag = "play")]
+    /// Play Doom with the Default Profile PWAD. Takes the first PWAD in Profile.
+    #[clap(short_flag = 'p')]
     Play,
 
-    /// Play Doom with the last used profile
-    #[clap(long_flag = "playlast")]
+    /// Play Doom with the Last Run Profile. Takes the first PWAD in Profile.
     PlayLast,
 
-    /// Open the map editor with the default profile
-    #[clap(short_flag = 'm', long_flag = "mapeditor")]
+    /// Open the Map Editor with the Default Profile PWAD. Takes the first PWAD in Profile.
+    #[clap(short_flag = 'm')]
     MapEditor,
 
-    /// Open the map editor with the last used profile
-    #[clap(long_flag = "mapeditorlast")]
+    /// Open the Map Editor with the Last Run Profile. Takes the first PWAD in Profile.
     MapEditorLast,
 
-    /// Imports the app for usage!
-    #[clap(short_flag = 'i', long_flag = "init")]
+    /// Initializes the app for use. Asks a quick set of questions to get you Dooming!
+    #[clap(short_flag = 'i')]
     Init,
 
-    /// Resets the database.
-    #[clap(short_flag = 'r', long_flag = "reset")]
+    /// Resets the database, nuking all settings.
+    #[clap(short_flag = 'r')]
     Reset {
         /// Force database reset and skip confirmation prompt.
         #[arg(long, default_value = "false")]
