@@ -5,8 +5,6 @@ use color_eyre::{
     Result,
 };
 use colored::Colorize;
-use eyre::Context;
-use log::info;
 use uuid::Uuid;
 
 use crate::{data, db, paths, runner, tui};
@@ -102,20 +100,20 @@ pub fn pick_and_play_profile() -> Result<String, eyre::Report> {
 }
 
 pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
-    let engines = db::get_engines()?;
-    if engines.is_empty() {
+    let engine_list = db::get_engines()?;
+    if engine_list.is_empty() {
         return Ok("There are no Engines to select. Please run 'init'"
             .red()
             .to_string());
     }
-    let iwads = db::get_iwads()?;
-    if iwads.is_empty() {
+    let iwad_list = db::get_iwads()?;
+    if iwad_list.is_empty() {
         return Ok("There are no IWADs to select. Please run 'init"
             .red()
             .to_string());
     }
-    let pwads = db::get_pwads()?;
-    if pwads.is_empty() {
+    let pwad_list = db::get_pwads()?;
+    if pwad_list.is_empty() {
         return Ok("There are no PWADs to select. Please run 'init'"
             .red()
             .to_string());
@@ -123,42 +121,64 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
 
     let app_settings = db::get_app_settings()?;
 
-    let engine_selection = {
-        if let Some(engine_id) = app_settings.default_engine_id {
-            let engine =
-                db::get_engine_by_id(engine_id).wrap_err("Unable to get Default Engine")?;
-            info!("Using Default Engine: {}", engine.blue());
-            engine
-        } else {
-            inquire::Select::new("Pick the Engine you want to use:", engines)
-                .with_page_size(tui::MENU_PAGE_SIZE)
-                .prompt()?
-        }
+    let starting_cursor = match app_settings.default_engine_id {
+        Some(ref i) => engine_list.iter().position(|x| x.id == *i).unwrap(),
+        None => 0,
     };
 
-    let iwad_selection = {
-        if let Some(iwad_id) = app_settings.default_iwad_id {
-            let iwad = db::get_iwad_by_id(iwad_id).wrap_err("Unable to get Default IWAD")?;
-            info!("Using Default IWAD: {}", iwad.blue());
-            iwad
-        } else {
-            inquire::Select::new("Pick the IWAD you want to use:", iwads)
-                .with_page_size(tui::MENU_PAGE_SIZE)
-                .prompt()?
-        }
+    let engine_selection = inquire::Select::new("Pick the Engine you want to use:", engine_list)
+        .with_starting_cursor(starting_cursor)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt()?;
+
+    // let engine_selection = {
+    //     if let Some(engine_id) = app_settings.default_engine_id {
+    //         let engine =
+    //             db::get_engine_by_id(engine_id).wrap_err("Unable to get Default Engine")?;
+    //         info!("Using Default Engine: {}", engine.blue());
+    //         engine
+    //     } else {
+    //         inquire::Select::new("Pick the Engine you want to use:", engine_list)
+    //             .with_page_size(tui::MENU_PAGE_SIZE)
+    //             .prompt()?
+    //     }
+    // };
+
+    let starting_cursor = match app_settings.default_iwad_id {
+        Some(ref i) => iwad_list.iter().position(|x| x.id == *i).unwrap(),
+        None => 0,
     };
+
+    let iwad_selection = inquire::Select::new("Pick the IWAD you want to use:", iwad_list)
+        .with_starting_cursor(starting_cursor)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt()?;
+
+    // let iwad_selection = {
+    //     if let Some(iwad_id) = app_settings.default_iwad_id {
+    //         let iwad = db::get_iwad_by_id(iwad_id).wrap_err("Unable to get Default IWAD")?;
+    //         info!("Using Default IWAD: {}", iwad.blue());
+    //         iwad
+    //     } else {
+    //         inquire::Select::new("Pick the IWAD you want to use:", iwad_list)
+    //             .with_page_size(tui::MENU_PAGE_SIZE)
+    //             .prompt()?
+    //     }
+    // };
 
     // Yes this is ONE PWAD only. Profiles can have up to 5 PWADs, but this is just a quick play option.
-    let pwad_selection =
-        inquire::Select::new("Pick the PWAD you want to use (optional):", pwads.clone())
-            .with_page_size(tui::MENU_PAGE_SIZE)
-            .prompt_skippable()?;
+    let pwad_selection = inquire::Select::new(
+        "Pick the PWAD you want to use (optional):",
+        pwad_list.clone(),
+    )
+    .with_page_size(tui::MENU_PAGE_SIZE)
+    .prompt_skippable()?;
     let pwad_id = pwad_selection.as_ref().map(|pwad| pwad.id);
 
     let additional_arguments =
         inquire::Text::new("Enter any additional arguments (optional):").prompt_skippable()?;
 
-    if inquire::Confirm::new("Autosave this options as a Profile?")
+    if inquire::Confirm::new("Autosave these options as a Profile?")
         .with_default(false)
         .prompt()
         .unwrap()

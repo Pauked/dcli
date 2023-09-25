@@ -1,6 +1,7 @@
 use chrono::Utc;
 use colored::Colorize;
 use eyre::Context;
+use inquire::validator::Validation;
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{data, db, menu_common, tui};
@@ -27,17 +28,31 @@ pub fn new_profile() -> Result<String, eyre::Report> {
 
     let app_settings = db::get_app_settings()?;
     let engine_starting_cursor = match app_settings.default_engine_id {
-        Some(ref s) => engines.iter().position(|x| x.id == *s).unwrap(),
+        Some(ref i) => engines.iter().position(|x| x.id == *i).unwrap(),
         None => 0,
     };
     let iwad_starting_cursor = match app_settings.default_iwad_id {
-        Some(ref s) => iwads.iter().position(|x| x.id == *s).unwrap(),
+        Some(ref i) => iwads.iter().position(|x| x.id == *i).unwrap(),
         None => 0,
     };
 
-    // TODO: Validate if profile_name already exists
     let profile_name = inquire::Text::new("Enter a name for your Profile:")
-        .with_validator(inquire::min_length!(5))
+        .with_validator(|input: &str| {
+            let profile_result = db::get_profile_by_name(input);
+            if let Ok(profile) = profile_result {
+                if profile.name == input {
+                    return Ok(Validation::Invalid("Profile name already exists.".into()));
+                }
+            }
+
+            if input.len() < 5 {
+                Ok(Validation::Invalid(
+                    "Profile name must be at least 5 characters.".into(),
+                ))
+            } else {
+                Ok(Validation::Valid)
+            }
+        })
         .prompt()?;
 
     let engine_selection = inquire::Select::new("Pick the Engine you want to use:", engines)
@@ -135,37 +150,29 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
         .position(|iwad| profile_display.iwad_id == iwad.id)
         .unwrap_or(0);
 
-    let pwad_starting_cursor = pwads
+    let ids = &profile_display.pwad_ids;
+    let default_pwads: Vec<usize> = [ids.0, ids.1, ids.2, ids.3, ids.4]
         .iter()
-        .position(|pwad| profile_display.pwad_ids.0 == pwad.id)
-        .unwrap_or(0);
-    let pwad_starting_cursor2 = pwads
-        .iter()
-        .position(|pwad| profile_display.pwad_ids.1 == pwad.id)
-        .unwrap_or(0);
-    let pwad_starting_cursor3 = pwads
-        .iter()
-        .position(|pwad| profile_display.pwad_ids.2 == pwad.id)
-        .unwrap_or(0);
-    let pwad_starting_cursor4 = pwads
-        .iter()
-        .position(|pwad| profile_display.pwad_ids.3 == pwad.id)
-        .unwrap_or(0);
-    let pwad_starting_cursor5 = pwads
-        .iter()
-        .position(|pwad| profile_display.pwad_ids.4 == pwad.id)
-        .unwrap_or(0);
-    let default_pwads = vec![
-        pwad_starting_cursor,
-        pwad_starting_cursor2,
-        pwad_starting_cursor3,
-        pwad_starting_cursor4,
-        pwad_starting_cursor5,
-    ];
+        .filter_map(|&id| pwads.iter().position(|pwad| pwad.id == id))
+        .collect();
 
-    // TODO: Validate if profile_name already exists
     let profile_name = inquire::Text::new("Enter a name for your Profile:")
-        .with_validator(inquire::min_length!(5))
+        .with_validator(move |input: &str| {
+            let profile_result = db::get_profile_by_name(input);
+            if let Ok(profile) = profile_result {
+                if profile.id != profile_display.id && profile.name == input {
+                    return Ok(Validation::Invalid("Profile name already exists.".into()));
+                }
+            }
+
+            if input.len() < 5 {
+                Ok(Validation::Invalid(
+                    "Profile name must be at least 5 characters.".into(),
+                ))
+            } else {
+                Ok(Validation::Valid)
+            }
+        })
         .with_default(&profile_display.name)
         .prompt()?;
 

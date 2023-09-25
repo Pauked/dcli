@@ -76,7 +76,7 @@ pub fn set_default_map_editor() -> Result<String, eyre::Report> {
 
     let mut app_settings = db::get_app_settings()?;
     let starting_cursor = match app_settings.default_map_editor_id {
-        Some(ref s) => map_editor_list.iter().position(|x| x.id == *s).unwrap(),
+        Some(ref i) => map_editor_list.iter().position(|x| x.id == *i).unwrap(),
         None => 0,
     };
 

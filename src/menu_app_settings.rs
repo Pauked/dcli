@@ -421,7 +421,7 @@ pub fn set_default_engine() -> Result<String, eyre::Report> {
 
     let mut app_settings = db::get_app_settings()?;
     let starting_cursor = match app_settings.default_engine_id {
-        Some(ref s) => engine_list.iter().position(|x| x.id == *s).unwrap(),
+        Some(ref i) => engine_list.iter().position(|x| x.id == *i).unwrap(),
         None => 0,
     };
 
@@ -452,7 +452,7 @@ pub fn set_default_iwad() -> Result<String, eyre::Report> {
 
     let mut app_settings = db::get_app_settings()?;
     let starting_cursor = match app_settings.default_iwad_id {
-        Some(ref s) => iwad_list.iter().position(|x| x.id == *s).unwrap(),
+        Some(ref i) => iwad_list.iter().position(|x| x.id == *i).unwrap(),
         None => 0,
     };
 

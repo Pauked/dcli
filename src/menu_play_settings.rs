@@ -19,7 +19,7 @@ pub fn update_comp_level() -> Result<String, eyre::Report> {
 
     let mut play_settings = db::get_play_settings()?;
     let starting_cursor = match play_settings.comp_level {
-        Some(ref s) => selections.iter().position(|x| x == &s.to_string()).unwrap(),
+        Some(ref c) => selections.iter().position(|x| x == &c.to_string()).unwrap(),
         None => 0,
     };
 

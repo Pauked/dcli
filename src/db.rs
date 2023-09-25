@@ -539,6 +539,19 @@ pub fn get_profile_by_id(id: i32) -> Result<data::Profile, eyre::Report> {
     })
 }
 
+pub fn get_profile_by_name(name: &str) -> Result<data::Profile, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query_as::<_, data::Profile>("SELECT * FROM profiles WHERE name = ?")
+            .bind(name)
+            .fetch_one(&db)
+            .await
+            .wrap_err(format!("Failed to get profile with name '{}'", name))
+    })
+}
+
 fn get_profile_display(
     profile: data::Profile,
     engine: data::Engine,
