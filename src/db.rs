@@ -332,6 +332,10 @@ fn update_app_settings(
 }
 
 pub fn get_app_settings() -> Result<data::AppSettings, eyre::Report> {
+    if !database_exists() {
+        return Ok(data::AppSettings::default());
+    }
+
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let db = get_db().await;

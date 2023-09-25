@@ -177,7 +177,10 @@ pub fn menu_prompt(
                 ),
                 (MenuCommand::PlayLastProfile.to_string(), MenuMode::Full),
                 (MenuCommand::PickAndPlayPwad.to_string(), MenuMode::Simple),
-                (MenuCommand::PickAndPlayProfile.to_string(), MenuMode::Simple),
+                (
+                    MenuCommand::PickAndPlayProfile.to_string(),
+                    MenuMode::Simple,
+                ),
                 (MenuCommand::PlaySettings.to_string(), MenuMode::Simple),
                 (MenuCommand::Profiles.to_string(), MenuMode::Simple),
                 (MenuCommand::MapEditor.to_string(), MenuMode::Full),
@@ -499,7 +502,10 @@ pub fn run_menu_command(menu_command: MenuCommand) -> Result<String, eyre::Repor
     run_menu_command_with_force(menu_command, false)
 }
 
-pub fn run_menu_command_with_force(menu_command: MenuCommand, force: bool) -> Result<String, eyre::Report> {
+pub fn run_menu_command_with_force(
+    menu_command: MenuCommand,
+    force: bool,
+) -> Result<String, eyre::Report> {
     match menu_command {
         // Main Menu
         MenuCommand::PlayDefaultProfile => menu_main::play_default_profile(),

@@ -16,6 +16,7 @@ pub enum GameEngineType {
     Doom,
     GzDoom,
     PrBoomPlus,
+    CrispyDoom,
     Unknown,
 }
 
@@ -75,18 +76,25 @@ pub fn get_engine_list(operating_system: OperatingSystem) -> Vec<GameEngine> {
             operating_system: OperatingSystem::Windows,
         },
         GameEngine {
+            exe_name: "crispy-doom.exe".to_string(),
+            internal_path: None,
+            game_engine_type: GameEngineType::CrispyDoom,
+            operating_system: OperatingSystem::Windows,
+        },
+        GameEngine {
             exe_name: "gzdoom.app".to_string(),
             internal_path: Some("Contents/MacOS/gzdoom".to_string()),
             game_engine_type: GameEngineType::GzDoom,
             operating_system: OperatingSystem::Mac,
-        }, // GameEngine {
-           //     exe_name: "prboom-plus.exe".to_string(),
-           //     game_engine_type: GameEngineType::PrBoom,
-           // },
-           // GameEngine {
-           //     exe_name: "glboom-plus.exe".to_string(),
-           //     game_engine_type: GameEngineType::PrBoom,
-           // },
+        },
+        // GameEngine {
+        //     exe_name: "prboom-plus.exe".to_string(),
+        //     game_engine_type: GameEngineType::PrBoom,
+        // },
+        // GameEngine {
+        //     exe_name: "glboom-plus.exe".to_string(),
+        //     game_engine_type: GameEngineType::PrBoom,
+        // },
     ];
 
     result

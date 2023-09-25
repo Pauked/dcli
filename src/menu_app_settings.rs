@@ -12,6 +12,15 @@ use crate::{
     db, doom_data, files, paths, tui,
 };
 
+pub fn check_app_can_run() -> Result<String, eyre::Report> {
+    db::create_db()?;
+    if db::is_empty_app_settings_table()? {
+        info!("{}", "No app settings found, running init...".red());
+        init()?;
+    }
+    Ok("App is ready to run".to_string())
+}
+
 pub fn update_menu_mode() -> Result<String, eyre::Report> {
     let mut app_settings = db::get_app_settings()?;
     if app_settings.menu_mode == tui::MenuMode::Full {

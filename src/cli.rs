@@ -1,8 +1,7 @@
 use clap::Parser;
-use log::info;
 
 use crate::{
-    constants, db, menu_app_settings,
+    constants, menu_app_settings,
     tui::{self, MenuCommand},
 };
 
@@ -53,11 +52,7 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
         match action {
             Action::Reset { force: _ } => {}
             _ => {
-                db::create_db()?;
-                if db::is_empty_app_settings_table()? {
-                    info!("No settings found, running init...");
-                    menu_app_settings::init()?;
-                }
+                menu_app_settings::check_app_can_run()?;
             }
         }
 
@@ -89,6 +84,9 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
             }
         }
     } else {
-        Ok(("No arguments specified, continue to UI".to_string(), CliRunMode::Tui))
+        Ok((
+            "No arguments specified, continue to UI".to_string(),
+            CliRunMode::Tui,
+        ))
     }
 }

@@ -1,4 +1,4 @@
-use std::{path::Path, fs::File, io::Read};
+use std::{fs::File, io::Read, path::Path};
 
 use crate::{data, doom_data, finder, paths};
 
@@ -67,7 +67,6 @@ pub fn get_details_from_readme(pwad: &str) -> Result<(String, String), eyre::Rep
     Ok((title, author))
 }
 
-
 pub fn get_version_from_exe_name(
     exe_name: &str,
     game_engine_type: doom_data::GameEngineType,
@@ -75,7 +74,9 @@ pub fn get_version_from_exe_name(
     match game_engine_type {
         doom_data::GameEngineType::Doom => todo!("Doom version not implemented yet!"),
         doom_data::GameEngineType::PrBoomPlus => Ok(finder::get_prboom_file_version(exe_name)?),
-        doom_data::GameEngineType::GzDoom => Ok(finder::get_file_version(exe_name)?),
+        doom_data::GameEngineType::GzDoom | doom_data::GameEngineType::CrispyDoom => {
+            Ok(finder::get_file_version(exe_name)?)
+        }
         doom_data::GameEngineType::Unknown => Err(eyre::eyre!("Unknown game engine type")),
     }
 }
