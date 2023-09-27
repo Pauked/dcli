@@ -50,16 +50,16 @@ pub fn init() -> Result<String, eyre::Report> {
     };
     let iwad_search_folder = init_iwads(&iwad_search_folder, false)?;
 
-    let pwad_search_folder = match app_settings.pwad_search_folder {
-        Some(pwad_search_folder) => pwad_search_folder,
+    let map_search_folder = match app_settings.map_search_folder {
+        Some(map_search_folder) => map_search_folder,
         None => iwad_search_folder.clone(),
     };
-    let pwad_search_folder = init_pwads(&pwad_search_folder, false)?;
+    let map_search_folder = init_maps(&map_search_folder, false)?;
 
     // Update app_settings
     app_settings.engine_search_folder = Some(engine_search_folder);
     app_settings.iwad_search_folder = Some(iwad_search_folder);
-    app_settings.pwad_search_folder = Some(pwad_search_folder);
+    app_settings.map_search_folder = Some(map_search_folder);
     db::save_app_settings(app_settings)?;
 
     // Set default engine and iwad for quick play
@@ -76,7 +76,7 @@ pub fn init() -> Result<String, eyre::Report> {
 pub fn cli_init(
     engine_path: String,
     iwad_path: String,
-    pwad_path: Option<String>,
+    map_path: Option<String>,
     force: bool,
 ) -> Result<String, eyre::Report> {
     // Check the paths exist
@@ -93,14 +93,14 @@ pub fn cli_init(
         )));
     }
 
-    if let Some(path) = &pwad_path {
+    if let Some(path) = &map_path {
         if !paths::folder_exists(path) {
-            return Err(eyre::eyre!(format!("PWAD path does not exist: {}", path)));
+            return Err(eyre::eyre!(format!("Map path does not exist: {}", path)));
         }
     }
 
-    // If Pwad is None then set to Iwad path
-    let pwad_path_2 = match pwad_path {
+    // If Map is None then set to Iwad path
+    let updated_map_path = match map_path {
         Some(path) => path,
         None => iwad_path.clone(),
     };
@@ -109,13 +109,13 @@ pub fn cli_init(
     //  Force will skip any dialogs and will select all found files
     let engine_search_folder = init_engines(&engine_path, force)?;
     let iwad_search_folder = init_iwads(&iwad_path, force)?;
-    let pwad_search_folder = init_pwads(&pwad_path_2, force)?;
+    let map_search_folder = init_maps(&updated_map_path, force)?;
 
     // Update app_settings
     let mut app_settings = db::get_app_settings()?;
     app_settings.engine_search_folder = Some(engine_search_folder);
     app_settings.iwad_search_folder = Some(iwad_search_folder);
-    app_settings.pwad_search_folder = Some(pwad_search_folder);
+    app_settings.map_search_folder = Some(map_search_folder);
     db::save_app_settings(app_settings)?;
 
     Ok("Succesfully configured!".green().to_string())
@@ -214,7 +214,10 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
         let existing_engine = db_engines.iter().find(|e| e.path == selection.path);
         match existing_engine {
             Some(existing) => {
-                info!("  Engine already exists, no need to add: {}", selection.green());
+                info!(
+                    "  Engine already exists, no need to add: {}",
+                    selection.green()
+                );
                 if existing.version != selection.version {
                     info!(
                         "  Updating Engine version from '{}' to '{}'",
@@ -330,7 +333,11 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
 
                 db::add_iwad(&iwad)?;
                 debug!("  IWAD: {:?}", iwad);
-                info!("Added IWAD: {} - {}", iwad.internal_wad_type.green(), iwad.path.green());
+                info!(
+                    "Added IWAD: {} - {}",
+                    iwad.internal_wad_type.green(),
+                    iwad.path.green()
+                );
             }
         }
     }
@@ -341,11 +348,11 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
     Ok(iwad_search_folder)
 }
 
-pub fn init_pwads(default_folder: &str, force: bool) -> Result<String, eyre::Report> {
-    let pwad_search_folder: String = if force {
+pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Report> {
+    let map_search_folder: String = if force {
         default_folder.to_string()
     } else {
-        inquire::Text::new("Folder to search for PWADs (Patch WAD files)")
+        inquire::Text::new("Folder to search for Maps:")
             .with_validator(|input: &str| {
                 if paths::folder_exists(input) {
                     Ok(Validation::Valid)
@@ -357,65 +364,65 @@ pub fn init_pwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
             .prompt()?
     };
 
-    let pwads = paths::find_files_with_extensions_in_folders(
-        &pwad_search_folder,
+    let maps = paths::find_files_with_extensions_in_folders(
+        &map_search_folder,
         doom_data::GAME_FILES.to_vec(),
     );
-    if pwads.is_empty() {
+    if maps.is_empty() {
         return Err(eyre::eyre!(format!(
             "No matches found using recursive search in folder '{}'",
-            &pwad_search_folder
+            &map_search_folder
         )));
     }
 
     // Get what we have in the datanse
-    let db_pwads = db::get_pwads()?;
+    let db_maps = db::get_maps()?;
 
     // Remove entries that were not selected but have entries in the database
-    for db_pwad in &db_pwads {
-        if !pwads.contains(&db_pwad.path) {
-            db::delete_pwad(&db_pwad.path)?;
-            debug!("Deleted pwad: {:?}", db_pwad)
+    for db_map in &db_maps {
+        if !maps.contains(&db_map.path) {
+            db::delete_map(&db_map.path)?;
+            debug!("Deleted map: {:?}", db_map)
         }
     }
 
-    for pwad in pwads {
-        if files::is_iwad(&pwad)? {
-            info!("Skipping IWAD file: {}", &pwad.yellow());
+    for map in maps {
+        if files::is_iwad(&map)? {
+            info!("Skipping IWAD file: {}", &map.yellow());
             continue;
         }
 
-        if !files::game_file_extension(&pwad)? {
-            info!("Skipping invalid game file: {}", &pwad.yellow());
+        if !files::map_file_extension(&map)? {
+            info!("Skipping invalid map file: {}", &map.yellow());
             continue;
         }
 
-        let existing_pwad = db_pwads.iter().find(|e| e.path == pwad);
+        let existing_map = db_maps.iter().find(|e| e.path == map);
 
-        match existing_pwad {
+        match existing_map {
             Some(_) => {
-                debug!("PWAD already exists, no need to add: {}", pwad);
+                debug!("Map already exists, no need to add: {}", map);
             }
             None => {
-                info!("Getting map title and author for PWAD: '{}'", pwad);
-                let (title, author) = files::get_details_from_readme(&pwad)?;
-                let pwad = data::Pwad {
+                info!("Getting map title and author for Map: '{}'", map);
+                let (title, author) = files::get_details_from_readme(&map)?;
+                let map = data::Map {
                     id: 0,
                     title,
                     author,
-                    path: pwad.clone(),
+                    path: map.clone(),
                 };
 
-                db::add_pwad(&pwad)?;
-                debug!("  PWAD {:?}", pwad);
-                info!("Added PWAD: {} - {}", pwad.title.green(), pwad.path.green());
+                db::add_map(&map)?;
+                debug!("  Map {:?}", map);
+                info!("Added Map: {} - {}", map.title.green(), map.path.green());
             }
         }
     }
 
-    info!("{}", list_pwads()?);
+    info!("{}", list_maps()?);
 
-    Ok(pwad_search_folder)
+    Ok(map_search_folder)
 }
 
 pub fn list_engines() -> Result<String, eyre::Report> {
@@ -438,10 +445,10 @@ pub fn list_iwads() -> Result<String, eyre::Report> {
     Ok(table)
 }
 
-pub fn list_pwads() -> Result<String, eyre::Report> {
-    let pwads = db::get_pwads().wrap_err("Unable to iwad listing".to_string())?;
+pub fn list_maps() -> Result<String, eyre::Report> {
+    let maps = db::get_maps().wrap_err("Unable to iwad listing".to_string())?;
 
-    let table = tabled::Table::new(pwads)
+    let table = tabled::Table::new(maps)
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
         .with(Style::modern())
         .to_string();

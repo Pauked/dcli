@@ -99,7 +99,7 @@ pub fn pick_and_play_profile() -> Result<String, eyre::Report> {
     }
 }
 
-pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
+pub fn pick_and_play_map() -> Result<String, eyre::Report> {
     let engine_list = db::get_engines()?;
     if engine_list.is_empty() {
         return Ok("There are no Engines to select. Please run 'init'"
@@ -112,9 +112,9 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
             .red()
             .to_string());
     }
-    let pwad_list = db::get_pwads()?;
-    if pwad_list.is_empty() {
-        return Ok("There are no PWADs to select. Please run 'init'"
+    let map_list = db::get_maps()?;
+    if map_list.is_empty() {
+        return Ok("There are no Maps to select. Please run 'init'"
             .red()
             .to_string());
     }
@@ -166,14 +166,14 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
     //     }
     // };
 
-    // Yes this is ONE PWAD only. Profiles can have up to 5 PWADs, but this is just a quick play option.
-    let pwad_selection = inquire::Select::new(
-        "Pick the PWAD you want to use (optional):",
-        pwad_list.clone(),
+    // Yes this is ONE Map only. Profiles can have up to 5 Maps, but this is just a quick play option.
+    let map_selection = inquire::Select::new(
+        "Pick the Map you want to use (optional):",
+        map_list.clone(),
     )
     .with_page_size(tui::MENU_PAGE_SIZE)
     .prompt_skippable()?;
-    let pwad_id = pwad_selection.as_ref().map(|pwad| pwad.id);
+    let map_id = map_selection.as_ref().map(|map| map.id);
 
     let additional_arguments =
         inquire::Text::new("Enter any additional arguments (optional):").prompt_skippable()?;
@@ -183,9 +183,9 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
         .prompt()
         .unwrap()
     {
-        let wad_name = match pwad_selection {
+        let wad_name = match map_selection {
             None => paths::extract_file_name(&iwad_selection.path),
-            Some(pwad) => pwad.title,
+            Some(map) => map.title,
         };
         let profile_name = format!(
             "Autosave-{} '{}'",
@@ -198,11 +198,11 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
             name: profile_name,
             engine_id: Some(engine_selection.id),
             iwad_id: Some(iwad_selection.id),
-            pwad_id,
-            pwad_id2: None,
-            pwad_id3: None,
-            pwad_id4: None,
-            pwad_id5: None,
+            map_id,
+            map_id2: None,
+            map_id3: None,
+            map_id4: None,
+            map_id5: None,
             additional_arguments,
             date_created: Utc::now(),
             date_edited: Utc::now(),
@@ -213,10 +213,10 @@ pub fn pick_and_play_pwad() -> Result<String, eyre::Report> {
 
         runner::play_from_profile(new_profile_id, true)
     } else {
-        runner::play_from_engine_iwad_and_pwad(
+        runner::play_from_engine_iwad_and_map(
             engine_selection.id,
             iwad_selection.id,
-            data::pwad_ids_from_options(pwad_id, None, None, None, None),
+            data::map_ids_from_options(map_id, None, None, None, None),
             additional_arguments,
         )
     }

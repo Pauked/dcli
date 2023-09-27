@@ -20,19 +20,19 @@ pub struct Args {
 
 #[derive(Parser, Debug, PartialEq)]
 pub enum Action {
-    /// Play Doom with the Default Profile PWAD. Takes the first PWAD in Profile.
+    /// Play Doom with the Default Profile.
     #[clap(short_flag = 'p')]
     Play,
 
-    /// Play Doom with the Last Run Profile. Takes the first PWAD in Profile.
+    /// Play Doom with the Last Run Profile.
     PlayLast,
 
-    /// Open the Map Editor with the Default Profile PWAD. Takes the first PWAD in Profile.
+    /// Open the Editor with the Default Profile. Takes the first Map in Profile.
     #[clap(short_flag = 'm')]
-    MapEditor,
+    Editor,
 
-    /// Open the Map Editor with the Last Run Profile. Takes the first PWAD in Profile.
-    MapEditorLast,
+    /// Open the Editor with the Last Run Profile. Takes the first Map in Profile.
+    EditorLast,
 
     /// Initializes the app for use. Asks a quick set of questions to get you Dooming!
     #[clap(short_flag = 'i')]
@@ -41,8 +41,8 @@ pub enum Action {
         engine_path: String,
         /// IWAD path
         iwad_path: String,
-        /// PWAD paths
-        pwad_path: Option<String>,
+        /// Map paths
+        map_path: Option<String>,
         /// Force initialization and skip any entry and selection prompts.
         #[arg(long, default_value = "false")]
         force: bool,
@@ -63,8 +63,8 @@ pub enum Action {
     //     engine: String,
     //     /// IWAD path
     //     iwad: String,
-    //     /// PWAD path
-    //     pwad: Option<String>,
+    //     /// Map path
+    //     map: Option<String>,
     //     /// Additional arguments to pass to the engine
     //     #[arg(long)]
     //     additional_args: Option<Vec<String>>,
@@ -76,7 +76,12 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
         // If we are not resetting the database, make sure it exists and is ready to use
         match action {
             Action::Reset { .. } => {}
-            Action::Init { engine_path: _, iwad_path: _, pwad_path: _, force     } => {
+            Action::Init {
+                engine_path: _,
+                iwad_path: _,
+                map_path: _,
+                force,
+            } => {
                 menu_app_settings::check_app_can_run(force)?;
             }
             _ => {
@@ -93,22 +98,25 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                 tui::run_menu_command(MenuCommand::PlayLastProfile)?,
                 CliRunMode::Quit,
             )),
-            Action::MapEditor => Ok((
+            Action::Editor => Ok((
                 tui::run_menu_command(MenuCommand::OpenFromDefaultProfile)?,
                 CliRunMode::Quit,
             )),
-            Action::MapEditorLast => Ok((
+            Action::EditorLast => Ok((
                 tui::run_menu_command(MenuCommand::OpenFromDefaultProfile)?,
                 CliRunMode::Quit,
             )),
             Action::Init {
                 engine_path,
                 iwad_path,
-                pwad_path,
+                map_path,
                 force,
             } => {
-                debug!("Init engine_path '{}', iwad_path '{}', pwad_path '{:?}', force '{}'", engine_path, iwad_path, pwad_path, force);
-                let result = menu_app_settings::cli_init(engine_path, iwad_path, pwad_path, force)?;
+                debug!(
+                    "Init engine_path '{}', iwad_path '{}', map_path '{:?}', force '{}'",
+                    engine_path, iwad_path, map_path, force
+                );
+                let result = menu_app_settings::cli_init(engine_path, iwad_path, map_path, force)?;
                 Ok((result, CliRunMode::Quit))
                 // Ok((tui::run_menu_command(MenuCommand::Init)?, CliRunMode::Tui));
             }
@@ -121,23 +129,22 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                 } else {
                     Ok((result, CliRunMode::Tui))
                 }
-            }
-            // Action::AddProfile {
-            //     name,
-            //     engine,
-            //     iwad,
-            //     pwad,
-            //     additional_args,
-            // } => {
-            //     // let result = tui::run_menu_command(MenuCommand::CliAddProfile {
-            //     //     name,
-            //     //     engine,
-            //     //     iwad,
-            //     //     pwad,
-            //     //     additional_args,
-            //     // })?;
-            //     Ok(("".to_string(), CliRunMode::Quit))
-            // }
+            } // Action::AddProfile {
+              //     name,
+              //     engine,
+              //     iwad,
+              //     map,
+              //     additional_args,
+              // } => {
+              //     // let result = tui::run_menu_command(MenuCommand::CliAddProfile {
+              //     //     name,
+              //     //     engine,
+              //     //     iwad,
+              //     //     map,
+              //     //     additional_args,
+              //     // })?;
+              //     Ok(("".to_string(), CliRunMode::Quit))
+              // }
         }
     } else {
         Ok((

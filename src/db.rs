@@ -198,65 +198,65 @@ pub fn get_iwad_by_id(id: i32) -> Result<data::Iwad, eyre::Report> {
     })
 }
 
-pub fn get_pwads() -> Result<Vec<data::Pwad>, eyre::Report> {
+pub fn get_maps() -> Result<Vec<data::Map>, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query_as::<_, data::Pwad>("SELECT * FROM pwads ORDER BY title")
+        sqlx::query_as::<_, data::Map>("SELECT * FROM maps ORDER BY title")
             .fetch_all(&db)
             .await
-            .wrap_err("Failed to get list of all patch wads")
+            .wrap_err("Failed to get list of all maps")
     })
 }
 
-pub fn add_pwad(pwad: &data::Pwad) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+pub fn add_map(map: &data::Map) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("INSERT INTO pwads (title, author, path) VALUES (?,?,?)")
-            .bind(&pwad.title)
-            .bind(&pwad.author)
-            .bind(&pwad.path)
+        sqlx::query("INSERT INTO maps (title, author, path) VALUES (?,?,?)")
+            .bind(&map.title)
+            .bind(&map.author)
+            .bind(&map.path)
             .execute(&db)
             .await
-            .wrap_err(format!("Failed to add patch wad '{:?}", pwad))
+            .wrap_err(format!("Failed to add map '{:?}", map))
     })
 }
 
-pub fn delete_pwad(path: &str) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+pub fn delete_map(path: &str) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("DELETE FROM pwads WHERE path=$1 COLLATE NOCASE")
+        sqlx::query("DELETE FROM maps WHERE path=$1 COLLATE NOCASE")
             .bind(path.to_lowercase())
             .execute(&db)
             .await
-            .wrap_err(format!("Failed to delete pwad '{}'", path))
+            .wrap_err(format!("Failed to delete map '{}'", path))
     })
 }
 
-pub fn get_pwad_by_id(id: i32) -> Result<data::Pwad, eyre::Report> {
+pub fn get_map_by_id(id: i32) -> Result<data::Map, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query_as::<_, data::Pwad>("SELECT * FROM pwads WHERE id = ?")
+        sqlx::query_as::<_, data::Map>("SELECT * FROM maps WHERE id = ?")
             .bind(id)
             .fetch_one(&db)
             .await
-            .wrap_err(format!("Failed to get patch wad with id '{}'", id))
+            .wrap_err(format!("Failed to get map with id '{}'", id))
     })
 }
 
-pub fn get_pwads_by_ids(pwad_ids: data::PwadIds) -> Result<Vec<data::Pwad>, eyre::Report> {
+pub fn get_maps_by_ids(map_ids: data::MapIds) -> Result<Vec<data::Map>, eyre::Report> {
     let mut result = vec![];
-    let pwad_ids_array = [pwad_ids.0, pwad_ids.1, pwad_ids.2, pwad_ids.3, pwad_ids.4];
-    for &id in &pwad_ids_array {
+    let map_ids_array = [map_ids.0, map_ids.1, map_ids.2, map_ids.3, map_ids.4];
+    for &id in &map_ids_array {
         if id != 0 {
-            result.push(get_pwad_by_id(id)?);
+            result.push(get_map_by_id(id)?);
         }
     }
 
@@ -282,18 +282,18 @@ fn add_app_settings(
 
         sqlx::query(
             "INSERT INTO app_settings (default_profile_id, last_profile_id, default_engine_id,
-                default_iwad_id, default_map_editor_id, engine_search_folder, iwad_search_folder,
-                pwad_search_folder, map_editor_search_folder, menu_mode) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                default_iwad_id, default_editor_id, engine_search_folder, iwad_search_folder,
+                map_search_folder, editor_search_folder, menu_mode) VALUES (?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(app_settings.default_profile_id)
         .bind(app_settings.last_profile_id)
         .bind(app_settings.default_engine_id)
         .bind(app_settings.default_iwad_id)
-        .bind(app_settings.default_map_editor_id)
+        .bind(app_settings.default_editor_id)
         .bind(&app_settings.engine_search_folder)
         .bind(&app_settings.iwad_search_folder)
-        .bind(&app_settings.pwad_search_folder)
-        .bind(&app_settings.map_editor_search_folder)
+        .bind(&app_settings.map_search_folder)
+        .bind(&app_settings.editor_search_folder)
         .bind(&app_settings.menu_mode)
         .execute(&db)
         .await
@@ -310,19 +310,19 @@ fn update_app_settings(
 
         sqlx::query(
             "UPDATE app_settings SET default_profile_id = $1, last_profile_id = $2,
-        default_engine_id = $3, default_iwad_id = $4, default_map_editor_id = $5,
-        engine_search_folder = $6, iwad_search_folder = $7, pwad_search_folder = $8,
-        map_editor_search_folder = $9, menu_mode = $10 WHERE id = $11 COLLATE NOCASE",
+        default_engine_id = $3, default_iwad_id = $4, default_editor_id = $5,
+        engine_search_folder = $6, iwad_search_folder = $7, map_search_folder = $8,
+        editor_search_folder = $9, menu_mode = $10 WHERE id = $11 COLLATE NOCASE",
         )
         .bind(app_settings.default_profile_id)
         .bind(app_settings.last_profile_id)
         .bind(app_settings.default_engine_id)
         .bind(app_settings.default_iwad_id)
-        .bind(app_settings.default_map_editor_id)
+        .bind(app_settings.default_editor_id)
         .bind(&app_settings.engine_search_folder)
         .bind(&app_settings.iwad_search_folder)
-        .bind(&app_settings.pwad_search_folder)
-        .bind(&app_settings.map_editor_search_folder)
+        .bind(&app_settings.map_search_folder)
+        .bind(&app_settings.editor_search_folder)
         .bind(&app_settings.menu_mode)
         .bind(app_settings.id)
         .execute(&db)
@@ -382,10 +382,10 @@ pub fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre::Repo
         }
         None => constants::DEFAULT_NOT_SET.to_string(),
     };
-    let default_map_editor = match app_settings.default_map_editor_id {
+    let default_editor = match app_settings.default_editor_id {
         Some(id) => {
-            let map_editor = get_map_editor_by_id(id)?;
-            map_editor.to_string()
+            let editor = get_editor_by_id(id)?;
+            editor.to_string()
         }
         None => constants::DEFAULT_NOT_SET.to_string(),
     };
@@ -395,11 +395,11 @@ pub fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre::Repo
     let iwad_search_folder = app_settings
         .iwad_search_folder
         .unwrap_or(constants::DEFAULT_NOT_SET.to_string());
-    let pwad_search_folder = app_settings
-        .pwad_search_folder
+    let map_search_folder = app_settings
+        .map_search_folder
         .unwrap_or(constants::DEFAULT_NOT_SET.to_string());
-    let map_editor_search_folder = app_settings
-        .map_editor_search_folder
+    let editor_search_folder = app_settings
+        .editor_search_folder
         .unwrap_or(constants::DEFAULT_NOT_SET.to_string());
 
     Ok(data::AppSettingsDisplay {
@@ -407,11 +407,11 @@ pub fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre::Repo
         last_profile,
         default_engine,
         default_iwad,
-        default_map_editor,
+        default_editor,
         engine_search_folder,
         iwad_search_folder,
-        pwad_search_folder,
-        map_editor_search_folder,
+        map_search_folder,
+        editor_search_folder,
         menu_mode: app_settings.menu_mode.to_string(),
     })
 }
@@ -425,18 +425,18 @@ pub fn add_profile(
 
         sqlx::query(
             "INSERT INTO profiles (name, engine_id, iwad_id,
-            pwad_id, pwad_id2, pwad_id3, pwad_id4, pwad_id5, additional_arguments,
+            map_id, map_id2, map_id3, map_id4, map_id5, additional_arguments,
             date_created, date_edited, date_last_run)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(&profile.name)
         .bind(profile.engine_id)
         .bind(profile.iwad_id)
-        .bind(profile.pwad_id)
-        .bind(profile.pwad_id2)
-        .bind(profile.pwad_id3)
-        .bind(profile.pwad_id4)
-        .bind(profile.pwad_id5)
+        .bind(profile.map_id)
+        .bind(profile.map_id2)
+        .bind(profile.map_id3)
+        .bind(profile.map_id4)
+        .bind(profile.map_id5)
         .bind(&profile.additional_arguments)
         .bind(profile.date_created)
         .bind(profile.date_edited)
@@ -456,19 +456,19 @@ pub fn update_profile(
 
         sqlx::query(
             "UPDATE profiles SET name = $2, engine_id = $3, iwad_id = $4,
-    pwad_id = $5, pwad_id2 = $6, pwad_id3 = $7, pwad_id4 = $8, pwad_id5 = $9,
-    additional_arguments = $10, date_created = $11, date_edited = $12,
-    date_last_run = $13 WHERE id=$1 COLLATE NOCASE",
+            map_id = $5, map_id2 = $6, map_id3 = $7, map_id4 = $8, map_id5 = $9,
+            additional_arguments = $10, date_created = $11, date_edited = $12,
+            date_last_run = $13 WHERE id=$1 COLLATE NOCASE",
         )
         .bind(profile.id)
         .bind(&profile.name)
         .bind(profile.engine_id)
         .bind(profile.iwad_id)
-        .bind(profile.pwad_id)
-        .bind(profile.pwad_id2)
-        .bind(profile.pwad_id3)
-        .bind(profile.pwad_id4)
-        .bind(profile.pwad_id5)
+        .bind(profile.map_id)
+        .bind(profile.map_id2)
+        .bind(profile.map_id3)
+        .bind(profile.map_id4)
+        .bind(profile.map_id5)
         .bind(profile.additional_arguments)
         .bind(profile.date_created)
         .bind(profile.date_edited)
@@ -556,7 +556,7 @@ fn get_profile_display(
     profile: data::Profile,
     engine: data::Engine,
     iwad: data::Iwad,
-    pwads: Vec<data::Pwad>,
+    maps: Vec<data::Map>,
 ) -> data::ProfileDisplay {
     data::ProfileDisplay {
         id: profile.id,
@@ -568,26 +568,26 @@ fn get_profile_display(
         iwad_id: profile.iwad_id.unwrap_or(0),
         iwad_path: paths::extract_path(&iwad.path),
         iwad_file: paths::extract_file_name(&iwad.path),
-        pwad_ids: (
-            profile.pwad_id.unwrap_or(0),
-            profile.pwad_id2.unwrap_or(0),
-            profile.pwad_id3.unwrap_or(0),
-            profile.pwad_id4.unwrap_or(0),
-            profile.pwad_id5.unwrap_or(0),
+        map_ids: (
+            profile.map_id.unwrap_or(0),
+            profile.map_id2.unwrap_or(0),
+            profile.map_id3.unwrap_or(0),
+            profile.map_id4.unwrap_or(0),
+            profile.map_id5.unwrap_or(0),
         ),
-        pwad_paths: (
-            paths::extract_path(&pwads[0].path),
-            paths::extract_path(&pwads[1].path),
-            paths::extract_path(&pwads[2].path),
-            paths::extract_path(&pwads[3].path),
-            paths::extract_path(&pwads[4].path),
+        map_paths: (
+            paths::extract_path(&maps[0].path),
+            paths::extract_path(&maps[1].path),
+            paths::extract_path(&maps[2].path),
+            paths::extract_path(&maps[3].path),
+            paths::extract_path(&maps[4].path),
         ),
-        pwad_files: (
-            paths::extract_file_name(&pwads[0].path),
-            paths::extract_file_name(&pwads[1].path),
-            paths::extract_file_name(&pwads[2].path),
-            paths::extract_file_name(&pwads[3].path),
-            paths::extract_file_name(&pwads[4].path),
+        map_files: (
+            paths::extract_file_name(&maps[0].path),
+            paths::extract_file_name(&maps[1].path),
+            paths::extract_file_name(&maps[2].path),
+            paths::extract_file_name(&maps[3].path),
+            paths::extract_file_name(&maps[4].path),
         ),
         additional_arguments: profile.additional_arguments.unwrap_or_default(),
         date_created: profile.date_created,
@@ -600,11 +600,11 @@ pub fn get_profile_display_list() -> Result<Vec<data::ProfileDisplay>, eyre::Rep
     let profiles = get_profiles()?;
     let engines = get_engines()?;
     let iwads = get_iwads()?;
-    let pwads = get_pwads()?;
+    let maps = get_maps()?;
 
     let default_engine = data::Engine::default();
     let default_iwad = data::Iwad::default();
-    let default_pwad = data::Pwad::default();
+    let default_map = data::Map::default();
 
     let mut profile_list: Vec<data::ProfileDisplay> = Vec::new();
     for profile in profiles {
@@ -616,37 +616,37 @@ pub fn get_profile_display_list() -> Result<Vec<data::ProfileDisplay>, eyre::Rep
             .iter()
             .find(|i| i.id == profile.iwad_id.unwrap_or(0))
             .unwrap_or(&default_iwad);
-        let pwad = pwads
+        let map = maps
             .iter()
-            .find(|p| p.id == profile.pwad_id.unwrap_or(0))
-            .unwrap_or(&default_pwad);
-        let pwad2 = pwads
+            .find(|p| p.id == profile.map_id.unwrap_or(0))
+            .unwrap_or(&default_map);
+        let map2 = maps
             .iter()
-            .find(|p| p.id == profile.pwad_id2.unwrap_or(0))
-            .unwrap_or(&default_pwad);
-        let pwad3 = pwads
+            .find(|p| p.id == profile.map_id2.unwrap_or(0))
+            .unwrap_or(&default_map);
+        let map3 = maps
             .iter()
-            .find(|p| p.id == profile.pwad_id3.unwrap_or(0))
-            .unwrap_or(&default_pwad);
-        let pwad4 = pwads
+            .find(|p| p.id == profile.map_id3.unwrap_or(0))
+            .unwrap_or(&default_map);
+        let map4 = maps
             .iter()
-            .find(|p| p.id == profile.pwad_id4.unwrap_or(0))
-            .unwrap_or(&default_pwad);
-        let pwad5 = pwads
+            .find(|p| p.id == profile.map_id4.unwrap_or(0))
+            .unwrap_or(&default_map);
+        let map5 = maps
             .iter()
-            .find(|p| p.id == profile.pwad_id5.unwrap_or(0))
-            .unwrap_or(&default_pwad);
+            .find(|p| p.id == profile.map_id5.unwrap_or(0))
+            .unwrap_or(&default_map);
 
         profile_list.push(get_profile_display(
             profile.clone(),
             engine.clone(),
             iwad.clone(),
             vec![
-                pwad.clone(),
-                pwad2.clone(),
-                pwad3.clone(),
-                pwad4.clone(),
-                pwad5.clone(),
+                map.clone(),
+                map2.clone(),
+                map3.clone(),
+                map4.clone(),
+                map5.clone(),
             ],
         ));
     }
@@ -665,32 +665,32 @@ pub fn get_profile_display_by_id(id: i32) -> Result<data::ProfileDisplay, eyre::
         Some(id) => get_iwad_by_id(id)?,
         None => data::Iwad::default(),
     };
-    let pwad = match profile.pwad_id {
-        Some(id) => get_pwad_by_id(id)?,
-        None => data::Pwad::default(),
+    let map = match profile.map_id {
+        Some(id) => get_map_by_id(id)?,
+        None => data::Map::default(),
     };
-    let pwad2 = match profile.pwad_id2 {
-        Some(id) => get_pwad_by_id(id)?,
-        None => data::Pwad::default(),
+    let map2 = match profile.map_id2 {
+        Some(id) => get_map_by_id(id)?,
+        None => data::Map::default(),
     };
-    let pwad3 = match profile.pwad_id3 {
-        Some(id) => get_pwad_by_id(id)?,
-        None => data::Pwad::default(),
+    let map3 = match profile.map_id3 {
+        Some(id) => get_map_by_id(id)?,
+        None => data::Map::default(),
     };
-    let pwad4 = match profile.pwad_id4 {
-        Some(id) => get_pwad_by_id(id)?,
-        None => data::Pwad::default(),
+    let map4 = match profile.map_id4 {
+        Some(id) => get_map_by_id(id)?,
+        None => data::Map::default(),
     };
-    let pwad5 = match profile.pwad_id5 {
-        Some(id) => get_pwad_by_id(id)?,
-        None => data::Pwad::default(),
+    let map5 = match profile.map_id5 {
+        Some(id) => get_map_by_id(id)?,
+        None => data::Map::default(),
     };
 
     Ok(get_profile_display(
         profile,
         engine,
         iwad,
-        vec![pwad, pwad2, pwad3, pwad4, pwad5],
+        vec![map, map2, map3, map4, map5],
     ))
 }
 
@@ -789,39 +789,37 @@ pub fn get_play_settings() -> Result<data::PlaySettings, eyre::Report> {
     })
 }
 
-pub fn add_map_editor(
-    map_editor: &data::MapEditor,
-) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+pub fn add_editor(editor: &data::Editor) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("INSERT INTO map_editors (app_name, path, version, load_file_argument, additional_arguments) VALUES (?,?,?,?,?)")
-            .bind(&map_editor.app_name)
-            .bind(&map_editor.path)
-            .bind(&map_editor.version)
-            .bind(&map_editor.load_file_argument)
-            .bind(&map_editor.additional_arguments)
+        sqlx::query("INSERT INTO editors (app_name, path, version, load_file_argument, additional_arguments) VALUES (?,?,?,?,?)")
+            .bind(&editor.app_name)
+            .bind(&editor.path)
+            .bind(&editor.version)
+            .bind(&editor.load_file_argument)
+            .bind(&editor.additional_arguments)
             .execute(&db)
             .await
-            .wrap_err(format!("Failed to add map editor '{:?}", map_editor))
+            .wrap_err(format!("Failed to add editor '{:?}", editor))
     })
 }
 
-pub fn delete_map_editor(id: i32) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+pub fn delete_editor(id: i32) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("DELETE FROM map_editors WHERE id=$1")
+        sqlx::query("DELETE FROM editors WHERE id=$1")
             .bind(id)
             .execute(&db)
             .await
-            .wrap_err(format!("Failed to delete map editor with id '{}'", id))
+            .wrap_err(format!("Failed to delete editor with id '{}'", id))
     })
 }
 
-pub fn update_map_editor_version(
+pub fn update_editor_version(
     id: i32,
     version: &str,
 ) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
@@ -829,39 +827,39 @@ pub fn update_map_editor_version(
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("UPDATE engines SET version = $1 WHERE id=$2 COLLATE NOCASE")
+        sqlx::query("UPDATE editors SET version = $1 WHERE id=$2 COLLATE NOCASE")
             .bind(version)
             .bind(id)
             .execute(&db)
             .await
             .wrap_err(format!(
-                "Failed to update version '{}' for engine with id '{}'",
+                "Failed to update version '{}' for editor with id '{}'",
                 version, id
             ))
     })
 }
 
-pub fn get_map_editors() -> Result<Vec<data::MapEditor>, eyre::Report> {
+pub fn get_editors() -> Result<Vec<data::Editor>, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query_as::<_, data::MapEditor>("SELECT * FROM map_editors ORDER BY app_name")
+        sqlx::query_as::<_, data::Editor>("SELECT * FROM editors ORDER BY app_name")
             .fetch_all(&db)
             .await
-            .wrap_err("Failed to get list of all map editors")
+            .wrap_err("Failed to get list of all editors")
     })
 }
 
-pub fn get_map_editor_by_id(id: i32) -> Result<data::MapEditor, eyre::Report> {
+pub fn get_editor_by_id(id: i32) -> Result<data::Editor, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query_as::<_, data::MapEditor>("SELECT * FROM map_editors WHERE id = ?")
+        sqlx::query_as::<_, data::Editor>("SELECT * FROM editors WHERE id = ?")
             .bind(id)
             .fetch_one(&db)
             .await
-            .wrap_err(format!("Failed to get map editor with id '{}'", id))
+            .wrap_err(format!("Failed to get editor with id '{}'", id))
     })
 }

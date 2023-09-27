@@ -15,15 +15,15 @@ pub fn play_from_profile(
 ) -> Result<String, eyre::Report> {
     // Get profile and run it
     let profile = db::get_profile_by_id(profile_id)?;
-    let play_result = play_from_engine_iwad_and_pwad(
+    let play_result = play_from_engine_iwad_and_map(
         profile.engine_id.unwrap(),
         profile.iwad_id.unwrap(),
-        data::pwad_ids_from_options(
-            profile.pwad_id,
-            profile.pwad_id2,
-            profile.pwad_id3,
-            profile.pwad_id4,
-            profile.pwad_id5,
+        data::map_ids_from_options(
+            profile.map_id,
+            profile.map_id2,
+            profile.map_id3,
+            profile.map_id4,
+            profile.map_id5,
         ),
         profile.additional_arguments,
     )?;
@@ -41,10 +41,10 @@ pub fn play_from_profile(
     Ok(play_result)
 }
 
-pub fn play_from_engine_iwad_and_pwad(
+pub fn play_from_engine_iwad_and_map(
     engine_id: i32,
     iwad_id: i32,
-    pwad_ids: data::PwadIds,
+    map_ids: data::MapIds,
     additional_arguments: Option<String>,
 ) -> Result<String, eyre::Report> {
     let engine = db::get_engine_by_id(engine_id)?;
@@ -70,22 +70,19 @@ pub fn play_from_engine_iwad_and_pwad(
     let mut cmd = Command::new(&engine.path);
     cmd.arg("-iwad").arg(iwad.path);
 
-    // Multiple PWADs may be selected, so we need to add them all
-    if pwad_ids.0 != 0 {
+    // Multiple Maps may be selected, so we need to add them all
+    if map_ids.0 != 0 {
         cmd.arg("-file");
-        let pwad_ids_array = [pwad_ids.0, pwad_ids.1, pwad_ids.2, pwad_ids.3, pwad_ids.4];
-        for &id in &pwad_ids_array {
+        let map_ids_array = [map_ids.0, map_ids.1, map_ids.2, map_ids.3, map_ids.4];
+        for &id in &map_ids_array {
             if id != 0 {
-                let pwad = db::get_pwad_by_id(id)?;
+                let map = db::get_map_by_id(id)?;
 
-                if !paths::file_exists(&pwad.path) {
-                    return Err(eyre::eyre!(
-                        "Play aborted, EPWAD not found - '{}'",
-                        pwad.path
-                    ));
+                if !paths::file_exists(&map.path) {
+                    return Err(eyre::eyre!("Play aborted, Map not found - '{}'", map.path));
                 }
 
-                cmd.arg(&pwad.path);
+                cmd.arg(&map.path);
             }
         }
     }
@@ -179,9 +176,9 @@ fn get_display_args(cmd: &Command) -> String {
     result
 }
 
-pub fn open_map_readme(pwad_path: &str) -> Result<String, eyre::Report> {
-    let readme_file_name = files::get_map_readme_file_name(pwad_path)
-        .wrap_err(format!("Unable to get Map Readme for PWAD '{}'", pwad_path).to_string())?;
+pub fn open_map_readme(map_path: &str) -> Result<String, eyre::Report> {
+    let readme_file_name = files::get_map_readme_file_name(map_path)
+        .wrap_err(format!("Unable to get Map Readme for Map '{}'", map_path).to_string())?;
 
     match readme_file_name {
         Some(readme_file_name) => {
@@ -209,33 +206,33 @@ pub fn open_map_readme(pwad_path: &str) -> Result<String, eyre::Report> {
                 .stderr(Stdio::null())
                 .spawn()
                 .wrap_err(format!(
-                    "Failed to open Map Readme for PWAD - '{}' / '{}'",
-                    readme_file_name, pwad_path
+                    "Failed to open Map Readme for Map - '{}' / '{}'",
+                    readme_file_name, map_path
                 ))?;
 
             Ok(format!(
-                "Opened Map Readme for PWAD - '{}' / '{}'",
+                "Opened Map Readme for Map - '{}' / '{}'",
                 readme_file_name.magenta(),
-                pwad_path.blue()
+                map_path.blue()
             ))
         }
-        None => Ok(format!("No Map Readme found for PWAD - '{}'", pwad_path)
+        None => Ok(format!("No Map Readme found for Map - '{}'", map_path)
             .yellow()
             .to_string()),
     }
 }
 
-pub fn map_editor(pwad_path: &str, map_editor: data::MapEditor) -> Result<String, eyre::Report> {
-    let mut cmd = Command::new(&map_editor.path);
-    if map_editor.load_file_argument.is_some() {
-        cmd.arg(map_editor.load_file_argument.unwrap());
+pub fn editor(map_path: &str, editor: data::Editor) -> Result<String, eyre::Report> {
+    let mut cmd = Command::new(&editor.path);
+    if editor.load_file_argument.is_some() {
+        cmd.arg(editor.load_file_argument.unwrap());
     }
 
-    cmd.arg(pwad_path);
+    cmd.arg(map_path);
 
-    if map_editor.additional_arguments.is_some() {
+    if editor.additional_arguments.is_some() {
         let args: Vec<String> =
-            shlex::split(&map_editor.additional_arguments.unwrap()).unwrap_or_default();
+            shlex::split(&editor.additional_arguments.unwrap()).unwrap_or_default();
         for arg in args {
             cmd.arg(arg);
         }
@@ -243,8 +240,8 @@ pub fn map_editor(pwad_path: &str, map_editor: data::MapEditor) -> Result<String
 
     let display_args = get_display_args(&cmd);
     let run_message = format!(
-        "Map Editor '{}', Args '{}'",
-        &map_editor.path.magenta(),
+        "Editor '{}', Args '{}'",
+        &editor.path.magenta(),
         display_args.blue()
     );
 

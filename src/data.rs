@@ -93,7 +93,7 @@ impl Default for Iwad {
 }
 
 #[derive(Clone, Debug, FromRow, Tabled)]
-pub struct Pwad {
+pub struct Map {
     #[tabled(skip)]
     pub id: i32,
     #[tabled(rename = "Title")]
@@ -104,15 +104,15 @@ pub struct Pwad {
     pub path: String,
 }
 
-impl fmt::Display for Pwad {
+impl fmt::Display for Map {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} by '{}' ({})", self.title, self.author, self.path)
     }
 }
 
-impl Default for Pwad {
+impl Default for Map {
     fn default() -> Self {
-        Pwad {
+        Map {
             id: 0,
             title: constants::DEFAULT_NOT_SET.to_string(),
             author: constants::DEFAULT_NOT_SET.to_string(),
@@ -122,7 +122,7 @@ impl Default for Pwad {
 }
 
 #[derive(Clone, Debug, FromRow, Tabled)]
-pub struct MapEditor {
+pub struct Editor {
     #[tabled(skip)]
     pub id: i32,
     #[tabled(rename = "App Name")]
@@ -140,7 +140,7 @@ pub struct MapEditor {
     pub version: String,
 }
 
-impl fmt::Display for MapEditor {
+impl fmt::Display for Editor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} ({} [{}])", self.app_name, self.path, self.version)
     }
@@ -152,26 +152,26 @@ pub struct Profile {
     pub name: String,
     pub engine_id: Option<i32>,
     pub iwad_id: Option<i32>,
-    pub pwad_id: Option<i32>,
-    pub pwad_id2: Option<i32>,
-    pub pwad_id3: Option<i32>,
-    pub pwad_id4: Option<i32>,
-    pub pwad_id5: Option<i32>,
+    pub map_id: Option<i32>,
+    pub map_id2: Option<i32>,
+    pub map_id3: Option<i32>,
+    pub map_id4: Option<i32>,
+    pub map_id5: Option<i32>,
     pub date_created: DateTime<Utc>,
     pub date_edited: DateTime<Utc>,
     pub date_last_run: Option<DateTime<Utc>>,
     pub additional_arguments: Option<String>,
 }
 
-pub type PwadIds = (i32, i32, i32, i32, i32);
+pub type MapIds = (i32, i32, i32, i32, i32);
 
-pub fn pwad_ids_from_options(
+pub fn map_ids_from_options(
     a: Option<i32>,
     b: Option<i32>,
     c: Option<i32>,
     d: Option<i32>,
     e: Option<i32>,
-) -> PwadIds {
+) -> MapIds {
     (
         a.unwrap_or(0),
         b.unwrap_or(0),
@@ -181,7 +181,7 @@ pub fn pwad_ids_from_options(
     )
 }
 
-pub type PwadStrings = (String, String, String, String, String);
+pub type MapStrings = (String, String, String, String, String);
 
 #[derive(Clone, Debug, Tabled)]
 pub struct ProfileDisplay {
@@ -204,17 +204,17 @@ pub struct ProfileDisplay {
     #[tabled(rename = "IWAD Path")]
     pub iwad_file: String,
     #[tabled(skip)]
-    pub pwad_ids: PwadIds,
+    pub map_ids: MapIds,
     #[tabled(
-        rename = "PWAD Path",
-        display_with = "display_combined_tabled_pwad_strings"
+        rename = "Map Path",
+        display_with = "display_combined_tabled_map_strings"
     )]
-    pub pwad_paths: PwadStrings,
+    pub map_paths: MapStrings,
     #[tabled(
-        rename = "PWAD File",
-        display_with = "display_combined_tabled_pwad_strings"
+        rename = "Map File",
+        display_with = "display_combined_tabled_map_strings"
     )]
-    pub pwad_files: PwadStrings,
+    pub map_files: MapStrings,
     #[tabled(rename = "Additionl Args")]
     pub additional_arguments: String,
     #[tabled(
@@ -237,7 +237,7 @@ impl fmt::Display for ProfileDisplay {
             f,
             "{} ({}) / {} [{}] / {}",
             self.name,
-            display_combined_pwad_strings(&self.pwad_files),
+            display_combined_map_strings(&self.map_files),
             self.engine_file,
             self.engine_version,
             self.iwad_file
@@ -252,11 +252,11 @@ pub struct AppSettings {
     pub last_profile_id: Option<i32>,
     pub default_engine_id: Option<i32>,
     pub default_iwad_id: Option<i32>,
-    pub default_map_editor_id: Option<i32>,
+    pub default_editor_id: Option<i32>,
     pub engine_search_folder: Option<String>,
     pub iwad_search_folder: Option<String>,
-    pub pwad_search_folder: Option<String>,
-    pub map_editor_search_folder: Option<String>,
+    pub map_search_folder: Option<String>,
+    pub editor_search_folder: Option<String>,
     pub menu_mode: tui::MenuMode,
 }
 
@@ -268,11 +268,11 @@ impl Default for AppSettings {
             last_profile_id: None,
             default_engine_id: None,
             default_iwad_id: None,
-            default_map_editor_id: None,
+            default_editor_id: None,
             engine_search_folder: None,
             iwad_search_folder: None,
-            pwad_search_folder: None,
-            map_editor_search_folder: None,
+            map_search_folder: None,
+            editor_search_folder: None,
             menu_mode: MenuMode::Simple,
         }
     }
@@ -290,16 +290,16 @@ pub struct AppSettingsDisplay {
     pub default_engine: String,
     #[tabled(rename = "Default Internal WAD")]
     pub default_iwad: String,
-    #[tabled(rename = "Default Map Editor")]
-    pub default_map_editor: String,
+    #[tabled(rename = "Default Editor")]
+    pub default_editor: String,
     #[tabled(rename = "Engine Search Folder")]
     pub engine_search_folder: String,
     #[tabled(rename = "Internal WAD Search Folder")]
     pub iwad_search_folder: String,
-    #[tabled(rename = "Patch WAD Search Folder")]
-    pub pwad_search_folder: String,
-    #[tabled(rename = "Map Editor Search Folder")]
-    pub map_editor_search_folder: String,
+    #[tabled(rename = "Map Search Folder")]
+    pub map_search_folder: String,
+    #[tabled(rename = "Editor Search Folder")]
+    pub editor_search_folder: String,
 }
 
 pub fn display_option_u8(value: &Option<u8>) -> String {
@@ -384,7 +384,7 @@ pub struct PlaySettings {
 }
 
 // Helper methods for display
-pub fn display_combined_tabled_pwad_strings(data: &PwadStrings) -> String {
+pub fn display_combined_tabled_map_strings(data: &MapStrings) -> String {
     let vec = [&data.0, &data.1, &data.2, &data.3, &data.4]
         .iter()
         .filter(|&&s| !s.is_empty() && s != constants::DEFAULT_NOT_SET)
@@ -394,7 +394,7 @@ pub fn display_combined_tabled_pwad_strings(data: &PwadStrings) -> String {
     vec.join("\n")
 }
 
-pub fn display_combined_pwad_strings(data: &PwadStrings) -> String {
+pub fn display_combined_map_strings(data: &MapStrings) -> String {
     let vec = [&data.0, &data.1, &data.2, &data.3, &data.4]
         .iter()
         .filter(|&&s| !s.is_empty() && s != constants::DEFAULT_NOT_SET)

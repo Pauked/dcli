@@ -1,39 +1,39 @@
 use crate::{db, menu_common, runner};
 use eyre::Context;
 
-pub fn view_map_readme_from_pwad_id(pwad_id: i32) -> Result<String, eyre::Report> {
-    let pwad = db::get_pwad_by_id(pwad_id)
-        .wrap_err(format!("Unable to get PWAD for id '{}'", pwad_id).to_string())?;
+pub fn view_map_readme_from_map_id(map_id: i32) -> Result<String, eyre::Report> {
+    let map = db::get_map_by_id(map_id)
+        .wrap_err(format!("Unable to get Map for id '{}'", map_id).to_string())?;
 
-    runner::open_map_readme(&pwad.path)
+    runner::open_map_readme(&map.path)
 }
 
 pub fn view_from_default_profile() -> Result<String, eyre::Report> {
-    let pwad_id = menu_common::get_pwad_id_from_from_default_profile("Cannot view Map Readme.")?;
+    let map_id = menu_common::get_map_id_from_from_default_profile("Cannot view Map Readme.")?;
 
-    view_map_readme_from_pwad_id(pwad_id)
+    view_map_readme_from_map_id(map_id)
 }
 
 pub fn view_from_last_profile() -> Result<String, eyre::Report> {
-    let pwad_id = menu_common::get_pwad_id_from_from_last_profile("Cannot view Map Readme.")?;
+    let map_id = menu_common::get_map_id_from_from_last_profile("Cannot view Map Readme.")?;
 
-    view_map_readme_from_pwad_id(pwad_id)
+    view_map_readme_from_map_id(map_id)
 }
 
 pub fn view_from_pick_profile() -> Result<String, eyre::Report> {
-    let pwad_id = menu_common::get_pwad_id_from_pick_profile(
+    let map_id = menu_common::get_map_id_from_pick_profile(
         "Pick the Profile to view Map Readme from:",
         "Cancelled viewing Map Readme.",
     )?;
 
-    view_map_readme_from_pwad_id(pwad_id)
+    view_map_readme_from_map_id(map_id)
 }
 
-pub fn view_from_pick_pwad() -> Result<String, eyre::Report> {
-    let pwad_id = menu_common::get_pwad_id_from_pick_pwad(
-        "Pick the PWAD to view Map Readme from:",
+pub fn view_from_pick_map() -> Result<String, eyre::Report> {
+    let map_id = menu_common::get_map_id_from_pick_map(
+        "Pick the Map to view Map Readme from:",
         "Cancelled viewing Map Readme.",
     )?;
 
-    view_map_readme_from_pwad_id(pwad_id)
+    view_map_readme_from_map_id(map_id)
 }

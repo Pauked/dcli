@@ -19,9 +19,9 @@ pub fn new_profile() -> Result<String, eyre::Report> {
             .red()
             .to_string());
     }
-    let pwads = db::get_pwads()?;
-    if pwads.is_empty() {
-        return Ok("There are no PWADs to select. Please run 'init'"
+    let maps = db::get_maps()?;
+    if maps.is_empty() {
+        return Ok("There are no Maps to select. Please run 'init'"
             .red()
             .to_string());
     }
@@ -65,12 +65,12 @@ pub fn new_profile() -> Result<String, eyre::Report> {
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
-    let pwad_selection = menu_common::get_pwad_selection(pwads, vec![])?;
-    let pwad_id = Some(pwad_selection[0].id).filter(|&id| id > 0);
-    let pwad_id2 = Some(pwad_selection[1].id).filter(|&id| id > 0);
-    let pwad_id3 = Some(pwad_selection[2].id).filter(|&id| id > 0);
-    let pwad_id4 = Some(pwad_selection[3].id).filter(|&id| id > 0);
-    let pwad_id5 = Some(pwad_selection[4].id).filter(|&id| id > 0);
+    let map_selection = menu_common::get_map_selection(maps, vec![])?;
+    let map_id = Some(map_selection[0].id).filter(|&id| id > 0);
+    let map_id2 = Some(map_selection[1].id).filter(|&id| id > 0);
+    let map_id3 = Some(map_selection[2].id).filter(|&id| id > 0);
+    let map_id4 = Some(map_selection[3].id).filter(|&id| id > 0);
+    let map_id5 = Some(map_selection[4].id).filter(|&id| id > 0);
 
     let additional_arguments =
         inquire::Text::new("Enter any additional arguments (optional):").prompt_skippable()?;
@@ -80,11 +80,11 @@ pub fn new_profile() -> Result<String, eyre::Report> {
         name: profile_name,
         engine_id: Some(engine_selection.id),
         iwad_id: Some(iwad_selection.id),
-        pwad_id,
-        pwad_id2,
-        pwad_id3,
-        pwad_id4,
-        pwad_id5,
+        map_id,
+        map_id2,
+        map_id3,
+        map_id4,
+        map_id5,
         additional_arguments,
         date_created: Utc::now(),
         date_edited: Utc::now(),
@@ -129,9 +129,9 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
             .red()
             .to_string());
     }
-    let pwads = db::get_pwads()?;
-    if pwads.is_empty() {
-        return Ok("There are no PWADs to select. Please run 'init'"
+    let maps = db::get_maps()?;
+    if maps.is_empty() {
+        return Ok("There are no Maps to select. Please run 'init'"
             .red()
             .to_string());
     }
@@ -150,10 +150,10 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
         .position(|iwad| profile_display.iwad_id == iwad.id)
         .unwrap_or(0);
 
-    let ids = &profile_display.pwad_ids;
-    let default_pwads: Vec<usize> = [ids.0, ids.1, ids.2, ids.3, ids.4]
+    let ids = &profile_display.map_ids;
+    let default_maps: Vec<usize> = [ids.0, ids.1, ids.2, ids.3, ids.4]
         .iter()
-        .filter_map(|&id| pwads.iter().position(|pwad| pwad.id == id))
+        .filter_map(|&id| maps.iter().position(|map| map.id == id))
         .collect();
 
     let profile_name = inquire::Text::new("Enter a name for your Profile:")
@@ -186,12 +186,12 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
-    let pwad_selection = menu_common::get_pwad_selection(pwads, default_pwads)?;
-    let pwad_id = Some(pwad_selection[0].id).filter(|&id| id > 0);
-    let pwad_id2 = Some(pwad_selection[1].id).filter(|&id| id > 0);
-    let pwad_id3 = Some(pwad_selection[2].id).filter(|&id| id > 0);
-    let pwad_id4 = Some(pwad_selection[3].id).filter(|&id| id > 0);
-    let pwad_id5 = Some(pwad_selection[4].id).filter(|&id| id > 0);
+    let map_selection = menu_common::get_map_selection(maps, default_maps)?;
+    let map_id = Some(map_selection[0].id).filter(|&id| id > 0);
+    let map_id2 = Some(map_selection[1].id).filter(|&id| id > 0);
+    let map_id3 = Some(map_selection[2].id).filter(|&id| id > 0);
+    let map_id4 = Some(map_selection[3].id).filter(|&id| id > 0);
+    let map_id5 = Some(map_selection[4].id).filter(|&id| id > 0);
 
     let additional_arguments = inquire::Text::new("Enter any additional arguments (optional):")
         .with_default(&profile_display.additional_arguments)
@@ -202,11 +202,11 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
         name: profile_name.clone(),
         engine_id: Some(engine_selection.id),
         iwad_id: Some(iwad_selection.id),
-        pwad_id,
-        pwad_id2,
-        pwad_id3,
-        pwad_id4,
-        pwad_id5,
+        map_id,
+        map_id2,
+        map_id3,
+        map_id4,
+        map_id5,
         additional_arguments,
         date_created: profile_display.date_created,
         date_edited: Utc::now(),

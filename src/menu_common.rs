@@ -3,29 +3,29 @@ use log::info;
 
 use crate::{data, db, tui};
 
-fn pick_from_pwad_from_profile_tuple(pwad_ids: data::PwadIds) -> Result<i32, eyre::Report> {
-    let pwad_list = db::get_pwads_by_ids(pwad_ids)?;
-    if pwad_list.is_empty() {
-        return Err(eyre::eyre!("There are no PWADs to select from."));
+fn pick_from_map_from_profile_map_ids(map_ids: data::MapIds) -> Result<i32, eyre::Report> {
+    let map_list = db::get_maps_by_ids(map_ids)?;
+    if map_list.is_empty() {
+        return Err(eyre::eyre!("There are no Maps to select from."));
     }
 
     // If there's only one, just return it
-    if pwad_list.len() == 1 {
-        return Ok(pwad_list[0].id);
+    if map_list.len() == 1 {
+        return Ok(map_list[0].id);
     }
 
-    let pwad_selection = inquire::Select::new("Pick the PWAD you want to use:", pwad_list)
+    let map_selection = inquire::Select::new("Pick the Map you want to use:", map_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt_skippable()?;
 
-    if let Some(pwad) = pwad_selection {
-        return Ok(pwad.id);
+    if let Some(map) = map_selection {
+        return Ok(map.id);
     }
 
-    Err(eyre::eyre!("Cancelled picking PWAD."))
+    Err(eyre::eyre!("Cancelled picking Map."))
 }
 
-pub fn get_pwad_id_from_from_default_profile(error_str: &str) -> Result<i32, eyre::Report> {
+pub fn get_map_id_from_from_default_profile(error_str: &str) -> Result<i32, eyre::Report> {
     let app_settings = db::get_app_settings()?;
 
     if app_settings.default_profile_id.is_none() {
@@ -38,18 +38,18 @@ pub fn get_pwad_id_from_from_default_profile(error_str: &str) -> Result<i32, eyr
     let profile = db::get_profile_by_id(app_settings.default_profile_id.unwrap())
         .wrap_err("Unable to get Profile".to_string())?;
 
-    let pwad_id = pick_from_pwad_from_profile_tuple((
-        profile.pwad_id.unwrap_or(0),
-        profile.pwad_id2.unwrap_or(0),
-        profile.pwad_id3.unwrap_or(0),
-        profile.pwad_id3.unwrap_or(0),
-        profile.pwad_id5.unwrap_or(0),
+    let map_id = pick_from_map_from_profile_map_ids((
+        profile.map_id.unwrap_or(0),
+        profile.map_id2.unwrap_or(0),
+        profile.map_id3.unwrap_or(0),
+        profile.map_id3.unwrap_or(0),
+        profile.map_id5.unwrap_or(0),
     ))?;
 
-    Ok(pwad_id)
+    Ok(map_id)
 }
 
-pub fn get_pwad_id_from_from_last_profile(error_str: &str) -> Result<i32, eyre::Report> {
+pub fn get_map_id_from_from_last_profile(error_str: &str) -> Result<i32, eyre::Report> {
     let app_settings = db::get_app_settings()?;
 
     if app_settings.last_profile_id.is_none() {
@@ -59,18 +59,18 @@ pub fn get_pwad_id_from_from_last_profile(error_str: &str) -> Result<i32, eyre::
     let profile = db::get_profile_by_id(app_settings.last_profile_id.unwrap())
         .wrap_err("Unable to get Profile".to_string())?;
 
-    let pwad_id = pick_from_pwad_from_profile_tuple((
-        profile.pwad_id.unwrap_or(0),
-        profile.pwad_id2.unwrap_or(0),
-        profile.pwad_id3.unwrap_or(0),
-        profile.pwad_id3.unwrap_or(0),
-        profile.pwad_id5.unwrap_or(0),
+    let map_id = pick_from_map_from_profile_map_ids((
+        profile.map_id.unwrap_or(0),
+        profile.map_id2.unwrap_or(0),
+        profile.map_id3.unwrap_or(0),
+        profile.map_id3.unwrap_or(0),
+        profile.map_id5.unwrap_or(0),
     ))?;
 
-    Ok(pwad_id)
+    Ok(map_id)
 }
 
-pub fn get_pwad_id_from_pick_profile(
+pub fn get_map_id_from_pick_profile(
     option_str: &str,
     error_str: &str,
 ) -> Result<i32, eyre::Report> {
@@ -84,41 +84,41 @@ pub fn get_pwad_id_from_pick_profile(
         .prompt_skippable()?;
 
     if let Some(profile) = profile_selection {
-        let pwad_id = pick_from_pwad_from_profile_tuple(profile.pwad_ids)?;
+        let map_id = pick_from_map_from_profile_map_ids(profile.map_ids)?;
 
-        return Ok(pwad_id);
+        return Ok(map_id);
     }
 
     Err(eyre::eyre!(error_str.to_string()))
 }
 
-pub fn get_pwad_id_from_pick_pwad(option_text: &str, error_str: &str) -> Result<i32, eyre::Report> {
-    let pwad_list = db::get_pwads()?;
-    if pwad_list.is_empty() {
-        return Err(eyre::eyre!("There are no PWADs to select from."));
+pub fn get_map_id_from_pick_map(option_text: &str, error_str: &str) -> Result<i32, eyre::Report> {
+    let map_list = db::get_maps()?;
+    if map_list.is_empty() {
+        return Err(eyre::eyre!("There are no Maps to select from."));
     }
 
-    let pwad_selection = inquire::Select::new(option_text, pwad_list)
+    let map_selection = inquire::Select::new(option_text, map_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt_skippable()?;
 
-    if let Some(pwad) = pwad_selection {
-        return Ok(pwad.id);
+    if let Some(map) = map_selection {
+        return Ok(map.id);
     }
 
     Err(eyre::eyre!(error_str.to_string()))
 }
 
-pub fn get_pwad_selection(
-    pwads: Vec<data::Pwad>,
-    default_pwads: Vec<usize>,
-) -> Result<Vec<data::Pwad>, eyre::Report> {
-    // Multiselect of up to five PWADs, can be aborted
+pub fn get_map_selection(
+    maps: Vec<data::Map>,
+    default_maps: Vec<usize>,
+) -> Result<Vec<data::Map>, eyre::Report> {
+    // Multiselect of up to five Maps, can be aborted
     let selected_items =
-        inquire::MultiSelect::new("Pick the PWAD you want to use (optional):", pwads.clone())
-            .with_default(&default_pwads)
+        inquire::MultiSelect::new("Pick the Map you want to use (optional):", maps.clone())
+            .with_default(&default_maps)
             .with_page_size(tui::MENU_PAGE_SIZE)
-            .with_help_message("You can select up to five PWADs")
+            .with_help_message("You can select up to five Maps")
             .with_validator(inquire::max_length!(5))
             .prompt_skippable()?;
 
@@ -126,21 +126,21 @@ pub fn get_pwad_selection(
         // No ordering need if nothing is selected
         if unwrapped_selected_items.is_empty() {
             return Ok(vec![
-                data::Pwad::default(),
-                data::Pwad::default(),
-                data::Pwad::default(),
-                data::Pwad::default(),
-                data::Pwad::default(),
+                data::Map::default(),
+                data::Map::default(),
+                data::Map::default(),
+                data::Map::default(),
+                data::Map::default(),
             ]);
         }
         // No ordering need if they just pick one
         if unwrapped_selected_items.len() == 1 {
             return Ok(vec![
                 unwrapped_selected_items[0].clone(),
-                data::Pwad::default(),
-                data::Pwad::default(),
-                data::Pwad::default(),
-                data::Pwad::default(),
+                data::Map::default(),
+                data::Map::default(),
+                data::Map::default(),
+                data::Map::default(),
             ]);
         }
 
@@ -151,7 +151,7 @@ pub fn get_pwad_selection(
 
             for i in 0..temp_items.len() {
                 let selected = inquire::Select::new(
-                    &format!("Pick PWAD #{} from your selected PWADs:", i + 1),
+                    &format!("Pick Map #{} from your selected Maps:", i + 1),
                     temp_items.clone(),
                 )
                 .prompt()
@@ -174,7 +174,7 @@ pub fn get_pwad_selection(
             if confirm {
                 if ordered_items.len() < 5 {
                     for _ in ordered_items.len()..5 {
-                        ordered_items.push(data::Pwad::default());
+                        ordered_items.push(data::Map::default());
                     }
                 }
                 return Ok(ordered_items);
@@ -183,11 +183,11 @@ pub fn get_pwad_selection(
     } else {
         // They skipped, so default the result
         Ok(vec![
-            data::Pwad::default(),
-            data::Pwad::default(),
-            data::Pwad::default(),
-            data::Pwad::default(),
-            data::Pwad::default(),
+            data::Map::default(),
+            data::Map::default(),
+            data::Map::default(),
+            data::Map::default(),
+            data::Map::default(),
         ])
     }
 }

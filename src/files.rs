@@ -2,8 +2,8 @@ use std::{fs::File, io::Read, path::Path};
 
 use crate::{data, doom_data, finder, paths};
 
-pub fn get_map_readme_file_name(pwad: &str) -> Result<Option<String>, eyre::Report> {
-    let path = Path::new(pwad);
+pub fn get_map_readme_file_name(map_path: &str) -> Result<Option<String>, eyre::Report> {
+    let path = Path::new(map_path);
     let extension = path
         .extension()
         .unwrap_or_default()
@@ -16,7 +16,7 @@ pub fn get_map_readme_file_name(pwad: &str) -> Result<Option<String>, eyre::Repo
         .any(|&e| e.to_lowercase() == extension);
 
     if valid_extension {
-        let readme = pwad.to_lowercase().replace(
+        let readme = map_path.to_lowercase().replace(
             &format!(".{}", extension),
             &format!(".{}", doom_data::EXT_TXT),
         );
@@ -38,13 +38,13 @@ fn check_readme_line(line: &str, key: &str) -> Option<String> {
     None
 }
 
-pub fn get_details_from_readme(pwad: &str) -> Result<(String, String), eyre::Report> {
-    let mut title = paths::extract_file_name(pwad);
+pub fn get_details_from_readme(map_path: &str) -> Result<(String, String), eyre::Report> {
+    let mut title = paths::extract_file_name(map_path);
     let mut title_found = false;
     let mut author = "Unknown".to_string();
     let mut author_found = false;
 
-    if let Some(readme) = get_map_readme_file_name(pwad)? {
+    if let Some(readme) = get_map_readme_file_name(map_path)? {
         let lines = paths::lines_from_file("readme", &readme)?;
         for line in lines {
             if let Some(value) = check_readme_line(&line, "title") {
@@ -139,7 +139,7 @@ fn is_pwad(file: &str) -> Result<bool, eyre::Report> {
     is_valid_wad(file, &doom_data::PWAD_IDENTIFIER)
 }
 
-pub fn game_file_extension(file: &str) -> Result<bool, eyre::Report> {
+pub fn map_file_extension(file: &str) -> Result<bool, eyre::Report> {
     let path = Path::new(file);
     let extension = path
         .extension()
@@ -158,51 +158,3 @@ pub fn game_file_extension(file: &str) -> Result<bool, eyre::Report> {
 
     Ok(valid_extension)
 }
-
-// #[cfg(test)]
-// mod tests {
-//     #[cfg(target_os = "windows")]
-//     #[test]
-//     fn get_map_readme_file_name_tntr_wad() {
-//         // Arrange
-//         use super::get_map_readme_file_name;
-//         let pwad = r"C:\Doom\Maps\PWAD\tntr\tntr.wad";
-//         let expected = r"C:\Doom\Maps\PWAD\tntr\tntr.txt";
-
-//         // Act
-//         let actual = get_map_readme_file_name(pwad);
-
-//         // Assert
-//         assert_eq!(actual.unwrap().unwrap(), expected);
-//     }
-
-//     #[cfg(target_os = "windows")]
-//     #[test]
-//     fn get_map_readme_file_name_lullaby_pk3() {
-//         // Arrange
-//         use super::get_map_readme_file_name;
-//         let pwad = r"C:\Doom\Maps\PWAD\Lullaby\Lullaby.pk3";
-//         let expected = r"C:\Doom\Maps\PWAD\Lullaby\Lullaby.txt";
-
-//         // Act
-//         let actual = get_map_readme_file_name(pwad);
-
-//         // Assert
-//         assert_eq!(actual.unwrap().unwrap(), expected);
-//     }
-
-//     #[cfg(target_os = "windows")]
-//     #[test]
-//     fn get_map_readme_file_name_ramppk3_no_readme() {
-//         // Arrange
-//         use super::get_map_readme_file_name;
-//         let pwad = r"C:\Doom\Maps\PWAD\RAMP\RAMP.pk3";
-//         let expected = None;
-
-//         // Act
-//         let actual = get_map_readme_file_name(pwad);
-
-//         // Assert
-//         assert_eq!(actual.unwrap(), expected);
-//     }
-// }
