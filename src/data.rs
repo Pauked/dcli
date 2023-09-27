@@ -215,7 +215,7 @@ pub struct ProfileDisplay {
         display_with = "display_combined_tabled_map_strings"
     )]
     pub map_files: MapStrings,
-    #[tabled(rename = "Additionl Args")]
+    #[tabled(rename = "Additional Args")]
     pub additional_arguments: String,
     #[tabled(
         rename = "Date Created",

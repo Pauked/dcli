@@ -4,7 +4,7 @@ use eyre::Context;
 use inquire::validator::Validation;
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
-use crate::{data, db, menu_common, tui};
+use crate::{data, db, menu_common, tui, paths};
 
 pub fn new_profile() -> Result<String, eyre::Report> {
     let engines = db::get_engines()?;
@@ -90,11 +90,113 @@ pub fn new_profile() -> Result<String, eyre::Report> {
         date_edited: Utc::now(),
         date_last_run: None,
     };
-    let add_result = db::add_profile(profile)?;
+    let add_result = db::add_profile(profile.clone())?;
     let new_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
     set_profile_as_default(new_profile_id)?;
 
-    Ok("Successfully created a new Profile".to_string())
+    Ok(format!("Successfully created a new Profile - '{}'", profile.name.green()))
+}
+
+pub fn cli_new_profile(
+    name: &str,
+    engine: &str,
+    iwad: &str,
+    maps_in: Option<Vec<String>>,
+    args: Option<Vec<String>>,
+) -> Result<String, eyre::Report> {
+    let engines = db::get_engines()?;
+    if engines.is_empty() {
+        return Ok("There are no Engines to select. Please run 'init'"
+            .red()
+            .to_string());
+    }
+    let iwads = db::get_iwads()?;
+    if iwads.is_empty() {
+        return Ok("There are no IWADs to select. Please run 'init"
+            .red()
+            .to_string());
+    }
+    let maps = db::get_maps()?;
+    if maps.is_empty() {
+        return Ok("There are no Maps to select. Please run 'init'"
+            .red()
+            .to_string());
+    }
+
+    // Check profile name is unique
+    let profile_result = db::get_profile_by_name(name);
+    if let Ok(profile) = profile_result {
+        if profile.name == name {
+            return Ok("Profile name already exists.".into());
+        }
+    }
+    if name.len() < 5 {
+        return Ok("Profile name must be at least 5 characters.".into());
+    }
+
+    let engine_selection = match engines
+        .iter()
+        .find(|&x| x.path.to_lowercase() == engine.to_lowercase())
+    {
+        Some(engine) => engine,
+        None => return Ok("Engine not found".into()),
+    };
+
+    let iwad_selection = match iwads
+        .iter()
+        .find(|&x| x.path.to_lowercase() == iwad.to_lowercase())
+    {
+        Some(iwad) => iwad,
+        None => return Ok("IWAD not found".into()),
+    };
+
+    let map_ids: Vec<Option<i32>> = match maps_in {
+        Some(maps_unwrapped) => {
+            if maps_unwrapped.len() > 5 {
+                return Ok("Only up to 5 maps can be specified".into());
+            }
+            let mut map_ids: Vec<Option<i32>> = Vec::new();
+            for map in maps_unwrapped {
+                match maps
+                    .iter()
+                    .find(|&x| paths::extract_file_name(&x.path).to_lowercase() == map.to_lowercase())
+                {
+                    Some(map) => map_ids.push(Some(map.id)),
+                    None => map_ids.push(None),
+                };
+            }
+
+            if map_ids.len() < 5 {
+                for _ in map_ids.len()..5 {
+                    map_ids.push(None);
+                }
+            }
+
+            map_ids
+        }
+        None => { vec![None, None, None, None, None] }
+    };
+
+    let additional_arguments = args.map(|args_unwrapped| args_unwrapped.join(" "));
+
+    let profile = data::Profile {
+        id: 0,
+        name: name.to_string(),
+        engine_id: Some(engine_selection.id),
+        iwad_id: Some(iwad_selection.id),
+        map_id: map_ids[0],
+        map_id2: map_ids[1],
+        map_id3: map_ids[2],
+        map_id4: map_ids[3],
+        map_id5: map_ids[4],
+        additional_arguments,
+        date_created: Utc::now(),
+        date_edited: Utc::now(),
+        date_last_run: None,
+    };
+    db::add_profile(profile.clone())?;
+
+    Ok(format!("Successfully created a new Profile - '{}'", profile.name.green()))
 }
 
 pub fn set_profile_as_default(profile_id: i32) -> Result<String, eyre::Report> {

@@ -1,8 +1,8 @@
-use clap::Parser;
-use log::debug;
+use clap::{Parser, ValueEnum};
+use log::{debug, info};
 
 use crate::{
-    constants, menu_app_settings,
+    constants, menu_app_settings, menu_profiles,
     tui::{self, MenuCommand},
 };
 
@@ -55,20 +55,39 @@ pub enum Action {
         #[arg(long, default_value = "false")]
         force: bool,
     },
-    // #[clap(short_flag = 'a')]
-    // AddProfile {
-    //     /// Profile name
-    //     name: String,
-    //     /// Engine path
-    //     engine: String,
-    //     /// IWAD path
-    //     iwad: String,
-    //     /// Map path
-    //     map: Option<String>,
-    //     /// Additional arguments to pass to the engine
-    //     #[arg(long)]
-    //     additional_args: Option<Vec<String>>,
-    // },
+
+    /// List out selected data from the database.
+    #[clap(short_flag = 'l')]
+    List {
+        /// What data to list.
+        #[clap(value_enum)]
+        list_type: ListType,
+    },
+
+    #[clap(short_flag = 'a')]
+    AddProfile {
+        /// Profile name
+        name: String,
+        /// Engine path
+        engine: String,
+        /// IWAD path
+        iwad: String,
+        /// Map paths. Up to five
+        #[clap(long, value_delimiter = ',')]
+        maps: Option<Vec<String>>,
+        /// Additional arguments to pass to the engine
+        #[arg(long)]
+        args: Option<Vec<String>>,
+    },
+}
+
+#[derive(ValueEnum, Clone, Debug, PartialEq)]
+pub enum ListType {
+    Engines,
+    Iwads,
+    Maps,
+    Profiles,
+    AppSettings,
 }
 
 pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> {
@@ -129,22 +148,28 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                 } else {
                     Ok((result, CliRunMode::Tui))
                 }
-            } // Action::AddProfile {
-              //     name,
-              //     engine,
-              //     iwad,
-              //     map,
-              //     additional_args,
-              // } => {
-              //     // let result = tui::run_menu_command(MenuCommand::CliAddProfile {
-              //     //     name,
-              //     //     engine,
-              //     //     iwad,
-              //     //     map,
-              //     //     additional_args,
-              //     // })?;
-              //     Ok(("".to_string(), CliRunMode::Quit))
-              // }
+            }
+            Action::List { list_type } => {
+                let result = match list_type {
+                    ListType::Engines => menu_app_settings::list_engines(),
+                    ListType::Iwads => menu_app_settings::list_iwads(),
+                    ListType::Maps => menu_app_settings::list_maps(),
+                    ListType::Profiles => menu_profiles::list_profiles(),
+                    ListType::AppSettings => menu_app_settings::list_app_settings(),
+                }?;
+                Ok((result, CliRunMode::Quit))
+            }
+            Action::AddProfile {
+                name,
+                engine,
+                iwad,
+                maps,
+                args,
+            } => {
+                info!("AddProfile: name '{}', engine '{}', iwad '{}', maps '{:?}', args '{:?}'", name, engine, iwad, maps, args);
+                let result = menu_profiles::cli_new_profile(&name, &engine, &iwad, maps, args)?;
+                Ok((result, CliRunMode::Quit))
+            }
         }
     } else {
         Ok((
