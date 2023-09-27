@@ -1,5 +1,5 @@
 use clap::{Parser, ValueEnum};
-use log::{debug, info};
+use log::debug;
 
 use crate::{
     constants, data, menu_app_settings, menu_editor, menu_profiles,
@@ -87,6 +87,15 @@ pub enum Action {
         #[arg(long)]
         args: Option<Vec<String>>,
     },
+
+    DeleteProfile {
+        /// Profile name
+        name: String,
+
+        /// Force profile delete and skip confirmation prompt.
+        #[arg(long, default_value = "false")]
+        force: bool,
+    },
 }
 
 #[derive(ValueEnum, Clone, Debug, PartialEq)]
@@ -146,7 +155,6 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                 );
                 let result = menu_app_settings::cli_init(engine_path, iwad_path, map_path, force)?;
                 Ok((result, CliRunMode::Quit))
-                // Ok((tui::run_menu_command(MenuCommand::Init)?, CliRunMode::Tui));
             }
             Action::Reset { force } => {
                 let result = tui::run_menu_command_with_force(MenuCommand::Reset, force)?;
@@ -180,11 +188,15 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                 maps,
                 args,
             } => {
-                info!(
+                debug!(
                     "AddProfile: name '{}', engine '{}', iwad '{}', maps '{:?}', args '{:?}'",
                     name, engine, iwad, maps, args
                 );
                 let result = menu_profiles::cli_new_profile(&name, &engine, &iwad, maps, args)?;
+                Ok((result, CliRunMode::Quit))
+            }
+            Action::DeleteProfile { name, force } => {
+                let result = menu_profiles::cli_delete_profile(&name, force)?;
                 Ok((result, CliRunMode::Quit))
             }
         }

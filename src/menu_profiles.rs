@@ -42,10 +42,8 @@ pub fn new_profile() -> Result<String, eyre::Report> {
     let profile_name = inquire::Text::new("Enter a name for your Profile:")
         .with_validator(|input: &str| {
             let profile_result = db::get_profile_by_name(input);
-            if let Ok(profile) = profile_result {
-                if profile.name == input {
-                    return Ok(Validation::Invalid("Profile name already exists.".into()));
-                }
+            if profile_result.is_ok() {
+                return Ok(Validation::Invalid("Profile name already exists.".into()));
             }
 
             if input.len() < 5 {
@@ -131,10 +129,8 @@ pub fn cli_new_profile(
 
     // Check profile name is unique
     let profile_result = db::get_profile_by_name(name);
-    if let Ok(profile) = profile_result {
-        if profile.name == name {
-            return Ok("Profile name already exists.".into());
-        }
+    if profile_result.is_ok() {
+        return Ok("Profile name already exists.".into());
     }
     if name.len() < 5 {
         return Ok("Profile name must be at least 5 characters.".into());
@@ -272,7 +268,7 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
         .with_validator(move |input: &str| {
             let profile_result = db::get_profile_by_name(input);
             if let Ok(profile) = profile_result {
-                if profile.id != profile_display.id && profile.name == input {
+                if profile.id != profile_display.id {
                     return Ok(Validation::Invalid("Profile name already exists.".into()));
                 }
             }
@@ -329,6 +325,32 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
     Ok(format!("Successfully updated Profile - '{}'", profile_name))
 }
 
+pub fn delete_profile_core(
+    profile_id: i32,
+    profile_name: &str,
+    force: bool,
+) -> Result<String, eyre::Report> {
+    if force
+        || inquire::Confirm::new(&format!(
+            "Are you sure you want to delete this Profile - '{}'? This cannot be undone.",
+            profile_name
+        ))
+        .with_default(false)
+        .prompt()
+        .unwrap()
+    {
+        // Check if "Default Profile" and remove link if so
+        remove_profile_from_app_settings(profile_id)?;
+
+        // Now delete the profile
+        db::delete_profile(profile_id)
+            .wrap_err(format!("Failed to delete Profile - '{}", profile_name))?;
+        return Ok(format!("Successfully deleted Profile '{}'", profile_name.green()));
+    }
+
+    Ok("Cancelled Profile deletion.".yellow().to_string())
+}
+
 pub fn delete_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
@@ -339,25 +361,19 @@ pub fn delete_profile() -> Result<String, eyre::Report> {
         inquire::Select::new("Pick the Profile to Delete:", profile_list).prompt_skippable()?;
 
     if let Some(profile) = profile_selection {
-        if inquire::Confirm::new(&format!(
-            "Are you sure you want to delete this Profile - '{}'? This cannot be undone.",
-            profile.name
-        ))
-        .with_default(false)
-        .prompt()
-        .unwrap()
-        {
-            // Check if "Default Profile" and remove link if so
-            remove_profile_from_app_settings(profile.id)?;
-
-            // Now delete the profile
-            db::delete_profile(profile.id)
-                .wrap_err(format!("Failed to delete Profile - '{}", profile))?;
-            return Ok(format!("Successfully deleted Profile '{}'", profile));
-        }
+        delete_profile_core(profile.id, &profile.name, false)
+    } else {
+        Ok("No changes made to deleting Profile".to_string())
     }
+}
 
-    Ok("Cancelled Profile deletion.".yellow().to_string())
+pub fn cli_delete_profile(profile_name: &str, force: bool) -> Result<String, eyre::Report> {
+    let profile_result = db::get_profile_by_name(profile_name);
+    if let Ok(profile) = profile_result {
+        delete_profile_core(profile.id, &profile.name, force)
+    } else {
+        Ok(format!("Profile not found - '{}'", profile_name))
+    }
 }
 
 pub fn set_default_profile() -> Result<String, eyre::Report> {
