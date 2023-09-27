@@ -2,7 +2,7 @@ use clap::{Parser, ValueEnum};
 use log::{debug, info};
 
 use crate::{
-    constants, menu_app_settings, menu_profiles,
+    constants, data, menu_app_settings, menu_editor, menu_profiles,
     tui::{self, MenuCommand},
 };
 
@@ -61,20 +61,28 @@ pub enum Action {
     List {
         /// What data to list.
         #[clap(value_enum)]
-        list_type: ListType,
+        list_data: ListData,
+
+        /// Show full details. Does not apply to all data types.
+        #[arg(long, default_value = "false")]
+        full: bool,
     },
 
     #[clap(short_flag = 'a')]
     AddProfile {
         /// Profile name
         name: String,
+
         /// Engine path
         engine: String,
+
         /// IWAD path
         iwad: String,
+
         /// Map paths. Up to five
         #[clap(long, value_delimiter = ',')]
         maps: Option<Vec<String>>,
+
         /// Additional arguments to pass to the engine
         #[arg(long)]
         args: Option<Vec<String>>,
@@ -82,11 +90,12 @@ pub enum Action {
 }
 
 #[derive(ValueEnum, Clone, Debug, PartialEq)]
-pub enum ListType {
+pub enum ListData {
     Engines,
     Iwads,
     Maps,
     Profiles,
+    Editors,
     AppSettings,
 }
 
@@ -149,13 +158,18 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                     Ok((result, CliRunMode::Tui))
                 }
             }
-            Action::List { list_type } => {
-                let result = match list_type {
-                    ListType::Engines => menu_app_settings::list_engines(),
-                    ListType::Iwads => menu_app_settings::list_iwads(),
-                    ListType::Maps => menu_app_settings::list_maps(),
-                    ListType::Profiles => menu_profiles::list_profiles(),
-                    ListType::AppSettings => menu_app_settings::list_app_settings(),
+            Action::List { list_data, full } => {
+                let list_type = match full {
+                    true => data::ListType::Full,
+                    false => data::ListType::Summary,
+                };
+                let result = match list_data {
+                    ListData::Engines => menu_app_settings::list_engines(),
+                    ListData::Iwads => menu_app_settings::list_iwads(),
+                    ListData::Maps => menu_app_settings::list_maps(),
+                    ListData::Profiles => menu_profiles::list_profiles(list_type),
+                    ListData::Editors => menu_editor::list_editors(),
+                    ListData::AppSettings => menu_app_settings::list_app_settings(),
                 }?;
                 Ok((result, CliRunMode::Quit))
             }
@@ -166,7 +180,10 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                 maps,
                 args,
             } => {
-                info!("AddProfile: name '{}', engine '{}', iwad '{}', maps '{:?}', args '{:?}'", name, engine, iwad, maps, args);
+                info!(
+                    "AddProfile: name '{}', engine '{}', iwad '{}', maps '{:?}', args '{:?}'",
+                    name, engine, iwad, maps, args
+                );
                 let result = menu_profiles::cli_new_profile(&name, &engine, &iwad, maps, args)?;
                 Ok((result, CliRunMode::Quit))
             }

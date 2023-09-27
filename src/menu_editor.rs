@@ -35,18 +35,27 @@ fn open_editor_from_map_id(map_id: i32) -> Result<String, eyre::Report> {
 }
 
 pub fn open_from_default_profile() -> Result<String, eyre::Report> {
+    if db::get_editor_count()? == 0 {
+        return Ok("There are no Editors to select from.".red().to_string());
+    }
     let map_id = menu_common::get_map_id_from_from_default_profile("Cannot open Editor.")?;
 
     open_editor_from_map_id(map_id)
 }
 
 pub fn open_from_last_profile() -> Result<String, eyre::Report> {
+    if db::get_editor_count()? == 0 {
+        return Ok("There are no Editors to select from.".red().to_string());
+    }
     let map_id = menu_common::get_map_id_from_from_last_profile("Cannot open Editor.")?;
 
     open_editor_from_map_id(map_id)
 }
 
 pub fn open_from_pick_profile() -> Result<String, eyre::Report> {
+    if db::get_editor_count()? == 0 {
+        return Ok("There are no Editors to select from.".red().to_string());
+    }
     let map_id = menu_common::get_map_id_from_pick_profile(
         "Pick the Profile to open in Editor:",
         "Cancelled opening Editor.",
@@ -56,6 +65,9 @@ pub fn open_from_pick_profile() -> Result<String, eyre::Report> {
 }
 
 pub fn open_from_pick_map() -> Result<String, eyre::Report> {
+    if db::get_editor_count()? == 0 {
+        return Ok("There are no Editors to select from.".red().to_string());
+    }
     let map_id = menu_common::get_map_id_from_pick_map(
         "Pick the Map to open in Editor:",
         "Cancelled opening Editor.",

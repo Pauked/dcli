@@ -562,6 +562,7 @@ fn get_profile_display(
         id: profile.id,
         name: profile.name,
         engine_id: profile.engine_id.unwrap_or(0),
+        engine_app_name: engine.app_name.clone(),
         engine_path: paths::extract_path(&engine.path),
         engine_file: paths::extract_file_name(&engine.path),
         engine_version: engine.version.clone(),
@@ -861,5 +862,19 @@ pub fn get_editor_by_id(id: i32) -> Result<data::Editor, eyre::Report> {
             .fetch_one(&db)
             .await
             .wrap_err(format!("Failed to get editor with id '{}'", id))
+    })
+}
+
+pub fn get_editor_count() -> Result<i64, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM editors")
+            .fetch_one(&db)
+            .await
+            .wrap_err("Failed to get Editor count")?;
+
+        Ok(result.0)
     })
 }

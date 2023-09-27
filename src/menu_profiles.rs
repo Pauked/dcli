@@ -2,9 +2,12 @@ use chrono::Utc;
 use colored::Colorize;
 use eyre::Context;
 use inquire::validator::Validation;
-use tabled::settings::{object::Rows, Modify, Style, Width};
+use tabled::{
+    builder::Builder,
+    settings::{object::Rows, Modify, Style, Width},
+};
 
-use crate::{data, db, menu_common, tui, paths};
+use crate::{data, db, menu_common, paths, tui};
 
 pub fn new_profile() -> Result<String, eyre::Report> {
     let engines = db::get_engines()?;
@@ -94,7 +97,10 @@ pub fn new_profile() -> Result<String, eyre::Report> {
     let new_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
     set_profile_as_default(new_profile_id)?;
 
-    Ok(format!("Successfully created a new Profile - '{}'", profile.name.green()))
+    Ok(format!(
+        "Successfully created a new Profile - '{}'",
+        profile.name.green()
+    ))
 }
 
 pub fn cli_new_profile(
@@ -157,10 +163,9 @@ pub fn cli_new_profile(
             }
             let mut map_ids: Vec<Option<i32>> = Vec::new();
             for map in maps_unwrapped {
-                match maps
-                    .iter()
-                    .find(|&x| paths::extract_file_name(&x.path).to_lowercase() == map.to_lowercase())
-                {
+                match maps.iter().find(|&x| {
+                    paths::extract_file_name(&x.path).to_lowercase() == map.to_lowercase()
+                }) {
                     Some(map) => map_ids.push(Some(map.id)),
                     None => map_ids.push(None),
                 };
@@ -174,7 +179,9 @@ pub fn cli_new_profile(
 
             map_ids
         }
-        None => { vec![None, None, None, None, None] }
+        None => {
+            vec![None, None, None, None, None]
+        }
     };
 
     let additional_arguments = args.map(|args_unwrapped| args_unwrapped.join(" "));
@@ -196,7 +203,10 @@ pub fn cli_new_profile(
     };
     db::add_profile(profile.clone())?;
 
-    Ok(format!("Successfully created a new Profile - '{}'", profile.name.green()))
+    Ok(format!(
+        "Successfully created a new Profile - '{}'",
+        profile.name.green()
+    ))
 }
 
 pub fn set_profile_as_default(profile_id: i32) -> Result<String, eyre::Report> {
@@ -381,14 +391,44 @@ pub fn set_default_profile() -> Result<String, eyre::Report> {
     }
 }
 
-pub fn list_profiles() -> Result<String, eyre::Report> {
+pub fn list_profiles(list_type: data::ListType) -> Result<String, eyre::Report> {
     let profiles =
         db::get_profile_display_list().wrap_err("Unable to profile listing".to_string())?;
 
-    let table = tabled::Table::new(profiles)
-        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
-        .with(Style::modern())
-        .to_string();
+    let table = match list_type {
+        data::ListType::Full => tabled::Table::new(profiles)
+            .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
+            .with(Style::modern())
+            .to_string(),
+        data::ListType::Summary => {
+            let mut builder = Builder::default();
+            builder.set_header([
+                "Name",
+                "Engine App Name",
+                "Engine Version",
+                "IWAD File",
+                "Map Files",
+                "Additional Args",
+                "Date Last Run",
+            ]);
+            for profile in profiles {
+                builder.push_record([
+                    profile.name,
+                    profile.engine_app_name,
+                    profile.engine_version,
+                    profile.iwad_file,
+                    data::display_combined_tabled_map_strings(&profile.map_files),
+                    profile.additional_arguments,
+                    data::display_option_utc_datetime_to_local(&profile.date_last_run),
+                ]);
+            }
+            let mut table = builder.build();
+            table
+                .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
+                .with(Style::modern())
+                .to_string()
+        }
+    };
     Ok(table)
 }
 

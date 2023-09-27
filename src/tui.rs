@@ -526,7 +526,7 @@ pub fn run_menu_command_with_force(
         MenuCommand::EditProfile => menu_profiles::edit_profile(),
         MenuCommand::DeleteProfile => menu_profiles::delete_profile(),
         MenuCommand::SetDefaultProfile => menu_profiles::set_default_profile(),
-        MenuCommand::ListProfile => menu_profiles::list_profiles(),
+        MenuCommand::ListProfile => menu_profiles::list_profiles(data::ListType::Summary),
 
         // App Settings Menu
         MenuCommand::MenuMode => menu_app_settings::update_menu_mode(),

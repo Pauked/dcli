@@ -191,6 +191,8 @@ pub struct ProfileDisplay {
     pub name: String,
     #[tabled(skip)]
     pub engine_id: i32,
+    #[tabled(rename = "Engine App Name")]
+    pub engine_app_name: String,
     #[tabled(rename = "Engine Path")]
     pub engine_path: String,
     #[tabled(rename = "Engine File")]
@@ -201,17 +203,17 @@ pub struct ProfileDisplay {
     pub iwad_id: i32,
     #[tabled(rename = "IWAD Path")]
     pub iwad_path: String,
-    #[tabled(rename = "IWAD Path")]
+    #[tabled(rename = "IWAD File")]
     pub iwad_file: String,
     #[tabled(skip)]
     pub map_ids: MapIds,
     #[tabled(
-        rename = "Map Path",
+        rename = "Map Paths",
         display_with = "display_combined_tabled_map_strings"
     )]
     pub map_paths: MapStrings,
     #[tabled(
-        rename = "Map File",
+        rename = "Map Files",
         display_with = "display_combined_tabled_map_strings"
     )]
     pub map_files: MapStrings,
@@ -428,4 +430,9 @@ fn format_local_datetime(local_datetime: &DateTime<Local>) -> String {
         local_datetime.minute(),
         local_datetime.second()
     )
+}
+
+pub enum ListType {
+    Full,
+    Summary,
 }
