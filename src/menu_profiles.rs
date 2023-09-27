@@ -7,7 +7,7 @@ use tabled::{
     settings::{object::Rows, Modify, Style, Width},
 };
 
-use crate::{data, db, menu_common, paths, tui};
+use crate::{data, db, menu_app_settings, menu_common, paths, tui};
 
 pub fn new_profile() -> Result<String, eyre::Report> {
     let engines = db::get_engines()?;
@@ -340,12 +340,15 @@ pub fn delete_profile_core(
         .unwrap()
     {
         // Check if "Default Profile" and remove link if so
-        remove_profile_from_app_settings(profile_id)?;
+        menu_app_settings::remove_profile_from_app_settings(profile_id)?;
 
         // Now delete the profile
         db::delete_profile(profile_id)
             .wrap_err(format!("Failed to delete Profile - '{}", profile_name))?;
-        return Ok(format!("Successfully deleted Profile '{}'", profile_name.green()));
+        return Ok(format!(
+            "Successfully deleted Profile '{}'",
+            profile_name.green()
+        ));
     }
 
     Ok("Cancelled Profile deletion.".yellow().to_string())
@@ -447,30 +450,3 @@ pub fn list_profiles(list_type: data::ListType) -> Result<String, eyre::Report> 
     };
     Ok(table)
 }
-
-fn remove_profile_from_app_settings(profile_id: i32) -> Result<String, eyre::Report> {
-    // TODO: Make this "profile in use" check less ugly
-    let mut app_settings = db::get_app_settings()?;
-    let mut default_profile_tidied = false;
-    if let Some(default_profile_id) = app_settings.default_profile_id {
-        if default_profile_id == profile_id {
-            app_settings.default_profile_id = None;
-            default_profile_tidied = true;
-        }
-    }
-    let mut last_profile_tidied = false;
-    if let Some(last_profile_id) = app_settings.last_profile_id {
-        if last_profile_id == profile_id {
-            app_settings.last_profile_id = None;
-            last_profile_tidied = true;
-        }
-    }
-    if default_profile_tidied || last_profile_tidied {
-        db::save_app_settings(app_settings).wrap_err("Failed to remove Default Profile")?;
-    }
-
-    Ok("Successfully removed Profile from App Settings".to_string())
-}
-
-// fn remove_engine_from_app_settings(engine_id: i32) -> Result<String, eyre::Report> {
-// }

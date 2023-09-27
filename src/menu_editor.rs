@@ -5,7 +5,7 @@ use inquire::validator::Validation;
 use log::{debug, info};
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
-use crate::{data, db, finder, menu_common, paths, runner, tui};
+use crate::{data, db, finder, menu_app_settings, menu_common, paths, runner, tui};
 
 fn open_editor_from_map_id(map_id: i32) -> Result<String, eyre::Report> {
     let map = db::get_map_by_id(map_id)
@@ -140,7 +140,7 @@ pub fn update_editors() -> Result<String, eyre::Report> {
     let editors = paths::find_file_in_folders(&editor_search_folder, vec![&editor_executable_name]);
     if editors.is_empty() {
         return Err(eyre::eyre!(format!(
-            "No matches found using recursive search in folder '{}'",
+            "No Editor matches found using recursive search in folder - '{}'",
             &editor_search_folder
         )));
     }
@@ -189,12 +189,16 @@ pub fn update_editors() -> Result<String, eyre::Report> {
             .prompt()?;
 
     // Remove entries that were not selected but have entries in the database
-    // for db_engine in &db_engines {
-    //     if !selections.iter().any(|e| e.path == db_engine.path) {
-    //         db::delete_engine(&db_engine.path).await?;
-    //         debug!("Deleted engine: {:?}", db_engine);
-    //     }
-    // }
+    for db_editor in &db_editors {
+        if !selections
+            .iter()
+            .any(|e| e.path.to_lowercase() == db_editor.path.to_lowercase())
+        {
+            menu_app_settings::remove_editor_from_app_settings(db_editor.id)?;
+            db::delete_editor(db_editor.id)?;
+            debug!("Deleted editor: {:?}", db_editor);
+        }
+    }
 
     // Save engines to  engines table
     for selection in selections {
@@ -247,7 +251,9 @@ pub fn delete_editor() -> Result<String, eyre::Report> {
         .prompt()
         .unwrap()
         {
-            // TODO: Check if "default editor" and remove link if so
+            // Check if "Default Editor" and remove link if so
+            menu_app_settings::remove_editor_from_app_settings(editor.id)?;
+
             db::delete_editor(editor.id)
                 .wrap_err(format!("Failed to delete Editor - '{}", editor))?;
             return Ok(format!("Successfully deleted Editor '{}'", editor));

@@ -146,6 +146,21 @@ pub fn get_engine_by_id(id: i32) -> Result<data::Engine, eyre::Report> {
     })
 }
 
+pub fn is_engine_linked_to_profiles(id: i32) -> Result<bool, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM profiles WHERE engine_id = ?")
+            .bind(id)
+            .fetch_one(&db)
+            .await
+            .wrap_err("Failed to check if Engines linked to any Profiles")?;
+
+        Ok(result.0 > 0)
+    })
+}
+
 pub fn add_iwad(iwad: &data::Iwad) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
@@ -195,6 +210,21 @@ pub fn get_iwad_by_id(id: i32) -> Result<data::Iwad, eyre::Report> {
             .fetch_one(&db)
             .await
             .wrap_err(format!("Failed to get internal wad with id '{}'", id))
+    })
+}
+
+pub fn is_iwad_linked_to_profiles(id: i32) -> Result<bool, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM profiles WHERE iwad_id = ?")
+            .bind(id)
+            .fetch_one(&db)
+            .await
+            .wrap_err("Failed to check if IWAD linked to any Profiles")?;
+
+        Ok(result.0 > 0)
     })
 }
 
@@ -261,6 +291,21 @@ pub fn get_maps_by_ids(map_ids: data::MapIds) -> Result<Vec<data::Map>, eyre::Re
     }
 
     Ok(result)
+}
+
+pub fn is_map_linked_to_profiles(id: i32) -> Result<bool, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM profiles WHERE map_id = $1 OR map_id2 = $1 OR map_id3 = $1 OR map_id4 = $1 OR map_id5 = $1")
+            .bind(id) // The same ID is bound to all placeholders
+            .fetch_one(&db)
+            .await
+            .wrap_err("Failed to check if Map is linked to any Profiles")?;
+
+        Ok(result.0 > 0)
+    })
 }
 
 pub fn save_app_settings(

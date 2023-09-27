@@ -147,7 +147,7 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
     let engines = paths::find_file_in_folders(&engine_search_folder, doom_engine_files);
     if engines.is_empty() {
         return Err(eyre::eyre!(format!(
-            "No matches found using recursive search in folder '{}'",
+            "No Engine matches found using recursive search in folder - '{}'",
             &engine_search_folder
         )));
     }
@@ -201,9 +201,21 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
             .prompt()?
     };
 
-    // Remove entries that were not selected but have entries in the database
+    // Remove entries that were not selected but have entries in the database...
+    // ...but only do that if the engine isn't linked to a profile
     for db_engine in &db_engines {
-        if !selections.iter().any(|e| e.path == db_engine.path) {
+        if !selections
+            .iter()
+            .any(|e| e.path.to_lowercase() == db_engine.path.to_lowercase())
+        {
+            if db::is_engine_linked_to_profiles(db_engine.id)? {
+                info!(
+                    "  Cannot delete Engine as it is linked to a Profile: '{}'",
+                    db_engine.path
+                );
+                continue;
+            }
+            remove_engine_from_app_settings(db_engine.id)?;
             db::delete_engine(&db_engine.path)?;
             debug!("Deleted Engine: {:?}", db_engine);
         }
@@ -260,8 +272,6 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
     };
 
     // TODO: User filter for exists (what do you want to search for?)
-    // TODO: List for Windows, list for Mac
-    // TODO: If editing (not init), then we can search but not overwrite existing IWADs
     let iwad_list = doom_data::get_internal_wad_list();
     let iwad_files = iwad_list
         .iter()
@@ -271,7 +281,7 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
     let iwads = paths::find_file_in_folders(&iwad_search_folder, iwad_files);
     if iwads.is_empty() {
         return Err(eyre::eyre!(format!(
-            "No matches found using recursive search in folder '{}'",
+            "No IWAD matches found using recursive search in folder - '{}'",
             &iwad_search_folder
         )));
     }
@@ -307,9 +317,21 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
 
     // Remove entries that were not selected but have entries in the database
     for db_iwad in &db_iwads {
-        if !selections.contains(&db_iwad.path) {
+        // Check if the lowercase version of db_iwad.path exists in selections
+        if !selections
+            .iter()
+            .any(|s| s.eq_ignore_ascii_case(&db_iwad.path))
+        {
+            if db::is_iwad_linked_to_profiles(db_iwad.id)? {
+                info!(
+                    "  Cannot delete IWAD as it is linked to a Profile: '{}'",
+                    db_iwad.path
+                );
+                continue;
+            }
+            remove_iwad_from_app_settings(db_iwad.id)?;
             db::delete_iwad(&db_iwad.path)?;
-            debug!("Deleted iwad: {:?}", db_iwad)
+            debug!("Deleted iwad: {:?}", db_iwad);
         }
     }
 
@@ -370,7 +392,7 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
     );
     if maps.is_empty() {
         return Err(eyre::eyre!(format!(
-            "No matches found using recursive search in folder '{}'",
+            "No Map matches found using recursive search in folder -'{}'",
             &map_search_folder
         )));
     }
@@ -380,7 +402,14 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
 
     // Remove entries that were not selected but have entries in the database
     for db_map in &db_maps {
-        if !maps.contains(&db_map.path) {
+        if !maps.iter().any(|s| s.eq_ignore_ascii_case(&db_map.path)) {
+            if db::is_map_linked_to_profiles(db_map.id)? {
+                info!(
+                    "  Cannot delete Map as it is linked to a Profile: '{}'",
+                    db_map.path
+                );
+                continue;
+            }
             db::delete_map(&db_map.path)?;
             debug!("Deleted map: {:?}", db_map)
         }
@@ -545,4 +574,68 @@ pub fn set_default_iwad() -> Result<String, eyre::Report> {
         }
         None => Ok("No changes made to setting IWAD as Default".to_string()),
     }
+}
+
+pub fn remove_profile_from_app_settings(profile_id: i32) -> Result<String, eyre::Report> {
+    // TODO: Make this "profile in use" check less ugly
+    let mut app_settings = db::get_app_settings()?;
+    let mut default_profile_tidied = false;
+    if let Some(id) = app_settings.default_profile_id {
+        if id == profile_id {
+            app_settings.default_profile_id = None;
+            default_profile_tidied = true;
+        }
+    }
+    let mut last_profile_tidied = false;
+    if let Some(id) = app_settings.last_profile_id {
+        if id == profile_id {
+            app_settings.last_profile_id = None;
+            last_profile_tidied = true;
+        }
+    }
+    if default_profile_tidied || last_profile_tidied {
+        db::save_app_settings(app_settings).wrap_err("Failed to remove Default Profile")?;
+        return Ok("Successfully removed Profile from App Settings".to_string());
+    }
+
+    Ok("".to_string())
+}
+
+fn remove_engine_from_app_settings(engine_id: i32) -> Result<String, eyre::Report> {
+    let mut app_settings = db::get_app_settings()?;
+    if let Some(id) = app_settings.default_engine_id {
+        if id == engine_id {
+            app_settings.default_engine_id = None;
+            db::save_app_settings(app_settings).wrap_err("Failed to remove Default Engine")?;
+            return Ok("Successfully removed Engine from App Settings".to_string());
+        }
+    }
+
+    Ok("".to_string())
+}
+
+fn remove_iwad_from_app_settings(iwad_id: i32) -> Result<String, eyre::Report> {
+    let mut app_settings = db::get_app_settings()?;
+    if let Some(id) = app_settings.default_iwad_id {
+        if id == iwad_id {
+            app_settings.default_iwad_id = None;
+            db::save_app_settings(app_settings).wrap_err("Failed to remove Default IWAD")?;
+            return Ok("Successfully removed IWAD from App Settings".to_string());
+        }
+    }
+
+    Ok("".to_string())
+}
+
+pub fn remove_editor_from_app_settings(editor_id: i32) -> Result<String, eyre::Report> {
+    let mut app_settings = db::get_app_settings()?;
+    if let Some(id) = app_settings.default_editor_id {
+        if id == editor_id {
+            app_settings.default_editor_id = None;
+            db::save_app_settings(app_settings).wrap_err("Failed to remove Default Editor")?;
+            return Ok("Successfully removed Editor from App Settings".to_string());
+        }
+    }
+
+    Ok("".to_string())
 }

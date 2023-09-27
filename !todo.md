@@ -1,12 +1,12 @@
 # DCLI v0.3.5
 [/] Make menus less crashy if user aborts
-[ ] Block deleting of Engine/IWAD/Map if linked in Profiles.
 [/] Write Readme in repo root
+[x] Block deleting of Engine/IWAD/Map if linked in Profiles.
 [ ] Option to delete Maps (multi select?)
 [ ] Option to delete Engines
 [ ] Option to delete IWADs
-[/] Args to run init
-[ ] Args to add/edit/delete Profiles
+[x] Args to run init
+[x] Args to add and delete Profiles
 [x] Rename PWADs to Maps
 
 # DCLI v0.4
