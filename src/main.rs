@@ -43,7 +43,7 @@ fn run() -> eyre::Result<String> {
     match cli_run_mode {
         cli::CliRunMode::Tui => {
             info!("Welcome to {}", constants::APP_NAME.bright_yellow());
-            menu_app_settings::check_app_can_run()?;
+            menu_app_settings::check_app_can_run(false)?;
             tui::menu(tui::MenuLevel::Main)
         }
         cli::CliRunMode::Quit => Ok(cli_result),

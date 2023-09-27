@@ -282,7 +282,7 @@ fn add_app_settings(
 
         sqlx::query(
             "INSERT INTO app_settings (default_profile_id, last_profile_id, default_engine_id,
-                default_iwad_id, default_map_editor_id, exe_search_folder, iwad_search_folder,
+                default_iwad_id, default_map_editor_id, engine_search_folder, iwad_search_folder,
                 pwad_search_folder, map_editor_search_folder, menu_mode) VALUES (?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(app_settings.default_profile_id)
@@ -290,7 +290,7 @@ fn add_app_settings(
         .bind(app_settings.default_engine_id)
         .bind(app_settings.default_iwad_id)
         .bind(app_settings.default_map_editor_id)
-        .bind(&app_settings.exe_search_folder)
+        .bind(&app_settings.engine_search_folder)
         .bind(&app_settings.iwad_search_folder)
         .bind(&app_settings.pwad_search_folder)
         .bind(&app_settings.map_editor_search_folder)
@@ -311,7 +311,7 @@ fn update_app_settings(
         sqlx::query(
             "UPDATE app_settings SET default_profile_id = $1, last_profile_id = $2,
         default_engine_id = $3, default_iwad_id = $4, default_map_editor_id = $5,
-        exe_search_folder = $6, iwad_search_folder = $7, pwad_search_folder = $8,
+        engine_search_folder = $6, iwad_search_folder = $7, pwad_search_folder = $8,
         map_editor_search_folder = $9, menu_mode = $10 WHERE id = $11 COLLATE NOCASE",
         )
         .bind(app_settings.default_profile_id)
@@ -319,7 +319,7 @@ fn update_app_settings(
         .bind(app_settings.default_engine_id)
         .bind(app_settings.default_iwad_id)
         .bind(app_settings.default_map_editor_id)
-        .bind(&app_settings.exe_search_folder)
+        .bind(&app_settings.engine_search_folder)
         .bind(&app_settings.iwad_search_folder)
         .bind(&app_settings.pwad_search_folder)
         .bind(&app_settings.map_editor_search_folder)
@@ -389,8 +389,8 @@ pub fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre::Repo
         }
         None => constants::DEFAULT_NOT_SET.to_string(),
     };
-    let exe_search_folder = app_settings
-        .exe_search_folder
+    let engine_search_folder = app_settings
+        .engine_search_folder
         .unwrap_or(constants::DEFAULT_NOT_SET.to_string());
     let iwad_search_folder = app_settings
         .iwad_search_folder
@@ -408,7 +408,7 @@ pub fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre::Repo
         default_engine,
         default_iwad,
         default_map_editor,
-        exe_search_folder,
+        engine_search_folder,
         iwad_search_folder,
         pwad_search_folder,
         map_editor_search_folder,

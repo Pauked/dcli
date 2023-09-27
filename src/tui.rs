@@ -156,6 +156,9 @@ pub enum MenuCommand {
     #[strum(serialize = "View from Pick PWAD")]
     ViewFromPickPwad,
 
+    // CLI
+    // #[strum(serialize = "CLI Add Profile")]
+    // CliAddProfile,
     #[strum(serialize = "Back <ESC>")]
     Back,
     #[strum(serialize = "Quit <ESC>")]
@@ -540,9 +543,10 @@ pub fn run_menu_command_with_force(
         MenuCommand::UpdateEngines => {
             let mut app_settings = db::get_app_settings()?;
             let folder = menu_app_settings::init_engines(
-                &app_settings.exe_search_folder.unwrap_or("".to_string()),
+                &app_settings.engine_search_folder.unwrap_or("".to_string()),
+                false,
             )?;
-            app_settings.exe_search_folder = Some(folder);
+            app_settings.engine_search_folder = Some(folder);
             db::save_app_settings(app_settings)?;
             inquire::Text::new("Press any key to continue...").prompt_skippable()?;
             Ok("Successfully updated Engines".to_string())
@@ -551,6 +555,7 @@ pub fn run_menu_command_with_force(
             let mut app_settings = db::get_app_settings()?;
             let folder = menu_app_settings::init_iwads(
                 &app_settings.iwad_search_folder.unwrap_or("".to_string()),
+                false,
             )?;
             app_settings.iwad_search_folder = Some(folder);
             db::save_app_settings(app_settings)?;
@@ -561,6 +566,7 @@ pub fn run_menu_command_with_force(
             let mut app_settings = db::get_app_settings()?;
             let folder = menu_app_settings::init_pwads(
                 &app_settings.pwad_search_folder.unwrap_or("".to_string()),
+                false,
             )?;
             app_settings.pwad_search_folder = Some(folder);
             db::save_app_settings(app_settings)?;
@@ -584,7 +590,7 @@ pub fn run_menu_command_with_force(
         MenuCommand::FullScreen => menu_play_settings::update_full_screen(),
         MenuCommand::Windowed => menu_play_settings::update_windowed(),
         MenuCommand::AdditionalArguments => menu_play_settings::update_additional_arguments(),
-        MenuCommand::ResetPlaySettings => menu_play_settings::reset(),
+        MenuCommand::ResetPlaySettings => menu_play_settings::reset_play_settings(),
 
         // Map Editor Menu
         MenuCommand::OpenFromDefaultProfile => menu_map_editor::open_from_default_profile(),

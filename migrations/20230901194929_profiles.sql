@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
     default_engine_id INTEGER NULL,
     default_iwad_id INTEGER NULL,
     default_map_editor_id INTEGER NULL,
-    exe_search_folder TEXT NULL,
+    engine_search_folder TEXT NULL,
     iwad_search_folder TEXT NULL,
     pwad_search_folder TEXT NULL,
     map_editor_search_folder TEXT NULL,

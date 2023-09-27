@@ -1,4 +1,5 @@
 use clap::Parser;
+use log::info;
 
 use crate::{
     constants, menu_app_settings,
@@ -35,7 +36,17 @@ pub enum Action {
 
     /// Initializes the app for use. Asks a quick set of questions to get you Dooming!
     #[clap(short_flag = 'i')]
-    Init,
+    Init {
+        /// Engine path
+        engine_path: String,
+        /// IWAD path
+        iwad_path: String,
+        /// PWAD paths
+        pwad_path: Option<String>,
+        /// Force initialization and skip any entry and selection prompts.
+        #[arg(long, default_value = "false")]
+        force: bool,
+    },
 
     /// Resets the database, nuking all settings.
     #[clap(short_flag = 'r')]
@@ -44,15 +55,32 @@ pub enum Action {
         #[arg(long, default_value = "false")]
         force: bool,
     },
+    // #[clap(short_flag = 'a')]
+    // AddProfile {
+    //     /// Profile name
+    //     name: String,
+    //     /// Engine path
+    //     engine: String,
+    //     /// IWAD path
+    //     iwad: String,
+    //     /// PWAD path
+    //     pwad: Option<String>,
+    //     /// Additional arguments to pass to the engine
+    //     #[arg(long)]
+    //     additional_args: Option<Vec<String>>,
+    // },
 }
 
 pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> {
     if let Some(action) = args.action {
         // If we are not resetting the database, make sure it exists and is ready to use
         match action {
-            Action::Reset { force: _ } => {}
+            Action::Reset { .. } => {}
+            Action::Init { engine_path: _, iwad_path: _, pwad_path: _, force     } => {
+                menu_app_settings::check_app_can_run(force)?;
+            }
             _ => {
-                menu_app_settings::check_app_can_run()?;
+                menu_app_settings::check_app_can_run(false)?;
             }
         }
 
@@ -73,15 +101,43 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                 tui::run_menu_command(MenuCommand::OpenFromDefaultProfile)?,
                 CliRunMode::Quit,
             )),
-            Action::Init => Ok((tui::run_menu_command(MenuCommand::Init)?, CliRunMode::Tui)),
+            Action::Init {
+                engine_path,
+                iwad_path,
+                pwad_path,
+                force,
+            } => {
+                info!("Init engine_path '{}', iwad_path '{}', pwad_path '{:?}', force '{}'", engine_path, iwad_path, pwad_path, force);
+                let result = menu_app_settings::cli_init(engine_path, iwad_path, pwad_path, force)?;
+                Ok((result, CliRunMode::Quit))
+                // Ok((tui::run_menu_command(MenuCommand::Init)?, CliRunMode::Tui));
+            }
             Action::Reset { force } => {
                 let result = tui::run_menu_command_with_force(MenuCommand::Reset, force)?;
-                if result != *"Database reset not confirmed" {
+                if force {
+                    Ok((result, CliRunMode::Quit))
+                } else if result != *"Database reset not confirmed" {
                     Ok((tui::run_menu_command(MenuCommand::Init)?, CliRunMode::Tui))
                 } else {
                     Ok((result, CliRunMode::Tui))
                 }
             }
+            // Action::AddProfile {
+            //     name,
+            //     engine,
+            //     iwad,
+            //     pwad,
+            //     additional_args,
+            // } => {
+            //     // let result = tui::run_menu_command(MenuCommand::CliAddProfile {
+            //     //     name,
+            //     //     engine,
+            //     //     iwad,
+            //     //     pwad,
+            //     //     additional_args,
+            //     // })?;
+            //     Ok(("".to_string(), CliRunMode::Quit))
+            // }
         }
     } else {
         Ok((

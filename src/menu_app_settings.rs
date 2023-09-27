@@ -12,9 +12,9 @@ use crate::{
     db, doom_data, files, paths, tui,
 };
 
-pub fn check_app_can_run() -> Result<String, eyre::Report> {
+pub fn check_app_can_run(force: bool) -> Result<String, eyre::Report> {
     db::create_db()?;
-    if db::is_empty_app_settings_table()? {
+    if !force && db::is_empty_app_settings_table()? {
         info!("{}", "No app settings found, running init...".red());
         init()?;
     }
@@ -35,28 +35,29 @@ pub fn update_menu_mode() -> Result<String, eyre::Report> {
 
 pub fn init() -> Result<String, eyre::Report> {
     db::create_db()?;
-
     let mut app_settings = db::get_app_settings()?;
 
     info!("We'll ask you some questions, and then you'll be ready to go.");
 
-    let exe_search_folder =
-        init_engines(&app_settings.exe_search_folder.unwrap_or("".to_string()))?;
+    let engine_search_folder = init_engines(
+        &app_settings.engine_search_folder.unwrap_or("".to_string()),
+        false,
+    )?;
 
     let iwad_search_folder = match app_settings.iwad_search_folder {
         Some(iwad_search_folder) => iwad_search_folder,
-        None => exe_search_folder.clone(),
+        None => engine_search_folder.clone(),
     };
-    let iwad_search_folder = init_iwads(&iwad_search_folder)?;
+    let iwad_search_folder = init_iwads(&iwad_search_folder, false)?;
 
     let pwad_search_folder = match app_settings.pwad_search_folder {
         Some(pwad_search_folder) => pwad_search_folder,
         None => iwad_search_folder.clone(),
     };
-    let pwad_search_folder = init_pwads(&pwad_search_folder)?;
+    let pwad_search_folder = init_pwads(&pwad_search_folder, false)?;
 
     // Update app_settings
-    app_settings.exe_search_folder = Some(exe_search_folder);
+    app_settings.engine_search_folder = Some(engine_search_folder);
     app_settings.iwad_search_folder = Some(iwad_search_folder);
     app_settings.pwad_search_folder = Some(pwad_search_folder);
     db::save_app_settings(app_settings)?;
@@ -72,17 +73,69 @@ pub fn init() -> Result<String, eyre::Report> {
     Ok("Succesfully configured!".to_string())
 }
 
-pub fn init_engines(default_folder: &str) -> Result<String, eyre::Report> {
-    let exe_search_folder: String = inquire::Text::new("Folder to search for Engines:")
-        .with_validator(|input: &str| {
-            if paths::folder_exists(input) {
-                Ok(Validation::Valid)
-            } else {
-                Ok(Validation::Invalid("Folder does not exist.".into()))
-            }
-        })
-        .with_default(default_folder)
-        .prompt()?;
+pub fn cli_init(
+    engine_path: String,
+    iwad_path: String,
+    pwad_path: Option<String>,
+    force: bool,
+) -> Result<String, eyre::Report> {
+    // Check the paths exist
+    if !paths::folder_exists(&engine_path) {
+        return Err(eyre::eyre!(format!(
+            "Engine path does not exist: {}",
+            engine_path
+        )));
+    }
+    if !paths::folder_exists(&iwad_path) {
+        return Err(eyre::eyre!(format!(
+            "IWAD path does not exist: {}",
+            iwad_path
+        )));
+    }
+
+    if let Some(path) = &pwad_path {
+        if !paths::folder_exists(path) {
+            return Err(eyre::eyre!(format!("PWAD path does not exist: {}", path)));
+        }
+    }
+
+    // If Pwad is None then set to Iwad path
+    let pwad_path_2 = match pwad_path {
+        Some(path) => path,
+        None => iwad_path.clone(),
+    };
+
+    // Run individual init functions, need to amend to have a force/override option
+    //  Force will skip any dialogs and will select all found files
+    let engine_search_folder = init_engines(&engine_path, force)?;
+    let iwad_search_folder = init_iwads(&iwad_path, force)?;
+    let pwad_search_folder = init_pwads(&pwad_path_2, force)?;
+
+    // Update app_settings
+    let mut app_settings = db::get_app_settings()?;
+    app_settings.engine_search_folder = Some(engine_search_folder);
+    app_settings.iwad_search_folder = Some(iwad_search_folder);
+    app_settings.pwad_search_folder = Some(pwad_search_folder);
+    db::save_app_settings(app_settings)?;
+
+    Ok("Succesfully configured!".green().to_string())
+}
+
+pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::Report> {
+    let engine_search_folder: String = if force {
+        default_folder.to_string()
+    } else {
+        inquire::Text::new("Folder to search for Engines:")
+            .with_validator(|input: &str| {
+                if paths::folder_exists(input) {
+                    Ok(Validation::Valid)
+                } else {
+                    Ok(Validation::Invalid("Folder does not exist.".into()))
+                }
+            })
+            .with_default(default_folder)
+            .prompt()?
+    };
 
     // TODO: User filter for exists (what do you want to search for?)
     // TODO: List for Windows, list for Mac
@@ -92,11 +145,11 @@ pub fn init_engines(default_folder: &str) -> Result<String, eyre::Report> {
         .map(|e| e.exe_name.as_str())
         .collect::<Vec<&str>>();
 
-    let engines = paths::find_file_in_folders(&exe_search_folder, doom_engine_files);
+    let engines = paths::find_file_in_folders(&engine_search_folder, doom_engine_files);
     if engines.is_empty() {
         return Err(eyre::eyre!(format!(
             "No matches found using recursive search in folder '{}'",
-            &exe_search_folder
+            &engine_search_folder
         )));
     }
 
@@ -139,12 +192,15 @@ pub fn init_engines(default_folder: &str) -> Result<String, eyre::Report> {
     }
     //info!("Found engines: {:?}", engines_extended);
 
-    // Multi-select prompt to user
-    let selections =
+    // Multi-select prompt to user, can be skipped and all will be selected
+    let selections = if force {
+        engines_extended.clone()
+    } else {
         inquire::MultiSelect::new("Pick the Engines you want to save:", engines_extended)
             .with_default(&db_defaults)
             .with_page_size(tui::MENU_PAGE_SIZE)
-            .prompt()?;
+            .prompt()?
+    };
 
     // Remove entries that were not selected but have entries in the database
     for db_engine in &db_engines {
@@ -178,14 +234,16 @@ pub fn init_engines(default_folder: &str) -> Result<String, eyre::Report> {
     // FIXME: This is getting blanked by menu display...
     info!("{}", list_engines()?);
 
-    Ok(exe_search_folder)
+    Ok(engine_search_folder)
 }
 
-pub fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
+pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Report> {
     // Search for IWADs
     // Use the same folder as the engines, but given option to change
     // Save to IWADs table
-    let iwad_search_folder: String =
+    let iwad_search_folder: String = if force {
+        default_folder.to_string()
+    } else {
         inquire::Text::new("Folder to search for IWADs (Internal WAD files):")
             .with_validator(|input: &str| {
                 if paths::folder_exists(input) {
@@ -195,7 +253,8 @@ pub fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
                 }
             })
             .with_default(default_folder)
-            .prompt()?;
+            .prompt()?
+    };
 
     // TODO: User filter for exists (what do you want to search for?)
     // TODO: List for Windows, list for Mac
@@ -233,11 +292,15 @@ pub fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
         }
     }
 
-    // TODO: Mark the IWADs that have been picked previously
-    let selections = inquire::MultiSelect::new("Pick the IWADs you want to save:", confirmed_iwads)
-        .with_default(&db_defaults)
-        .with_page_size(tui::MENU_PAGE_SIZE)
-        .prompt()?;
+    // Multi-select prompt to user, can be skipped and all will be selected
+    let selections = if force {
+        confirmed_iwads.clone()
+    } else {
+        inquire::MultiSelect::new("Pick the IWADs you want to save:", confirmed_iwads)
+            .with_default(&db_defaults)
+            .with_page_size(tui::MENU_PAGE_SIZE)
+            .prompt()?
+    };
 
     // Remove entries that were not selected but have entries in the database
     for db_iwad in &db_iwads {
@@ -279,8 +342,10 @@ pub fn init_iwads(default_folder: &str) -> Result<String, eyre::Report> {
     Ok(iwad_search_folder)
 }
 
-pub fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
-    let pwad_search_folder: String =
+pub fn init_pwads(default_folder: &str, force: bool) -> Result<String, eyre::Report> {
+    let pwad_search_folder: String = if force {
+        default_folder.to_string()
+    } else {
         inquire::Text::new("Folder to search for PWADs (Patch WAD files)")
             .with_validator(|input: &str| {
                 if paths::folder_exists(input) {
@@ -290,7 +355,8 @@ pub fn init_pwads(default_folder: &str) -> Result<String, eyre::Report> {
                 }
             })
             .with_default(default_folder)
-            .prompt()?;
+            .prompt()?
+    };
 
     // TODO: Remove IWADS from search. Could check 4 byte file header?
     // TODO: Needs to be a list of extensions. Missing PK3 (see RAMP project!)

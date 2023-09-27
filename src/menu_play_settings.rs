@@ -239,7 +239,7 @@ pub fn update_additional_arguments() -> Result<String, eyre::Error> {
         .to_string())
 }
 
-pub fn reset() -> Result<String, eyre::Error> {
+pub fn reset_play_settings() -> Result<String, eyre::Error> {
     if inquire::Confirm::new("Are you sure you want to Reset your Play Settings?")
         .with_default(false)
         .prompt()

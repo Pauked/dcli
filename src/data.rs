@@ -253,7 +253,7 @@ pub struct AppSettings {
     pub default_engine_id: Option<i32>,
     pub default_iwad_id: Option<i32>,
     pub default_map_editor_id: Option<i32>,
-    pub exe_search_folder: Option<String>,
+    pub engine_search_folder: Option<String>,
     pub iwad_search_folder: Option<String>,
     pub pwad_search_folder: Option<String>,
     pub map_editor_search_folder: Option<String>,
@@ -269,7 +269,7 @@ impl Default for AppSettings {
             default_engine_id: None,
             default_iwad_id: None,
             default_map_editor_id: None,
-            exe_search_folder: None,
+            engine_search_folder: None,
             iwad_search_folder: None,
             pwad_search_folder: None,
             map_editor_search_folder: None,
@@ -292,8 +292,8 @@ pub struct AppSettingsDisplay {
     pub default_iwad: String,
     #[tabled(rename = "Default Map Editor")]
     pub default_map_editor: String,
-    #[tabled(rename = "Executable Search Folder")]
-    pub exe_search_folder: String,
+    #[tabled(rename = "Engine Search Folder")]
+    pub engine_search_folder: String,
     #[tabled(rename = "Internal WAD Search Folder")]
     pub iwad_search_folder: String,
     #[tabled(rename = "Patch WAD Search Folder")]
@@ -332,17 +332,19 @@ pub fn display_option_comp_level(value: &Option<CompLevel>) -> String {
 
 #[derive(Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type)]
 pub enum CompLevel {
+    #[strum(serialize = "Default (0)")]
     Default = 0,
-    #[strum(serialize = "Doom and Doom 2")]
+    #[strum(serialize = "Doom and Doom 2 (2)")]
     DoomAndDoom2 = 2,
-    #[strum(serialize = "Ultimate Doom")]
+    #[strum(serialize = "Ultimate Doom (3)")]
     UltimateDoom = 3,
-    #[strum(serialize = "Final Doom")]
+    #[strum(serialize = "Final Doom (4)")]
     FinalDoom = 4,
+    #[strum(serialize = "Boom (9)")]
     Boom = 9,
-    #[strum(serialize = "MBF")]
+    #[strum(serialize = "MBF (11)")]
     Mbf = 11,
-    #[strum(serialize = "MBF 21")]
+    #[strum(serialize = "MBF 21 (21)")]
     Mbf21 = 21,
 }
 
