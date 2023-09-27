@@ -1,5 +1,5 @@
 use clap::Parser;
-use log::info;
+use log::debug;
 
 use crate::{
     constants, menu_app_settings,
@@ -107,7 +107,7 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                 pwad_path,
                 force,
             } => {
-                info!("Init engine_path '{}', iwad_path '{}', pwad_path '{:?}', force '{}'", engine_path, iwad_path, pwad_path, force);
+                debug!("Init engine_path '{}', iwad_path '{}', pwad_path '{:?}', force '{}'", engine_path, iwad_path, pwad_path, force);
                 let result = menu_app_settings::cli_init(engine_path, iwad_path, pwad_path, force)?;
                 Ok((result, CliRunMode::Quit))
                 // Ok((tui::run_menu_command(MenuCommand::Init)?, CliRunMode::Tui));

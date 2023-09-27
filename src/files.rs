@@ -4,23 +4,20 @@ use crate::{data, doom_data, finder, paths};
 
 pub fn get_map_readme_file_name(pwad: &str) -> Result<Option<String>, eyre::Report> {
     let path = Path::new(pwad);
-    let extension = path.extension().unwrap_or_default();
+    let extension = path
+        .extension()
+        .unwrap_or_default()
+        .to_str()
+        .unwrap()
+        .to_lowercase();
 
-    // Try for wad first
-    if extension == doom_data::EXT_WAD {
-        let readme = pwad.replace(
-            &format!(".{}", doom_data::EXT_WAD),
-            &format!(".{}", doom_data::EXT_TXT),
-        );
-        if paths::file_exists(&readme) {
-            return Ok(Some(readme));
-        }
-    }
+    let valid_extension = doom_data::GAME_FILES
+        .iter()
+        .any(|&e| e.to_lowercase() == extension);
 
-    // Try for pk3
-    if extension == doom_data::EXT_PK3 {
-        let readme = pwad.replace(
-            &format!(".{}", doom_data::EXT_PK3),
+    if valid_extension {
+        let readme = pwad.to_lowercase().replace(
+            &format!(".{}", extension),
             &format!(".{}", doom_data::EXT_TXT),
         );
         if paths::file_exists(&readme) {
@@ -74,9 +71,9 @@ pub fn get_version_from_exe_name(
     match game_engine_type {
         doom_data::GameEngineType::Doom => todo!("Doom version not implemented yet!"),
         doom_data::GameEngineType::PrBoomPlus => Ok(finder::get_prboom_file_version(exe_name)?),
-        doom_data::GameEngineType::GzDoom | doom_data::GameEngineType::CrispyDoom => {
-            Ok(finder::get_file_version(exe_name)?)
-        }
+        doom_data::GameEngineType::GzDoom
+        | doom_data::GameEngineType::CrispyDoom
+        | doom_data::GameEngineType::EternityEngine => Ok(finder::get_file_version(exe_name)?),
         doom_data::GameEngineType::Unknown => Err(eyre::eyre!("Unknown game engine type")),
     }
 }
@@ -121,18 +118,45 @@ pub fn get_internal_wad_type_from_file_name(
     )))
 }
 
-pub fn is_iwad(path: &str) -> Result<bool, eyre::Report> {
-    let path = Path::new(path);
+fn is_valid_wad(file: &str, wad_identifier: &[u8; 4]) -> Result<bool, eyre::Report> {
+    let path = Path::new(file);
     let extension = path.extension().unwrap_or_default();
 
     if extension.to_ascii_lowercase() == doom_data::EXT_WAD {
         let mut file = File::open(path)?;
         let mut identifier = [0u8; 4];
         file.read_exact(&mut identifier)?;
-        return Ok(identifier == doom_data::IWAD_IDENTIFIER);
+        return Ok(&identifier == wad_identifier);
     }
 
     Ok(false)
+}
+pub fn is_iwad(file: &str) -> Result<bool, eyre::Report> {
+    is_valid_wad(file, &doom_data::IWAD_IDENTIFIER)
+}
+
+fn is_pwad(file: &str) -> Result<bool, eyre::Report> {
+    is_valid_wad(file, &doom_data::PWAD_IDENTIFIER)
+}
+
+pub fn game_file_extension(file: &str) -> Result<bool, eyre::Report> {
+    let path = Path::new(file);
+    let extension = path
+        .extension()
+        .unwrap_or_default()
+        .to_str()
+        .unwrap()
+        .to_lowercase();
+
+    let valid_extension = doom_data::GAME_FILES
+        .iter()
+        .any(|&e| e.to_lowercase() == extension);
+
+    if valid_extension && extension.to_ascii_lowercase() == doom_data::EXT_WAD {
+        return is_pwad(file);
+    }
+
+    Ok(valid_extension)
 }
 
 // #[cfg(test)]

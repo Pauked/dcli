@@ -6,17 +6,26 @@ use crate::constants;
 
 pub const EXT_WAD: &str = "wad";
 pub const EXT_PK3: &str = "pk3";
+pub const EXT_PKE: &str = "pke";
 pub const EXT_TXT: &str = "txt";
 
+pub const GAME_FILES: [&str; 3]  = [EXT_WAD, EXT_PK3, EXT_PKE];
+
 pub const IWAD_IDENTIFIER: [u8; 4] = *b"IWAD";
-// pub const PWAD_IDENTIFIER: [u8; 4] = *b"PWAD";
+pub const PWAD_IDENTIFIER: [u8; 4] = *b"PWAD";
 
 #[derive(Clone, Debug, PartialEq, sqlx::Type, Display)]
 pub enum GameEngineType {
+    #[strum(serialize = "DOS Doom")]
     Doom,
+    #[strum(serialize = "GzDoom")]
     GzDoom,
+    #[strum(serialize = "PrBoom+")]
     PrBoomPlus,
+    #[strum(serialize = "Crispy Doom")]
     CrispyDoom,
+    #[strum(serialize = "Eternity Engine")]
+    EternityEngine,
     Unknown,
 }
 
@@ -82,6 +91,12 @@ pub fn get_engine_list(operating_system: OperatingSystem) -> Vec<GameEngine> {
             operating_system: OperatingSystem::Windows,
         },
         GameEngine {
+            exe_name: "eternity.exe".to_string(),
+            internal_path: None,
+            game_engine_type: GameEngineType::EternityEngine,
+            operating_system: OperatingSystem::Windows,
+        },
+        GameEngine {
             exe_name: "gzdoom.app".to_string(),
             internal_path: Some("Contents/MacOS/gzdoom".to_string()),
             game_engine_type: GameEngineType::GzDoom,
@@ -105,17 +120,29 @@ pub fn get_engine_list(operating_system: OperatingSystem) -> Vec<GameEngine> {
 
 #[derive(Clone, Debug, PartialEq, sqlx::Type, Display)]
 pub enum InternalWadType {
+    #[strum(serialize = "Doom")]
     Doom,
+    #[strum(serialize = "Doom Shareware")]
     DoomShareware,
+    #[strum(serialize = "Doom II")]
     Doom2,
+    #[strum(serialize = "Final Doom - TNT: Evilution")]
     Tnt,
+    #[strum(serialize = "Final Doom - The Plutonia Experiment")]
     Plutonia,
+    #[strum(serialize = "Heretic")]
     Heretic,
+    #[strum(serialize = "Heretic Shareware")]
     HereticShareware,
+    #[strum(serialize = "Hexen Demo or Full")]
     Hexen,
+    #[strum(serialize = "Hexen: Deathkings of the Dark Citadel")]
     HexenDeathkings,
+    #[strum(serialize = "Strife Teaser")]
     StrifeTeaser,
+    #[strum(serialize = "Strife")]
     Strife,
+    #[strum(serialize = "Strife Voices")]
     StrifeVoices,
     Unknown,
 }
@@ -132,62 +159,62 @@ pub fn get_internal_wad_list() -> Vec<InternalWad> {
     vec![
         InternalWad {
             file_name: "DOOM1.WAD".to_string(),
-            name: "Doom Shareware".to_string(),
+            name: InternalWadType::DoomShareware.to_string(),
             internal_wad_type: InternalWadType::DoomShareware,
         },
         InternalWad {
             file_name: "DOOM.WAD".to_string(),
-            name: "Doom".to_string(),
+            name: InternalWadType::Doom.to_string(),
             internal_wad_type: InternalWadType::Doom,
         },
         InternalWad {
             file_name: "DOOM2.WAD".to_string(),
-            name: "Doom II".to_string(),
+            name: InternalWadType::Doom2.to_string(),
             internal_wad_type: InternalWadType::Doom2,
         },
         InternalWad {
             file_name: "TNT.WAD".to_string(),
-            name: "Final Doom - TNT: Evilution".to_string(),
+            name: InternalWadType::Tnt.to_string(),
             internal_wad_type: InternalWadType::Tnt,
         },
         InternalWad {
             file_name: "PLUTONIA.WAD".to_string(),
-            name: "Final Doom - The Plutonia Experiment".to_string(),
+            name: InternalWadType::Plutonia.to_string(),
             internal_wad_type: InternalWadType::Plutonia,
         },
         InternalWad {
             file_name: "HERETIC1.WAD".to_string(),
-            name: "Heretic Shareware".to_string(),
+            name: InternalWadType::HereticShareware.to_string(),
             internal_wad_type: InternalWadType::HereticShareware,
         },
         InternalWad {
             file_name: "HERETIC.WAD".to_string(),
-            name: "Heretic".to_string(),
+            name: InternalWadType::Heretic.to_string(),
             internal_wad_type: InternalWadType::Heretic,
         },
         InternalWad {
             file_name: "HEXEN.WAD".to_string(),
-            name: "Hexen Demo or Full".to_string(),
+            name: InternalWadType::Hexen.to_string(),
             internal_wad_type: InternalWadType::Hexen,
         },
         InternalWad {
             file_name: "HEXDD.WAD".to_string(),
-            name: "Hexen: Deathkings of the Dark Citadel".to_string(),
+            name: InternalWadType::HexenDeathkings.to_string(),
             internal_wad_type: InternalWadType::HexenDeathkings,
         },
         InternalWad {
             file_name: "STRIFE0.WAD".to_string(),
-            name: "Strife Teaser".to_string(),
+            name: InternalWadType::StrifeTeaser.to_string(),
             internal_wad_type: InternalWadType::StrifeTeaser,
         },
         InternalWad {
             file_name: "STRIFE1.WAD".to_string(),
-            name: "Strife".to_string(),
+            name: InternalWadType::Strife.to_string(),
             internal_wad_type: InternalWadType::Strife,
         },
         InternalWad {
             file_name: "VOICES.WAD".to_string(),
-            name: "Strife Voices".to_string(),
+            name: InternalWadType::StrifeVoices.to_string(),
             internal_wad_type: InternalWadType::StrifeVoices,
         },
     ]

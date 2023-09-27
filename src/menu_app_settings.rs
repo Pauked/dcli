@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use color_eyre::eyre;
+use color_eyre::{eyre, owo_colors::OwoColorize};
 use colored::Colorize;
 use eyre::Context;
 use inquire::validator::Validation;
@@ -138,7 +138,6 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
     };
 
     // TODO: User filter for exists (what do you want to search for?)
-    // TODO: List for Windows, list for Mac
     let doom_engine_list = doom_data::get_engine_list(doom_data::get_operating_system());
     let doom_engine_files = doom_engine_list
         .iter()
@@ -188,7 +187,7 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
             version: file_version.display_version(),
             game_engine_type: game_engine.game_engine_type,
         });
-        info!("Done - {}", engines_extended.last().unwrap().to_string());
+        info!("  {}", engines_extended.last().unwrap().to_string());
     }
     //info!("Found engines: {:?}", engines_extended);
 
@@ -215,10 +214,10 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
         let existing_engine = db_engines.iter().find(|e| e.path == selection.path);
         match existing_engine {
             Some(existing) => {
-                debug!("Engine already exists, no need to add: {}", selection);
+                info!("  Engine already exists, no need to add: {}", selection.green());
                 if existing.version != selection.version {
-                    debug!(
-                        "Updating Engine version from '{}' to '{}'",
+                    info!(
+                        "  Updating Engine version from '{}' to '{}'",
                         existing.version, selection.version
                     );
                     db::update_engine_version(existing.id, &selection.version)?;
@@ -227,6 +226,7 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
             None => {
                 db::add_engine(&selection)?;
                 debug!("Added Engine: {:?}", selection);
+                info!("Added Engine: {}", selection.green());
             }
         }
     }
@@ -328,10 +328,9 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
                     id: 0,
                 };
 
-                // TODO: Check iwad doesn't exist
                 db::add_iwad(&iwad)?;
                 debug!("  IWAD: {:?}", iwad);
-                info!("Added IWAD: {:?}", iwad.internal_wad_type);
+                info!("Added IWAD: {} - {}", iwad.internal_wad_type.green(), iwad.path.green());
             }
         }
     }
@@ -358,11 +357,9 @@ pub fn init_pwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
             .prompt()?
     };
 
-    // TODO: Remove IWADS from search. Could check 4 byte file header?
-    // TODO: Needs to be a list of extensions. Missing PK3 (see RAMP project!)
     let pwads = paths::find_files_with_extensions_in_folders(
         &pwad_search_folder,
-        vec![doom_data::EXT_WAD, doom_data::EXT_PK3],
+        doom_data::GAME_FILES.to_vec(),
     );
     if pwads.is_empty() {
         return Err(eyre::eyre!(format!(
@@ -371,6 +368,7 @@ pub fn init_pwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
         )));
     }
 
+    // Get what we have in the datanse
     let db_pwads = db::get_pwads()?;
 
     // Remove entries that were not selected but have entries in the database
@@ -383,7 +381,12 @@ pub fn init_pwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
 
     for pwad in pwads {
         if files::is_iwad(&pwad)? {
-            debug!("Skipping IWAD file: {}", &pwad);
+            info!("Skipping IWAD file: {}", &pwad.yellow());
+            continue;
+        }
+
+        if !files::game_file_extension(&pwad)? {
+            info!("Skipping invalid game file: {}", &pwad.yellow());
             continue;
         }
 
@@ -405,7 +408,7 @@ pub fn init_pwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
 
                 db::add_pwad(&pwad)?;
                 debug!("  PWAD {:?}", pwad);
-                info!("Added PWAD - {}", pwad.title);
+                info!("Added PWAD: {} - {}", pwad.title.green(), pwad.path.green());
             }
         }
     }

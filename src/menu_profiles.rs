@@ -299,7 +299,7 @@ fn remove_profile_from_app_settings(profile_id: i32) -> Result<String, eyre::Rep
             app_settings.default_profile_id = None;
             default_profile_tidied = true;
         }
-    };
+    }
     let mut last_profile_tidied = false;
     if let Some(last_profile_id) = app_settings.last_profile_id {
         if last_profile_id == profile_id {
@@ -313,3 +313,6 @@ fn remove_profile_from_app_settings(profile_id: i32) -> Result<String, eyre::Rep
 
     Ok("Successfully removed Profile from App Settings".to_string())
 }
+
+// fn remove_engine_from_app_settings(engine_id: i32) -> Result<String, eyre::Report> {
+// }
