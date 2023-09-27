@@ -110,30 +110,33 @@ pub fn cli_new_profile(
 ) -> Result<String, eyre::Report> {
     let engines = db::get_engines()?;
     if engines.is_empty() {
-        return Ok("There are no Engines to select. Please run 'init'"
-            .red()
-            .to_string());
+        return Ok(format!(
+            "Cannot add Profile '{}', There are no Engines to select. Please run 'init'",
+            name.red()
+        ));
     }
     let iwads = db::get_iwads()?;
     if iwads.is_empty() {
-        return Ok("There are no IWADs to select. Please run 'init"
-            .red()
-            .to_string());
+        return Ok(format!(
+            "Cannot add Profile '{}', There are no IWADs to select. Please run 'init",
+            name.red()
+        ));
     }
     let maps = db::get_maps()?;
     if maps.is_empty() {
-        return Ok("There are no Maps to select. Please run 'init'"
-            .red()
-            .to_string());
+        return Ok(format!(
+            "Cannot add Profile '{}', There are no Maps to select. Please run 'init'",
+            name.red()
+        ));
     }
 
     // Check profile name is unique
     let profile_result = db::get_profile_by_name(name);
     if profile_result.is_ok() {
-        return Ok("Profile name already exists.".into());
+        return Ok(format!("Profile name already exists - '{}'", name.red()));
     }
     if name.len() < 5 {
-        return Ok("Profile name must be at least 5 characters.".into());
+        return Ok(format!("Profile name must be at least 5 characters - '{}'", name.red()));
     }
 
     let engine_selection = match engines
@@ -141,7 +144,13 @@ pub fn cli_new_profile(
         .find(|&x| x.path.to_lowercase() == engine.to_lowercase())
     {
         Some(engine) => engine,
-        None => return Ok("Engine not found".into()),
+        None => {
+            return Ok(format!(
+                "Cannot add Profile '{}', Engine not found - '{}'",
+                name,
+                engine.red()
+            ))
+        }
     };
 
     let iwad_selection = match iwads
@@ -149,17 +158,25 @@ pub fn cli_new_profile(
         .find(|&x| x.path.to_lowercase() == iwad.to_lowercase())
     {
         Some(iwad) => iwad,
-        None => return Ok("IWAD not found".into()),
+        None => {
+            return Ok(format!(
+                "Cannot add Profile '{}', IWAD not found - '{}'",
+                name,
+                iwad.red()
+            ))
+        }
     };
 
     let map_ids: Vec<Option<i32>> = match maps_in {
         Some(maps_unwrapped) => {
             if maps_unwrapped.len() > 5 {
-                return Ok("Only up to 5 maps can be specified".into());
+                return Ok(format!("Cannot add Profile '{}', a max of 5 maps can be specified per Profile", name.red()));
             }
             let mut map_ids: Vec<Option<i32>> = Vec::new();
             for map in maps_unwrapped {
                 match maps.iter().find(|&x| {
+                    // ASSUMPTION CORNER: We match on the first file we find,
+                    // so if JEFF.WAD is in db 10 times, we'll match on the first one.
                     paths::extract_file_name(&x.path).to_lowercase() == map.to_lowercase()
                 }) {
                     Some(map) => map_ids.push(Some(map.id)),
