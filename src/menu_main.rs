@@ -11,13 +11,11 @@ use crate::{data, db, paths, runner, tui};
 
 pub fn get_default_profile_text() -> Result<String, eyre::Report> {
     if !db::database_exists() {
-        return Ok("No database found. Please run 'init'".red().to_string());
+        return Ok("No database found. Please run 'init'".to_string());
     }
 
     if db::is_empty_app_settings_table()? {
-        return Ok("No settings configured. Please run 'init'"
-            .red()
-            .to_string());
+        return Ok("No settings configured. Please run 'init'".to_string());
     }
 
     let app_settings = db::get_app_settings()?;
@@ -35,9 +33,7 @@ pub fn get_default_profile_text() -> Result<String, eyre::Report> {
 
 pub fn get_last_profile_text() -> Result<String, eyre::Report> {
     if db::is_empty_app_settings_table()? {
-        return Ok("No settings configured. Please run 'init'"
-            .red()
-            .to_string());
+        return Ok("No settings configured. Please run 'init'".to_string());
     }
 
     let app_settings = db::get_app_settings()?;
@@ -59,7 +55,7 @@ pub fn play_default_profile() -> Result<String, eyre::Report> {
     let app_settings = db::get_app_settings()?;
 
     if app_settings.default_profile_id.is_none() {
-        return Ok("No Default Profile found. Please set one".red().to_string());
+        return Ok("No Default Profile found. Please set one".to_string());
     };
 
     runner::play_from_profile(app_settings.default_profile_id.unwrap(), false)
@@ -69,11 +65,7 @@ pub fn play_last_profile() -> Result<String, eyre::Report> {
     let app_settings = db::get_app_settings()?;
 
     if app_settings.last_profile_id.is_none() {
-        return Ok(
-            "No Last Run Profile found. Run a profile to make it the last run"
-                .red()
-                .to_string(),
-        );
+        return Ok("No Last Run Profile found. Run a profile to make it the last run".to_string());
     };
 
     runner::play_from_profile(app_settings.last_profile_id.unwrap(), true)
@@ -83,9 +75,7 @@ pub fn pick_and_play_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
         return Ok(
-            "Cannot Play Profile, there are no profiles found. Please create one"
-                .red()
-                .to_string(),
+            "Cannot Play Profile, there are no profiles found. Please create one".to_string(),
         );
     }
     let profile = inquire::Select::new("Pick the Profile you want to Play:", profile_list)
@@ -93,28 +83,22 @@ pub fn pick_and_play_profile() -> Result<String, eyre::Report> {
 
     match profile {
         Some(profile) => runner::play_from_profile(profile.id, true),
-        None => Ok("No profile selected".yellow().to_string()),
+        None => Ok("No profile selected".to_string()),
     }
 }
 
 pub fn pick_and_play_map() -> Result<String, eyre::Report> {
     let engine_list = db::get_engines()?;
     if engine_list.is_empty() {
-        return Ok("There are no Engines to select. Please run 'init'"
-            .red()
-            .to_string());
+        return Ok("There are no Engines to select. Please run 'init'".to_string());
     }
     let iwad_list = db::get_iwads()?;
     if iwad_list.is_empty() {
-        return Ok("There are no IWADs to select. Please run 'init"
-            .red()
-            .to_string());
+        return Ok("There are no IWADs to select. Please run 'init".to_string());
     }
     let map_list = db::get_maps()?;
     if map_list.is_empty() {
-        return Ok("There are no Maps to select. Please run 'init'"
-            .red()
-            .to_string());
+        return Ok("There are no Maps to select. Please run 'init'".to_string());
     }
 
     let app_settings = db::get_app_settings()?;

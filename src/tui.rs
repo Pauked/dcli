@@ -31,6 +31,7 @@ pub enum MenuLevel {
     AppSettingsDefaults,
     AppSettingsList,
     AppSettingsUpdate,
+    AppSettingsDelete,
 }
 
 #[derive(Clone, Debug, PartialEq, EnumString, Display, sqlx::Type, ValueEnum)]
@@ -100,6 +101,14 @@ pub enum MenuCommand {
     UpdateIwads,
     #[strum(serialize = "Update Maps")]
     UpdateMaps,
+    #[strum(serialize = "Delete Stored Data >>")]
+    DeleteStoredData,
+    #[strum(serialize = "Delete Engines")]
+    DeleteEngines,
+    #[strum(serialize = "Delete Internal WADs")]
+    DeleteIwads,
+    #[strum(serialize = "Delete Maps")]
+    DeleteMaps,
     Init,
     Reset,
 
@@ -383,6 +392,7 @@ pub fn menu_prompt(
                 (MenuCommand::SetDefaults.to_string(), MenuMode::Simple),
                 (MenuCommand::UpdateStoredData.to_string(), MenuMode::Simple),
                 (MenuCommand::ListStoredData.to_string(), MenuMode::Simple),
+                (MenuCommand::DeleteStoredData.to_string(), MenuMode::Simple),
                 (MenuCommand::Init.to_string(), MenuMode::Simple),
                 (MenuCommand::Reset.to_string(), MenuMode::Simple),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),
@@ -435,6 +445,20 @@ pub fn menu_prompt(
                 selections,
                 "App Settings / Update".to_string(),
                 "Have fun! Don't break anything".to_string(),
+            )
+        }
+        MenuLevel::AppSettingsDelete => {
+            let selections = vec![
+                (MenuCommand::DeleteEngines.to_string(), MenuMode::Simple),
+                (MenuCommand::DeleteIwads.to_string(), MenuMode::Simple),
+                (MenuCommand::DeleteMaps.to_string(), MenuMode::Simple),
+                (MenuCommand::DeleteEditor.to_string(), MenuMode::Full),
+                (MenuCommand::Back.to_string(), MenuMode::Simple),
+            ];
+            (
+                selections,
+                "App Settings / Delete".to_string(),
+                "If you really want to delete everything, use Reset".to_string(),
             )
         }
     };
@@ -498,7 +522,7 @@ pub fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
         match result {
             Ok(result) => {
                 if !result.is_empty() {
-                    info!("{}", result)
+                    info!("{}", colour_result(&result))
                 }
             }
             Err(e) => match e.downcast_ref::<InquireError>() {
@@ -590,6 +614,10 @@ pub fn run_menu_command_with_force(
             inquire::Text::new("Press any key to continue...").prompt_skippable()?;
             Ok("Successfully updated Maps".to_string())
         }
+        MenuCommand::DeleteStoredData => menu(MenuLevel::AppSettingsDelete),
+        MenuCommand::DeleteEngines => menu_app_settings::delete_engines(),
+        MenuCommand::DeleteIwads => menu_app_settings::delete_iwads(),
+        MenuCommand::DeleteMaps => menu_app_settings::delete_maps(),
         MenuCommand::Reset => menu_app_settings::reset(force),
 
         // Play Settings Menu
@@ -629,5 +657,21 @@ pub fn run_menu_command_with_force(
         MenuCommand::Ignore => Ok("".to_string()),
         MenuCommand::Back => Ok("".to_string()),
         MenuCommand::Quit => Ok("Quitting".to_string()),
+    }
+}
+
+pub fn colour_result(result: &str) -> String {
+    // Yeah this is horrible
+    if result.starts_with("Successfully") {
+        result.green().to_string()
+    } else if result.starts_with("Canceled")
+        || result.starts_with("Cannot")
+        || result.starts_with("No ")
+    {
+        result.yellow().to_string()
+    } else if result.starts_with("There are no") {
+        result.red().to_string()
+    } else {
+        result.to_string()
     }
 }

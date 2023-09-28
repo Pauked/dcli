@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use colored::Colorize;
 use inquire::validator::Validation;
 
 use crate::{constants, data, db, paths};
@@ -34,9 +33,7 @@ pub fn update_comp_level() -> Result<String, eyre::Report> {
     }
     db::save_play_settings(play_settings)?;
 
-    Ok("Successfully updated Compatibility Level"
-        .green()
-        .to_string())
+    Ok("Successfully updated Compatibility Level".to_string())
 }
 
 pub fn update_config_file() -> Result<String, eyre::Error> {
@@ -54,7 +51,7 @@ pub fn update_config_file() -> Result<String, eyre::Error> {
         .prompt_skippable()?;
     db::save_play_settings(play_settings)?;
 
-    Ok("Successfully updated Warp".green().to_string())
+    Ok("Successfully updated Warp".to_string())
 }
 
 pub fn update_fast_monsters() -> Result<String, eyre::Error> {
@@ -64,7 +61,7 @@ pub fn update_fast_monsters() -> Result<String, eyre::Error> {
         .prompt()?;
     db::save_play_settings(play_settings)?;
 
-    Ok("Successfully updated Fast Monsters".green().to_string())
+    Ok("Successfully updated Fast Monsters".to_string())
 }
 
 pub fn update_no_monsters() -> Result<String, eyre::Error> {
@@ -74,7 +71,7 @@ pub fn update_no_monsters() -> Result<String, eyre::Error> {
         .prompt()?;
     db::save_play_settings(play_settings)?;
 
-    Ok("Successfully updated No Monsters".green().to_string())
+    Ok("Successfully updated No Monsters".to_string())
 }
 
 pub fn update_respawn_monsters() -> Result<String, eyre::Error> {
@@ -84,7 +81,7 @@ pub fn update_respawn_monsters() -> Result<String, eyre::Error> {
         .prompt()?;
     db::save_play_settings(play_settings)?;
 
-    Ok("Successfully updated Respawn Monsters".green().to_string())
+    Ok("Successfully updated Respawn Monsters".to_string())
 }
 
 pub fn update_warp_to_level() -> Result<String, eyre::Error> {
@@ -95,7 +92,7 @@ pub fn update_warp_to_level() -> Result<String, eyre::Error> {
         .prompt_skippable()?;
     db::save_play_settings(play_settings)?;
 
-    Ok("Successfully updated Warp".green().to_string())
+    Ok("Successfully updated Warp".to_string())
 }
 
 pub fn update_skill() -> Result<String, eyre::Error> {
@@ -116,7 +113,7 @@ pub fn update_skill() -> Result<String, eyre::Error> {
         .prompt_skippable()?;
 
     db::save_play_settings(play_settings)?;
-    Ok("Successfully updated Skill".green().to_string())
+    Ok("Successfully updated Skill".to_string())
 }
 
 pub fn update_turbo() -> Result<String, eyre::Error> {
@@ -135,7 +132,7 @@ pub fn update_turbo() -> Result<String, eyre::Error> {
         .prompt_skippable()?;
 
     db::save_play_settings(play_settings)?;
-    Ok("Successfully updated Turbo".green().to_string())
+    Ok("Successfully updated Turbo".to_string())
 }
 
 pub fn update_timer() -> Result<String, eyre::Error> {
@@ -154,7 +151,7 @@ pub fn update_timer() -> Result<String, eyre::Error> {
         .prompt_skippable()?;
 
     db::save_play_settings(play_settings)?;
-    Ok("Successfully updated Timer".green().to_string())
+    Ok("Successfully updated Timer".to_string())
 }
 
 pub fn update_height() -> Result<String, eyre::Error> {
@@ -173,7 +170,7 @@ pub fn update_height() -> Result<String, eyre::Error> {
         .prompt_skippable()?;
 
     db::save_play_settings(play_settings)?;
-    Ok("Successfully updated Height".green().to_string())
+    Ok("Successfully updated Height".to_string())
 }
 
 pub fn update_width() -> Result<String, eyre::Error> {
@@ -192,7 +189,7 @@ pub fn update_width() -> Result<String, eyre::Error> {
         .prompt_skippable()?;
 
     db::save_play_settings(play_settings)?;
-    Ok("Successfully updated Width".green().to_string())
+    Ok("Successfully updated Width".to_string())
 }
 
 pub fn update_full_screen() -> Result<String, eyre::Error> {
@@ -202,7 +199,7 @@ pub fn update_full_screen() -> Result<String, eyre::Error> {
         .prompt()?;
     db::save_play_settings(play_settings)?;
 
-    Ok("Successfully updated Fast Monsters".green().to_string())
+    Ok("Successfully updated Fast Monsters".to_string())
 }
 
 pub fn update_windowed() -> Result<String, eyre::Error> {
@@ -212,7 +209,7 @@ pub fn update_windowed() -> Result<String, eyre::Error> {
         .prompt()?;
     db::save_play_settings(play_settings)?;
 
-    Ok("Successfully updated Windowed Mode".green().to_string())
+    Ok("Successfully updated Windowed Mode".to_string())
 }
 
 pub fn update_additional_arguments() -> Result<String, eyre::Error> {
@@ -222,9 +219,7 @@ pub fn update_additional_arguments() -> Result<String, eyre::Error> {
         .prompt_skippable()?;
     db::save_play_settings(play_settings)?;
 
-    Ok("Successfully updated Additional Arguments"
-        .green()
-        .to_string())
+    Ok("Successfully updated Additional Arguments".to_string())
 }
 
 pub fn reset_play_settings() -> Result<String, eyre::Error> {
@@ -238,7 +233,7 @@ pub fn reset_play_settings() -> Result<String, eyre::Error> {
             ..Default::default()
         };
         db::save_play_settings(new_play_settings)?;
-        Ok("Successfully Reset Play Settings".green().to_string())
+        Ok("Successfully Reset Play Settings".to_string())
     } else {
         Ok("Reset Play Settings not confirmed".to_string())
     }

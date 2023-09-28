@@ -82,10 +82,10 @@ pub fn init() -> Result<String, eyre::Report> {
     set_default_iwad()?;
 
     // Completed init!
-    info!("{}", "Successfully configured!".green());
+    info!("{}", "Successfully run init and app configured!".green());
     inquire::Text::new("Press any key to continue...").prompt_skippable()?;
 
-    Ok("Succesfully configured!".to_string())
+    Ok("Successfully run init and app configured!".to_string())
 }
 
 pub fn cli_init(
@@ -133,7 +133,7 @@ pub fn cli_init(
     app_settings.map_search_folder = Some(map_search_folder);
     db::save_app_settings(app_settings)?;
 
-    Ok("Succesfully configured!".green().to_string())
+    Ok("Successfully run init and app configured!".to_string())
 }
 
 pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::Report> {
@@ -203,7 +203,7 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
             version: file_version.display_version(),
             game_engine_type: game_engine.game_engine_type,
         });
-        info!("  {}", engines_extended.last().unwrap().to_string());
+        info!("  {}", engines_extended.last().unwrap().blue().to_string());
     }
     //info!("Found engines: {:?}", engines_extended);
 
@@ -226,7 +226,7 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
         {
             if db::is_engine_linked_to_profiles(db_engine.id)? {
                 info!(
-                    "  Cannot delete Engine as it is linked to a Profile: '{}'",
+                    "  Cannot delete Engine as it is linked to one or more Profiles: '{}'",
                     db_engine.path
                 );
                 continue;
@@ -237,6 +237,8 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
         }
     }
 
+    let mut count = 0;
+
     // Save engines to  engines table
     for selection in selections {
         let existing_engine = db_engines.iter().find(|e| e.path == selection.path);
@@ -244,7 +246,7 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
             Some(existing) => {
                 info!(
                     "  Engine already exists, no need to add: {}",
-                    selection.green()
+                    selection.blue()
                 );
                 if existing.version != selection.version {
                     info!(
@@ -257,13 +259,18 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
             None => {
                 db::add_engine(&selection)?;
                 debug!("Added Engine: {:?}", selection);
-                info!("Added Engine: {}", selection.green());
+                info!("Added Engine: {}", selection.blue());
+                count += 1;
             }
         }
     }
 
     // FIXME: This is getting blanked by menu display...
-    info!("{}", list_engines()?);
+    // info!("{}", list_engines()?);
+    if count > 0 {
+        let result_message = format!("Successfully added {} Engines", count);
+        info!("{}", result_message.green());
+    }
 
     Ok(engine_search_folder)
 }
@@ -341,7 +348,7 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
         {
             if db::is_iwad_linked_to_profiles(db_iwad.id)? {
                 info!(
-                    "  Cannot delete IWAD as it is linked to a Profile: '{}'",
+                    "  Cannot delete IWAD as it is linked to one or more Profiles: '{}'",
                     db_iwad.path
                 );
                 continue;
@@ -351,6 +358,8 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
             debug!("Deleted iwad: {:?}", db_iwad);
         }
     }
+
+    let mut count = 0;
 
     // Save engines to  engines table
     for selection in selections {
@@ -374,15 +383,19 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
                 debug!("  IWAD: {:?}", iwad);
                 info!(
                     "Added IWAD: {} - {}",
-                    iwad.internal_wad_type.green(),
-                    iwad.path.green()
+                    iwad.internal_wad_type.blue(),
+                    iwad.path.blue()
                 );
+                count += 1;
             }
         }
     }
 
-    // FIXME: This is getting blanked by menu display...
-    info!("{}", list_iwads()?);
+    //info!("{}", list_iwads()?);
+    if count > 0 {
+        let result_message = format!("Successfully added {} IWADs", count);
+        info!("{}", result_message.green());
+    }
 
     Ok(iwad_search_folder)
 }
@@ -423,7 +436,7 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
         if !maps.iter().any(|s| s.eq_ignore_ascii_case(&db_map.path)) {
             if db::is_map_linked_to_profiles(db_map.id)? {
                 info!(
-                    "  Cannot delete Map as it is linked to a Profile: '{}'",
+                    "  Cannot delete Map as it is linked to one or more Profiles: '{}'",
                     db_map.path
                 );
                 continue;
@@ -432,6 +445,8 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
             debug!("Deleted map: {:?}", db_map)
         }
     }
+
+    let mut count = 0;
 
     for map in maps {
         if files::is_iwad(&map)? {
@@ -462,18 +477,129 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
 
                 db::add_map(&map)?;
                 debug!("  Map {:?}", map);
-                info!("Added Map: {} - {}", map.title.green(), map.path.green());
+                info!("Added Map: {} - {}", map.title.blue(), map.path.blue());
+
+                count += 1;
             }
         }
     }
 
-    info!("{}", list_maps()?);
+    // info!("{}", list_maps()?);
+    if count > 0 {
+        let result_message = format!("Successfully added {} Maps", count);
+        info!("{}", result_message.green());
+    }
 
     Ok(map_search_folder)
 }
 
+pub fn delete_engines() -> Result<String, eyre::Report> {
+    let engine_list = db::get_engines()?;
+    if engine_list.is_empty() {
+        return Ok("There are no Engines to delete".to_string());
+    }
+
+    let engine_selection =
+        inquire::Select::new("Pick the Engine to Delete:", engine_list).prompt_skippable()?;
+
+    if let Some(engine) = engine_selection {
+        if db::is_engine_linked_to_profiles(engine.id)? {
+            return Ok(format!(
+                "Cannot delete Engine as it is linked to one or more Profiles: '{}'",
+                engine.path
+            ));
+        }
+
+        if inquire::Confirm::new(&format!(
+            "Are you sure you want to delete this Engine - '{}'? This cannot be undone",
+            engine.path
+        ))
+        .with_default(false)
+        .prompt()?
+        {
+            remove_engine_from_app_settings(engine.id)?;
+
+            db::delete_engine(&engine.path)
+                .wrap_err(format!("Failed to delete Engine - '{}", engine))?;
+            return Ok(format!("Successfully deleted Engine '{}'", engine));
+        }
+    }
+
+    Ok("Canceled Engine deletion".to_string())
+}
+
+pub fn delete_iwads() -> Result<String, eyre::Report> {
+    let iwad_list = db::get_iwads()?;
+    if iwad_list.is_empty() {
+        return Ok("There are no IWADs to delete".to_string());
+    }
+
+    let iwad_selection =
+        inquire::Select::new("Pick the IWAD to Delete:", iwad_list).prompt_skippable()?;
+
+    if let Some(iwad) = iwad_selection {
+        if db::is_iwad_linked_to_profiles(iwad.id)? {
+            return Ok(format!(
+                "Cannot delete IWAD as it is linked to one or more Profiles: '{}'",
+                iwad.path
+            ));
+        }
+
+        if inquire::Confirm::new(&format!(
+            "Are you sure you want to delete this IWAD - '{}'? This cannot be undone",
+            iwad.path
+        ))
+        .with_default(false)
+        .prompt()?
+        {
+            remove_iwad_from_app_settings(iwad.id)?;
+
+            db::delete_iwad(&iwad.path).wrap_err(format!("Failed to delete IWAD - '{}", iwad))?;
+            return Ok(format!("Successfully deleted IWAD '{}'", iwad));
+        }
+    }
+
+    Ok("Canceled IWAD deletion".to_string())
+}
+
+pub fn delete_maps() -> Result<String, eyre::Report> {
+    let map_list = db::get_maps()?;
+    if map_list.is_empty() {
+        return Ok("There are no Maps to delete".to_string());
+    }
+
+    let map_selection =
+        inquire::Select::new("Pick the Map to Delete:", map_list).prompt_skippable()?;
+
+    if let Some(map) = map_selection {
+        if db::is_map_linked_to_profiles(map.id)? {
+            return Ok(format!(
+                "Cannot delete Map as it is linked to one or more Profiles: '{}'",
+                map.path
+            ));
+        }
+
+        if inquire::Confirm::new(&format!(
+            "Are you sure you want to delete this Map - '{}'? This cannot be undone",
+            map.path
+        ))
+        .with_default(false)
+        .prompt()?
+        {
+            db::delete_map(&map.path).wrap_err(format!("Failed to delete Map - '{}", map))?;
+            return Ok(format!("Successfully deleted Map '{}'", map));
+        }
+    }
+
+    Ok("Canceled Map deletion".to_string())
+}
+
 pub fn list_engines() -> Result<String, eyre::Report> {
     let engines = db::get_engines().wrap_err("Unable to generate Engine listing".to_string())?;
+
+    if engines.is_empty() {
+        return Ok("No Engines found".to_string());
+    }
 
     let table = tabled::Table::new(engines)
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
@@ -485,6 +611,10 @@ pub fn list_engines() -> Result<String, eyre::Report> {
 pub fn list_iwads() -> Result<String, eyre::Report> {
     let iwads = db::get_iwads().wrap_err("Unable to iwad listing".to_string())?;
 
+    if iwads.is_empty() {
+        return Ok("No IWADs found".to_string());
+    }
+
     let table = tabled::Table::new(iwads)
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
         .with(Style::modern())
@@ -494,6 +624,10 @@ pub fn list_iwads() -> Result<String, eyre::Report> {
 
 pub fn list_maps() -> Result<String, eyre::Report> {
     let maps = db::get_maps().wrap_err("Unable to iwad listing".to_string())?;
+
+    if maps.is_empty() {
+        return Ok("No Maps found".to_string());
+    }
 
     let table = tabled::Table::new(maps)
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
@@ -510,14 +644,13 @@ pub fn list_app_settings() -> Result<String, eyre::Report> {
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
         .with(Style::modern())
         .to_string();
+    // let table = ExtendedTable::new(&vec![app_settings]).to_string();
     Ok(table)
 }
 
 pub fn reset(force: bool) -> Result<String, eyre::Report> {
     if !db::database_exists() {
-        return Ok("Database does not exist. Nothing to reset"
-            .yellow()
-            .to_string());
+        return Ok("Canceled Rest. Database does not exist".to_string());
     }
 
     // Prompt the user for confirmation the reset, unless force is set
@@ -527,7 +660,7 @@ pub fn reset(force: bool) -> Result<String, eyre::Report> {
             .prompt()?
     {
         db::reset_db().wrap_err("Failed to reset database")?;
-        Ok("Successfully reset database".green().to_string())
+        Ok("Successfully reset database".to_string())
     } else {
         Err(InquireError::OperationCanceled).wrap_err("Database reset not confirmed".to_string())
     }
@@ -537,9 +670,7 @@ pub fn set_default_engine() -> Result<String, eyre::Report> {
     let engine_list = db::get_engines()?;
     if engine_list.is_empty() {
         return Ok(
-            "Cannot set Default Engine. There are no Engines found. Please add one"
-                .red()
-                .to_string(),
+            "Cannot set Default Engine. There are no Engines found. Please add one".to_string(),
         );
     }
 
@@ -567,11 +698,7 @@ pub fn set_default_engine() -> Result<String, eyre::Report> {
 pub fn set_default_iwad() -> Result<String, eyre::Report> {
     let iwad_list = db::get_iwads()?;
     if iwad_list.is_empty() {
-        return Ok(
-            "Cannot set Default IWAD. There are no IWADs found. Please add one"
-                .red()
-                .to_string(),
-        );
+        return Ok("Cannot set Default IWAD. There are no IWADs found. Please add one".to_string());
     }
 
     let mut app_settings = db::get_app_settings()?;
@@ -614,9 +741,7 @@ pub fn remove_profile_from_app_settings(profile_id: i32) -> Result<String, eyre:
     }
     if default_profile_tidied || last_profile_tidied {
         db::save_app_settings(app_settings).wrap_err("Failed to remove Default Profile")?;
-        return Ok("Successfully removed Profile from App Settings"
-            .green()
-            .to_string());
+        return Ok("Successfully removed Profile from App Settings".to_string());
     }
 
     Ok("".to_string())
@@ -628,9 +753,7 @@ fn remove_engine_from_app_settings(engine_id: i32) -> Result<String, eyre::Repor
         if id == engine_id {
             app_settings.default_engine_id = None;
             db::save_app_settings(app_settings).wrap_err("Failed to remove Default Engine")?;
-            return Ok("Successfully removed Engine from App Settings"
-                .green()
-                .to_string());
+            return Ok("Successfully removed Engine from App Settings".to_string());
         }
     }
 
@@ -643,9 +766,7 @@ fn remove_iwad_from_app_settings(iwad_id: i32) -> Result<String, eyre::Report> {
         if id == iwad_id {
             app_settings.default_iwad_id = None;
             db::save_app_settings(app_settings).wrap_err("Failed to remove Default IWAD")?;
-            return Ok("Successfully removed IWAD from App Settings"
-                .green()
-                .to_string());
+            return Ok("Successfully removed IWAD from App Settings".to_string());
         }
     }
 
@@ -658,9 +779,7 @@ pub fn remove_editor_from_app_settings(editor_id: i32) -> Result<String, eyre::R
         if id == editor_id {
             app_settings.default_editor_id = None;
             db::save_app_settings(app_settings).wrap_err("Failed to remove Default Editor")?;
-            return Ok("Successfully removed Editor from App Settings"
-                .green()
-                .to_string());
+            return Ok("Successfully removed Editor from App Settings".to_string());
         }
     }
 

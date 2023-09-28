@@ -46,7 +46,7 @@ fn run() -> eyre::Result<String> {
             menu_app_settings::check_app_can_run(false)?;
             tui::menu(tui::MenuLevel::Main)
         }
-        cli::CliRunMode::Quit => Ok(cli_result),
+        cli::CliRunMode::Quit => Ok(tui::colour_result(&cli_result)),
     }
 }
 

@@ -12,21 +12,15 @@ use crate::{data, db, menu_app_settings, menu_common, paths, tui};
 pub fn new_profile() -> Result<String, eyre::Report> {
     let engines = db::get_engines()?;
     if engines.is_empty() {
-        return Ok("There are no Engines to select. Please run 'init'"
-            .red()
-            .to_string());
+        return Ok("There are no Engines to select. Please run 'init'".to_string());
     }
     let iwads = db::get_iwads()?;
     if iwads.is_empty() {
-        return Ok("There are no IWADs to select. Please run 'init"
-            .red()
-            .to_string());
+        return Ok("There are no IWADs to select. Please run 'init".to_string());
     }
     let maps = db::get_maps()?;
     if maps.is_empty() {
-        return Ok("There are no Maps to select. Please run 'init'"
-            .red()
-            .to_string());
+        return Ok("There are no Maps to select. Please run 'init'".to_string());
     }
 
     let app_settings = db::get_app_settings()?;
@@ -97,7 +91,7 @@ pub fn new_profile() -> Result<String, eyre::Report> {
 
     Ok(format!(
         "Successfully created a new Profile - '{}'",
-        profile.name.green()
+        profile.name
     ))
 }
 
@@ -112,33 +106,36 @@ pub fn cli_new_profile(
     if engines.is_empty() {
         return Ok(format!(
             "Cannot add Profile '{}', There are no Engines to select. Please run 'init'",
-            name.red()
+            name
         ));
     }
     let iwads = db::get_iwads()?;
     if iwads.is_empty() {
         return Ok(format!(
             "Cannot add Profile '{}', There are no IWADs to select. Please run 'init",
-            name.red()
+            name
         ));
     }
     let maps = db::get_maps()?;
     if maps.is_empty() {
         return Ok(format!(
             "Cannot add Profile '{}', There are no Maps to select. Please run 'init'",
-            name.red()
+            name
         ));
     }
 
     // Check profile name is unique
     let profile_result = db::get_profile_by_name(name);
     if profile_result.is_ok() {
-        return Ok(format!("Profile name already exists - '{}'", name.red()));
+        return Ok(format!(
+            "Cannot add Profile '{}'. Profile name already exists",
+            name
+        ));
     }
     if name.len() < 5 {
         return Ok(format!(
-            "Profile name must be at least 5 characters - '{}'",
-            name.red()
+            "Cannot add Profile '{}'. Profile name must be at least 5 characters",
+            name
         ));
     }
 
@@ -153,8 +150,7 @@ pub fn cli_new_profile(
         None => {
             return Ok(format!(
                 "Cannot add Profile '{}', Engine not found - '{}'",
-                name,
-                engine.red()
+                name, engine
             ))
         }
     };
@@ -167,8 +163,7 @@ pub fn cli_new_profile(
         None => {
             return Ok(format!(
                 "Cannot add Profile '{}', IWAD not found - '{}'",
-                name,
-                iwad.red()
+                name, iwad
             ))
         }
     };
@@ -178,7 +173,7 @@ pub fn cli_new_profile(
             if maps_unwrapped.len() > 5 {
                 return Ok(format!(
                     "Cannot add Profile '{}', a max of 5 maps can be specified per Profile",
-                    name.red()
+                    name
                 ));
             }
             let mut map_ids: Vec<Option<i32>> = Vec::new();
@@ -227,7 +222,7 @@ pub fn cli_new_profile(
 
     Ok(format!(
         "Successfully created a new Profile - '{}'",
-        profile.name.green()
+        profile.name
     ))
 }
 
@@ -239,7 +234,7 @@ pub fn set_profile_as_default(profile_id: i32) -> Result<String, eyre::Report> {
         let mut app_settings = db::get_app_settings()?;
         app_settings.default_profile_id = Some(profile_id);
         db::save_app_settings(app_settings).wrap_err("Failed to set Default profile")?;
-        return Ok("Successfully set Profile as Default".green().to_string());
+        return Ok("Successfully set Profile as Default".to_string());
     }
 
     Ok("No changes made to setting Profile as Default".to_string())
@@ -252,21 +247,15 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
     }
     let engines = db::get_engines()?;
     if engines.is_empty() {
-        return Ok("There are no Engines to select. Please run 'init'"
-            .red()
-            .to_string());
+        return Ok("There are no Engines to select. Please run 'init'".to_string());
     }
     let iwads = db::get_iwads()?;
     if iwads.is_empty() {
-        return Ok("There are no IWADs to select. Please run 'init"
-            .red()
-            .to_string());
+        return Ok("There are no IWADs to select. Please run 'init".to_string());
     }
     let maps = db::get_maps()?;
     if maps.is_empty() {
-        return Ok("There are no Maps to select. Please run 'init'"
-            .red()
-            .to_string());
+        return Ok("There are no Maps to select. Please run 'init'".to_string());
     }
 
     let profile_display = inquire::Select::new("Pick the Profile to Edit:", profile_list)
@@ -369,19 +358,16 @@ pub fn delete_profile_core(
         // Now delete the profile
         db::delete_profile(profile_id)
             .wrap_err(format!("Failed to delete Profile - '{}", profile_name))?;
-        return Ok(format!(
-            "Successfully deleted Profile '{}'",
-            profile_name.green()
-        ));
+        return Ok(format!("Successfully deleted Profile '{}'", profile_name));
     }
 
-    Ok("Canceled Profile deletion".yellow().to_string())
+    Ok("Canceled Profile deletion".to_string())
 }
 
 pub fn delete_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
-        return Ok("There are no Profiles to delete".red().to_string());
+        return Ok("There are no Profiles to delete".to_string());
     }
 
     let profile_selection =
@@ -408,7 +394,6 @@ pub fn set_default_profile() -> Result<String, eyre::Report> {
     if profile_list.is_empty() {
         return Ok(
             "Cannot set Default Profile. There are no Profiles found. Please create one"
-                .red()
                 .to_string(),
         );
     }
@@ -437,6 +422,10 @@ pub fn set_default_profile() -> Result<String, eyre::Report> {
 pub fn list_profiles(list_type: data::ListType) -> Result<String, eyre::Report> {
     let profiles =
         db::get_profile_display_list().wrap_err("Unable to profile listing".to_string())?;
+
+    if profiles.is_empty() {
+        return Ok("There are no Profiles to list".to_string());
+    }
 
     let table = match list_type {
         data::ListType::Full => tabled::Table::new(profiles)

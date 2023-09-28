@@ -216,9 +216,7 @@ pub fn open_map_readme(map_path: &str) -> Result<String, eyre::Report> {
                 map_path.blue()
             ))
         }
-        None => Ok(format!("No Map Readme found for Map - '{}'", map_path)
-            .yellow()
-            .to_string()),
+        None => Ok(format!("No Map Readme found for Map - '{}'", map_path).to_string()),
     }
 }
 

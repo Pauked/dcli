@@ -1,5 +1,3 @@
-use color_eyre::owo_colors::OwoColorize;
-use colored::Colorize;
 use eyre::Context;
 use inquire::validator::Validation;
 use log::{debug, info};
@@ -21,7 +19,7 @@ fn open_editor_from_map_id(map_id: i32) -> Result<String, eyre::Report> {
     // Otherwise, try select editor...
     let editor_list = db::get_editors()?;
     if editor_list.is_empty() {
-        return Ok("There are no Editors to select from".red().to_string());
+        return Ok("There are no Editors to select from".to_string());
     }
 
     let editor = inquire::Select::new("Pick the Editor to use:", editor_list)
@@ -30,13 +28,13 @@ fn open_editor_from_map_id(map_id: i32) -> Result<String, eyre::Report> {
 
     match editor {
         Some(editor) => runner::editor(&map.path, editor),
-        None => Ok("Canceled opening Editor".yellow().to_string()),
+        None => Ok("Canceled opening Editor".to_string()),
     }
 }
 
 pub fn open_from_default_profile() -> Result<String, eyre::Report> {
     if db::get_editor_count()? == 0 {
-        return Ok("There are no Editors to select from".red().to_string());
+        return Ok("There are no Editors to select from".to_string());
     }
     let map_id = menu_common::get_map_id_from_from_default_profile("Cannot open Editor")?;
 
@@ -45,7 +43,7 @@ pub fn open_from_default_profile() -> Result<String, eyre::Report> {
 
 pub fn open_from_last_profile() -> Result<String, eyre::Report> {
     if db::get_editor_count()? == 0 {
-        return Ok("There are no Editors to select from".red().to_string());
+        return Ok("There are no Editors to select from".to_string());
     }
     let map_id = menu_common::get_map_id_from_from_last_profile("Cannot open Editor")?;
 
@@ -54,7 +52,7 @@ pub fn open_from_last_profile() -> Result<String, eyre::Report> {
 
 pub fn open_from_pick_profile() -> Result<String, eyre::Report> {
     if db::get_editor_count()? == 0 {
-        return Ok("There are no Editors to select from".red().to_string());
+        return Ok("There are no Editors to select from".to_string());
     }
     let map_id = menu_common::get_map_id_from_pick_profile(
         "Pick the Profile to open in Editor:",
@@ -66,7 +64,7 @@ pub fn open_from_pick_profile() -> Result<String, eyre::Report> {
 
 pub fn open_from_pick_map() -> Result<String, eyre::Report> {
     if db::get_editor_count()? == 0 {
-        return Ok("There are no Editors to select from".red().to_string());
+        return Ok("There are no Editors to select from".to_string());
     }
     let map_id = menu_common::get_map_id_from_pick_map(
         "Pick the Map to open in Editor:",
@@ -80,9 +78,7 @@ pub fn set_default_editor() -> Result<String, eyre::Report> {
     let editor_list = db::get_editors()?;
     if editor_list.is_empty() {
         return Ok(
-            "Cannot set Default Editor. There are no Editors found. Please add one"
-                .red()
-                .to_string(),
+            "Cannot set Default Editor. There are no Editors found. Please add one".to_string(),
         );
     }
 
@@ -109,6 +105,10 @@ pub fn set_default_editor() -> Result<String, eyre::Report> {
 
 pub fn list_editors() -> Result<String, eyre::Report> {
     let editors = db::get_editors().wrap_err("Unable to generate Editor listing".to_string())?;
+
+    if editors.is_empty() {
+        return Ok("There are no Editors to list".to_string());
+    }
 
     let table = tabled::Table::new(editors)
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
@@ -219,7 +219,7 @@ pub fn add_editor() -> Result<String, eyre::Report> {
             }
             None => {
                 db::add_editor(&selection)?;
-                debug!("Added Editor: {:?}", selection.green());
+                debug!("Added Editor: {:?}", selection);
             }
         }
     }
@@ -239,7 +239,7 @@ pub fn add_editor() -> Result<String, eyre::Report> {
 pub fn delete_editor() -> Result<String, eyre::Report> {
     let editor_list = db::get_editors()?;
     if editor_list.is_empty() {
-        return Ok("There are no Editors to delete".red().to_string());
+        return Ok("There are no Editors to delete".to_string());
     }
 
     let editor_selection =
@@ -262,5 +262,5 @@ pub fn delete_editor() -> Result<String, eyre::Report> {
         }
     }
 
-    Ok("Canceled Editor deletion".yellow().to_string())
+    Ok("Canceled Editor deletion".to_string())
 }
