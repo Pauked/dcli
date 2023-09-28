@@ -21,7 +21,7 @@ fn open_editor_from_map_id(map_id: i32) -> Result<String, eyre::Report> {
     // Otherwise, try select editor...
     let editor_list = db::get_editors()?;
     if editor_list.is_empty() {
-        return Ok("There are no Editors to select from.".red().to_string());
+        return Ok("There are no Editors to select from".red().to_string());
     }
 
     let editor = inquire::Select::new("Pick the Editor to use:", editor_list)
@@ -30,35 +30,35 @@ fn open_editor_from_map_id(map_id: i32) -> Result<String, eyre::Report> {
 
     match editor {
         Some(editor) => runner::editor(&map.path, editor),
-        None => Ok("Cancelled opening Editor.".yellow().to_string()),
+        None => Ok("Canceled opening Editor".yellow().to_string()),
     }
 }
 
 pub fn open_from_default_profile() -> Result<String, eyre::Report> {
     if db::get_editor_count()? == 0 {
-        return Ok("There are no Editors to select from.".red().to_string());
+        return Ok("There are no Editors to select from".red().to_string());
     }
-    let map_id = menu_common::get_map_id_from_from_default_profile("Cannot open Editor.")?;
+    let map_id = menu_common::get_map_id_from_from_default_profile("Cannot open Editor")?;
 
     open_editor_from_map_id(map_id)
 }
 
 pub fn open_from_last_profile() -> Result<String, eyre::Report> {
     if db::get_editor_count()? == 0 {
-        return Ok("There are no Editors to select from.".red().to_string());
+        return Ok("There are no Editors to select from".red().to_string());
     }
-    let map_id = menu_common::get_map_id_from_from_last_profile("Cannot open Editor.")?;
+    let map_id = menu_common::get_map_id_from_from_last_profile("Cannot open Editor")?;
 
     open_editor_from_map_id(map_id)
 }
 
 pub fn open_from_pick_profile() -> Result<String, eyre::Report> {
     if db::get_editor_count()? == 0 {
-        return Ok("There are no Editors to select from.".red().to_string());
+        return Ok("There are no Editors to select from".red().to_string());
     }
     let map_id = menu_common::get_map_id_from_pick_profile(
         "Pick the Profile to open in Editor:",
-        "Cancelled opening Editor.",
+        "Canceled opening Editor",
     )?;
 
     open_editor_from_map_id(map_id)
@@ -66,11 +66,11 @@ pub fn open_from_pick_profile() -> Result<String, eyre::Report> {
 
 pub fn open_from_pick_map() -> Result<String, eyre::Report> {
     if db::get_editor_count()? == 0 {
-        return Ok("There are no Editors to select from.".red().to_string());
+        return Ok("There are no Editors to select from".red().to_string());
     }
     let map_id = menu_common::get_map_id_from_pick_map(
         "Pick the Map to open in Editor:",
-        "Cancelled opening Editor.",
+        "Canceled opening Editor",
     )?;
 
     open_editor_from_map_id(map_id)
@@ -80,7 +80,7 @@ pub fn set_default_editor() -> Result<String, eyre::Report> {
     let editor_list = db::get_editors()?;
     if editor_list.is_empty() {
         return Ok(
-            "Cannot set Default Editor. There are no Editors found. Please add one."
+            "Cannot set Default Editor. There are no Editors found. Please add one"
                 .red()
                 .to_string(),
         );
@@ -117,7 +117,7 @@ pub fn list_editors() -> Result<String, eyre::Report> {
     Ok(table)
 }
 
-pub fn update_editors() -> Result<String, eyre::Report> {
+pub fn add_editor() -> Result<String, eyre::Report> {
     let app_settings = db::get_app_settings()?;
 
     let default_folder = app_settings.editor_search_folder.unwrap_or("".to_string());
@@ -131,7 +131,7 @@ pub fn update_editors() -> Result<String, eyre::Report> {
             if paths::folder_exists(input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid("Folder does not exist.".into()))
+                Ok(Validation::Invalid("Folder does not exist".into()))
             }
         })
         .with_default(&default_folder)
@@ -236,7 +236,7 @@ pub fn update_editors() -> Result<String, eyre::Report> {
 pub fn delete_editor() -> Result<String, eyre::Report> {
     let editor_list = db::get_editors()?;
     if editor_list.is_empty() {
-        return Ok("There are no Editors to delete.".red().to_string());
+        return Ok("There are no Editors to delete".red().to_string());
     }
 
     let editor_selection =
@@ -244,12 +244,11 @@ pub fn delete_editor() -> Result<String, eyre::Report> {
 
     if let Some(editor) = editor_selection {
         if inquire::Confirm::new(&format!(
-            "Are you sure you want to delete this Editor - '{}'? This cannot be undone.",
+            "Are you sure you want to delete this Editor - '{}'? This cannot be undone",
             editor.app_name
         ))
         .with_default(false)
-        .prompt()
-        .unwrap()
+        .prompt()?
         {
             // Check if "Default Editor" and remove link if so
             menu_app_settings::remove_editor_from_app_settings(editor.id)?;
@@ -260,5 +259,5 @@ pub fn delete_editor() -> Result<String, eyre::Report> {
         }
     }
 
-    Ok("Cancelled Editor deletion.".yellow().to_string())
+    Ok("Canceled Editor deletion".yellow().to_string())
 }

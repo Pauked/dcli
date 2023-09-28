@@ -43,12 +43,12 @@ pub fn new_profile() -> Result<String, eyre::Report> {
         .with_validator(|input: &str| {
             let profile_result = db::get_profile_by_name(input);
             if profile_result.is_ok() {
-                return Ok(Validation::Invalid("Profile name already exists.".into()));
+                return Ok(Validation::Invalid("Profile name already exists".into()));
             }
 
             if input.len() < 5 {
                 Ok(Validation::Invalid(
-                    "Profile name must be at least 5 characters.".into(),
+                    "Profile name must be at least 5 characters".into(),
                 ))
             } else {
                 Ok(Validation::Valid)
@@ -136,7 +136,10 @@ pub fn cli_new_profile(
         return Ok(format!("Profile name already exists - '{}'", name.red()));
     }
     if name.len() < 5 {
-        return Ok(format!("Profile name must be at least 5 characters - '{}'", name.red()));
+        return Ok(format!(
+            "Profile name must be at least 5 characters - '{}'",
+            name.red()
+        ));
     }
 
     let engine_selection = match engines
@@ -170,7 +173,10 @@ pub fn cli_new_profile(
     let map_ids: Vec<Option<i32>> = match maps_in {
         Some(maps_unwrapped) => {
             if maps_unwrapped.len() > 5 {
-                return Ok(format!("Cannot add Profile '{}', a max of 5 maps can be specified per Profile", name.red()));
+                return Ok(format!(
+                    "Cannot add Profile '{}', a max of 5 maps can be specified per Profile",
+                    name.red()
+                ));
             }
             let mut map_ids: Vec<Option<i32>> = Vec::new();
             for map in maps_unwrapped {
@@ -225,13 +231,12 @@ pub fn cli_new_profile(
 pub fn set_profile_as_default(profile_id: i32) -> Result<String, eyre::Report> {
     if inquire::Confirm::new("Would you like to set this as your Default Profile?")
         .with_default(false)
-        .prompt()
-        .unwrap()
+        .prompt()?
     {
         let mut app_settings = db::get_app_settings()?;
         app_settings.default_profile_id = Some(profile_id);
         db::save_app_settings(app_settings).wrap_err("Failed to set Default profile")?;
-        return Ok("Successfully set Profile as Default".to_string());
+        return Ok("Successfully set Profile as Default".green().to_string());
     }
 
     Ok("No changes made to setting Profile as Default".to_string())
@@ -240,7 +245,7 @@ pub fn set_profile_as_default(profile_id: i32) -> Result<String, eyre::Report> {
 pub fn edit_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
-        return Ok("There are no profiles to edit.".red().to_string());
+        return Ok("There are no profiles to edit".red().to_string());
     }
     let engines = db::get_engines()?;
     if engines.is_empty() {
@@ -286,13 +291,13 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
             let profile_result = db::get_profile_by_name(input);
             if let Ok(profile) = profile_result {
                 if profile.id != profile_display.id {
-                    return Ok(Validation::Invalid("Profile name already exists.".into()));
+                    return Ok(Validation::Invalid("Profile name already exists".into()));
                 }
             }
 
             if input.len() < 5 {
                 Ok(Validation::Invalid(
-                    "Profile name must be at least 5 characters.".into(),
+                    "Profile name must be at least 5 characters".into(),
                 ))
             } else {
                 Ok(Validation::Valid)
@@ -349,12 +354,11 @@ pub fn delete_profile_core(
 ) -> Result<String, eyre::Report> {
     if force
         || inquire::Confirm::new(&format!(
-            "Are you sure you want to delete this Profile - '{}'? This cannot be undone.",
+            "Are you sure you want to delete this Profile - '{}'? This cannot be undone",
             profile_name
         ))
         .with_default(false)
-        .prompt()
-        .unwrap()
+        .prompt()?
     {
         // Check if "Default Profile" and remove link if so
         menu_app_settings::remove_profile_from_app_settings(profile_id)?;
@@ -368,13 +372,13 @@ pub fn delete_profile_core(
         ));
     }
 
-    Ok("Cancelled Profile deletion.".yellow().to_string())
+    Ok("Canceled Profile deletion".yellow().to_string())
 }
 
 pub fn delete_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
-        return Ok("There are no Profiles to delete.".red().to_string());
+        return Ok("There are no Profiles to delete".red().to_string());
     }
 
     let profile_selection =
@@ -400,7 +404,7 @@ pub fn set_default_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
         return Ok(
-            "Cannot set Default Profile. There are no Profiles found. Please create one."
+            "Cannot set Default Profile. There are no Profiles found. Please create one"
                 .red()
                 .to_string(),
         );

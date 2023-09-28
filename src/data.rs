@@ -235,15 +235,20 @@ pub struct ProfileDisplay {
 
 impl fmt::Display for ProfileDisplay {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} ({}) / {} [{}] / {}",
-            self.name,
-            display_combined_map_strings(&self.map_files),
-            self.engine_file,
-            self.engine_version,
-            self.iwad_file
-        )
+        let maps = display_combined_map_strings(&self.map_files);
+        if maps.is_empty() {
+            write!(
+                f,
+                "{} / {} [{}] / {}",
+                self.name, self.engine_file, self.engine_version, self.iwad_file
+            )
+        } else {
+            write!(
+                f,
+                "{} ({}) / {} [{}] / {}",
+                self.name, maps, self.engine_file, self.engine_version, self.iwad_file
+            )
+        }
     }
 }
 

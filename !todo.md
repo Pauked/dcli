@@ -1,5 +1,5 @@
 # DCLI v0.3.5
-[/] Make menus less crashy if user aborts
+[x] Make menus less crashy if user aborts (first pass)
 [/] Write Readme in repo root
 [/] Test script Windows (CLI usage)
 [ ] Test script MacOS
@@ -11,7 +11,7 @@
 [x] Args to add and delete Profiles
 [x] Rename PWADs to Maps
 [x] Set Menu Mode in App Settings
-[ ] Make message output consistent
+[x] Make message output consistent (first pass)
 
 # DCLI v0.4
 [ ] Have a profile switch of "include play settings?", default to on.

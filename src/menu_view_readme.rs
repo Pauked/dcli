@@ -9,13 +9,13 @@ pub fn view_map_readme_from_map_id(map_id: i32) -> Result<String, eyre::Report> 
 }
 
 pub fn view_from_default_profile() -> Result<String, eyre::Report> {
-    let map_id = menu_common::get_map_id_from_from_default_profile("Cannot view Map Readme.")?;
+    let map_id = menu_common::get_map_id_from_from_default_profile("Cannot view Map Readme")?;
 
     view_map_readme_from_map_id(map_id)
 }
 
 pub fn view_from_last_profile() -> Result<String, eyre::Report> {
-    let map_id = menu_common::get_map_id_from_from_last_profile("Cannot view Map Readme.")?;
+    let map_id = menu_common::get_map_id_from_from_last_profile("Cannot view Map Readme")?;
 
     view_map_readme_from_map_id(map_id)
 }
@@ -23,7 +23,7 @@ pub fn view_from_last_profile() -> Result<String, eyre::Report> {
 pub fn view_from_pick_profile() -> Result<String, eyre::Report> {
     let map_id = menu_common::get_map_id_from_pick_profile(
         "Pick the Profile to view Map Readme from:",
-        "Cancelled viewing Map Readme.",
+        "Canceled viewing Map Readme",
     )?;
 
     view_map_readme_from_map_id(map_id)
@@ -32,7 +32,7 @@ pub fn view_from_pick_profile() -> Result<String, eyre::Report> {
 pub fn view_from_pick_map() -> Result<String, eyre::Report> {
     let map_id = menu_common::get_map_id_from_pick_map(
         "Pick the Map to view Map Readme from:",
-        "Cancelled viewing Map Readme.",
+        "Canceled viewing Map Readme",
     )?;
 
     view_map_readme_from_map_id(map_id)

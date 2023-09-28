@@ -1,8 +1,10 @@
 use std::str::FromStr;
 
 use clap::ValueEnum;
+use color_eyre::owo_colors::OwoColorize;
 use colored::Colorize;
-use log::error;
+use inquire::InquireError;
+use log::debug;
 use log::info;
 use strum_macros::Display;
 use strum_macros::EnumString;
@@ -141,10 +143,10 @@ pub enum MenuCommand {
     #[strum(serialize = "Set Default Editor")]
     SetDefaultEditor,
     #[strum(serialize = "List Editors")]
-    ListEditor,
-    #[strum(serialize = "Update Editors")]
-    UpdateEditor,
-    #[strum(serialize = "Delete Editors")]
+    ListEditors,
+    #[strum(serialize = "Add Editor")]
+    AddEditor,
+    #[strum(serialize = "Delete Editor")]
     DeleteEditor,
 
     // View Readme Menu
@@ -343,9 +345,9 @@ pub fn menu_prompt(
                 (MenuCommand::OpenFromPickProfile.to_string(), MenuMode::Full),
                 (MenuCommand::OpenFromPickMap.to_string(), MenuMode::Full),
                 (MenuCommand::SetDefaultEditor.to_string(), MenuMode::Full),
-                (MenuCommand::UpdateEditor.to_string(), MenuMode::Full),
+                (MenuCommand::AddEditor.to_string(), MenuMode::Full),
                 (MenuCommand::DeleteEditor.to_string(), MenuMode::Full),
-                (MenuCommand::ListEditor.to_string(), MenuMode::Full),
+                (MenuCommand::ListEditors.to_string(), MenuMode::Full),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),
             ];
             (
@@ -411,7 +413,7 @@ pub fn menu_prompt(
                 (MenuCommand::ListIwads.to_string(), MenuMode::Simple),
                 (MenuCommand::ListMaps.to_string(), MenuMode::Simple),
                 (MenuCommand::ListProfile.to_string(), MenuMode::Simple),
-                (MenuCommand::ListEditor.to_string(), MenuMode::Full),
+                (MenuCommand::ListEditors.to_string(), MenuMode::Full),
                 (MenuCommand::ListAppSettings.to_string(), MenuMode::Simple),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),
             ];
@@ -426,7 +428,7 @@ pub fn menu_prompt(
                 (MenuCommand::UpdateEngines.to_string(), MenuMode::Simple),
                 (MenuCommand::UpdateIwads.to_string(), MenuMode::Simple),
                 (MenuCommand::UpdateMaps.to_string(), MenuMode::Simple),
-                (MenuCommand::UpdateEditor.to_string(), MenuMode::Full),
+                (MenuCommand::AddEditor.to_string(), MenuMode::Full),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),
             ];
             (
@@ -494,10 +496,24 @@ pub fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
         let result = run_menu_command(menu_command);
         clearscreen::clear().unwrap();
         match result {
-            Ok(result) => info!("{}", result.green()),
-            Err(err) => {
-                error!("Error: {:?}", err);
+            Ok(result) => {
+                if !result.is_empty() {
+                    info!("{}", result)
+                }
             }
+            Err(e) => match e.downcast_ref::<InquireError>() {
+                Some(InquireError::OperationCanceled) => {
+                    if e.to_string() == "Operation was canceled by the user" {
+                        info!("{}", "Option canceled".yellow())
+                    } else {
+                        info!("{}", e.yellow())
+                    }
+                }
+                _ => {
+                    info!("Error: {}", e.red());
+                    debug!("Error: {:?}", e);
+                }
+            },
         }
     }
 }
@@ -599,8 +615,8 @@ pub fn run_menu_command_with_force(
         MenuCommand::OpenFromPickProfile => menu_editor::open_from_pick_profile(),
         MenuCommand::OpenFromPickMap => menu_editor::open_from_pick_map(),
         MenuCommand::SetDefaultEditor => menu_editor::set_default_editor(),
-        MenuCommand::ListEditor => menu_editor::list_editors(),
-        MenuCommand::UpdateEditor => menu_editor::update_editors(),
+        MenuCommand::ListEditors => menu_editor::list_editors(),
+        MenuCommand::AddEditor => menu_editor::add_editor(),
         MenuCommand::DeleteEditor => menu_editor::delete_editor(),
 
         // View Readme Menu

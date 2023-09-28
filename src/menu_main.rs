@@ -59,9 +59,7 @@ pub fn play_default_profile() -> Result<String, eyre::Report> {
     let app_settings = db::get_app_settings()?;
 
     if app_settings.default_profile_id.is_none() {
-        return Ok("No Default Profile found. Please set one."
-            .red()
-            .to_string());
+        return Ok("No Default Profile found. Please set one".red().to_string());
     };
 
     runner::play_from_profile(app_settings.default_profile_id.unwrap(), false)
@@ -72,7 +70,7 @@ pub fn play_last_profile() -> Result<String, eyre::Report> {
 
     if app_settings.last_profile_id.is_none() {
         return Ok(
-            "No Last Run Profile found. Run a profile to make it the last run."
+            "No Last Run Profile found. Run a profile to make it the last run"
                 .red()
                 .to_string(),
         );
@@ -85,7 +83,7 @@ pub fn pick_and_play_profile() -> Result<String, eyre::Report> {
     let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
         return Ok(
-            "Cannot Play Profile, there are no profiles found. Please create one."
+            "Cannot Play Profile, there are no profiles found. Please create one"
                 .red()
                 .to_string(),
         );
@@ -95,7 +93,7 @@ pub fn pick_and_play_profile() -> Result<String, eyre::Report> {
 
     match profile {
         Some(profile) => runner::play_from_profile(profile.id, true),
-        None => Ok("No profile selected.".yellow().to_string()),
+        None => Ok("No profile selected".yellow().to_string()),
     }
 }
 
@@ -167,12 +165,10 @@ pub fn pick_and_play_map() -> Result<String, eyre::Report> {
     // };
 
     // Yes this is ONE Map only. Profiles can have up to 5 Maps, but this is just a quick play option.
-    let map_selection = inquire::Select::new(
-        "Pick the Map you want to use (optional):",
-        map_list.clone(),
-    )
-    .with_page_size(tui::MENU_PAGE_SIZE)
-    .prompt_skippable()?;
+    let map_selection =
+        inquire::Select::new("Pick the Map you want to use (optional):", map_list.clone())
+            .with_page_size(tui::MENU_PAGE_SIZE)
+            .prompt_skippable()?;
     let map_id = map_selection.as_ref().map(|map| map.id);
 
     let additional_arguments =
@@ -180,8 +176,7 @@ pub fn pick_and_play_map() -> Result<String, eyre::Report> {
 
     if inquire::Confirm::new("Autosave these options as a Profile?")
         .with_default(false)
-        .prompt()
-        .unwrap()
+        .prompt()?
     {
         let wad_name = match map_selection {
             None => paths::extract_file_name(&iwad_selection.path),

@@ -1,4 +1,5 @@
 use eyre::Context;
+use inquire::InquireError;
 use log::info;
 
 use crate::{data, db, tui};
@@ -6,7 +7,7 @@ use crate::{data, db, tui};
 fn pick_from_map_from_profile_map_ids(map_ids: data::MapIds) -> Result<i32, eyre::Report> {
     let map_list = db::get_maps_by_ids(map_ids)?;
     if map_list.is_empty() {
-        return Err(eyre::eyre!("There are no Maps to select from."));
+        return Err(eyre::eyre!("There are no Maps to select from"));
     }
 
     // If there's only one, just return it
@@ -22,7 +23,7 @@ fn pick_from_map_from_profile_map_ids(map_ids: data::MapIds) -> Result<i32, eyre
         return Ok(map.id);
     }
 
-    Err(eyre::eyre!("Cancelled picking Map."))
+    Err(InquireError::OperationCanceled).wrap_err("Cancelled picking Map".to_string())
 }
 
 pub fn get_map_id_from_from_default_profile(error_str: &str) -> Result<i32, eyre::Report> {
@@ -76,7 +77,7 @@ pub fn get_map_id_from_pick_profile(
 ) -> Result<i32, eyre::Report> {
     let profile_list = db::get_profile_display_list()?;
     if profile_list.is_empty() {
-        return Err(eyre::eyre!("There are no profiles to select from."));
+        return Err(eyre::eyre!("There are no profiles to select from"));
     }
 
     let profile_selection = inquire::Select::new(option_str, profile_list)
@@ -85,17 +86,16 @@ pub fn get_map_id_from_pick_profile(
 
     if let Some(profile) = profile_selection {
         let map_id = pick_from_map_from_profile_map_ids(profile.map_ids)?;
-
         return Ok(map_id);
     }
 
-    Err(eyre::eyre!(error_str.to_string()))
+    Err(InquireError::OperationCanceled).wrap_err(error_str.to_string())
 }
 
 pub fn get_map_id_from_pick_map(option_text: &str, error_str: &str) -> Result<i32, eyre::Report> {
     let map_list = db::get_maps()?;
     if map_list.is_empty() {
-        return Err(eyre::eyre!("There are no Maps to select from."));
+        return Err(eyre::eyre!("There are no Maps to select from"));
     }
 
     let map_selection = inquire::Select::new(option_text, map_list)
@@ -106,7 +106,7 @@ pub fn get_map_id_from_pick_map(option_text: &str, error_str: &str) -> Result<i3
         return Ok(map.id);
     }
 
-    Err(eyre::eyre!(error_str.to_string()))
+    Err(InquireError::OperationCanceled).wrap_err(error_str.to_string())
 }
 
 pub fn get_map_selection(
@@ -168,8 +168,7 @@ pub fn get_map_selection(
 
             let confirm = inquire::Confirm::new("Are you happy with this order?")
                 .with_default(true)
-                .prompt()
-                .unwrap();
+                .prompt()?;
 
             if confirm {
                 if ordered_items.len() < 5 {

@@ -46,7 +46,7 @@ pub fn update_config_file() -> Result<String, eyre::Error> {
             if paths::file_exists(input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid("Config File does not exist.".into()))
+                Ok(Validation::Invalid("Config File does not exist".into()))
             }
         })
         .with_default(&play_settings.config_file.unwrap_or("".to_string()))
@@ -61,8 +61,7 @@ pub fn update_fast_monsters() -> Result<String, eyre::Error> {
     let mut play_settings = db::get_play_settings()?;
     play_settings.fast_monsters = inquire::Confirm::new("Enable Fast Monsters?")
         .with_default(play_settings.fast_monsters)
-        .prompt()
-        .unwrap();
+        .prompt()?;
     db::save_play_settings(play_settings)?;
 
     Ok("Successfully updated Fast Monsters".green().to_string())
@@ -72,8 +71,7 @@ pub fn update_no_monsters() -> Result<String, eyre::Error> {
     let mut play_settings = db::get_play_settings()?;
     play_settings.no_monsters = inquire::Confirm::new("Enable No Monsters?")
         .with_default(play_settings.no_monsters)
-        .prompt()
-        .unwrap();
+        .prompt()?;
     db::save_play_settings(play_settings)?;
 
     Ok("Successfully updated No Monsters".green().to_string())
@@ -83,8 +81,7 @@ pub fn update_respawn_monsters() -> Result<String, eyre::Error> {
     let mut play_settings = db::get_play_settings()?;
     play_settings.respawn_monsters = inquire::Confirm::new("Enable Respawn Monsters?")
         .with_default(play_settings.respawn_monsters)
-        .prompt()
-        .unwrap();
+        .prompt()?;
     db::save_play_settings(play_settings)?;
 
     Ok("Successfully updated Respawn Monsters".green().to_string())
@@ -110,14 +107,13 @@ pub fn update_skill() -> Result<String, eyre::Error> {
                 Ok(Validation::Valid)
             } else {
                 Ok(Validation::Invalid(
-                    "Skill is not within the range [1-5].".into(),
+                    "Skill is not within the range [1-5]".into(),
                 ))
             }
         })
         .with_default(play_settings.skill.unwrap_or(4))
         .with_help_message("Range is 1 to 5")
-        .prompt_skippable()
-        .unwrap();
+        .prompt_skippable()?;
 
     db::save_play_settings(play_settings)?;
     Ok("Successfully updated Skill".green().to_string())
@@ -131,13 +127,12 @@ pub fn update_turbo() -> Result<String, eyre::Error> {
             if (&50..=&255).contains(&input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid("Turbo is not within the range.".into()))
+                Ok(Validation::Invalid("Turbo is not within the range".into()))
             }
         })
         .with_default(play_settings.turbo.unwrap_or(255))
         .with_help_message("Range is 10 to 255")
-        .prompt_skippable()
-        .unwrap();
+        .prompt_skippable()?;
 
     db::save_play_settings(play_settings)?;
     Ok("Successfully updated Turbo".green().to_string())
@@ -151,13 +146,12 @@ pub fn update_timer() -> Result<String, eyre::Error> {
             if (&1..=&43800).contains(&input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid("Timer is not within the range.".into()))
+                Ok(Validation::Invalid("Timer is not within the range".into()))
             }
         })
         .with_default(play_settings.timer.unwrap_or(10))
         .with_help_message("Range is 1 to 43800")
-        .prompt_skippable()
-        .unwrap();
+        .prompt_skippable()?;
 
     db::save_play_settings(play_settings)?;
     Ok("Successfully updated Timer".green().to_string())
@@ -171,15 +165,12 @@ pub fn update_height() -> Result<String, eyre::Error> {
             if (&1..=&10240).contains(&input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid(
-                    "Height is not within the range.".into(),
-                ))
+                Ok(Validation::Invalid("Height is not within the range".into()))
             }
         })
         .with_default(play_settings.height.unwrap_or(768))
         .with_help_message("Range is 1 to 10240")
-        .prompt_skippable()
-        .unwrap();
+        .prompt_skippable()?;
 
     db::save_play_settings(play_settings)?;
     Ok("Successfully updated Height".green().to_string())
@@ -193,13 +184,12 @@ pub fn update_width() -> Result<String, eyre::Error> {
             if (&1..=&2880).contains(&input) {
                 Ok(Validation::Valid)
             } else {
-                Ok(Validation::Invalid("Width is not within the range.".into()))
+                Ok(Validation::Invalid("Width is not within the range".into()))
             }
         })
         .with_default(play_settings.width.unwrap_or(1024))
         .with_help_message("Range is 1 to 2880")
-        .prompt_skippable()
-        .unwrap();
+        .prompt_skippable()?;
 
     db::save_play_settings(play_settings)?;
     Ok("Successfully updated Width".green().to_string())
@@ -209,8 +199,7 @@ pub fn update_full_screen() -> Result<String, eyre::Error> {
     let mut play_settings = db::get_play_settings()?;
     play_settings.full_screen = inquire::Confirm::new("Enable Full Screen?")
         .with_default(play_settings.full_screen)
-        .prompt()
-        .unwrap();
+        .prompt()?;
     db::save_play_settings(play_settings)?;
 
     Ok("Successfully updated Fast Monsters".green().to_string())
@@ -220,8 +209,7 @@ pub fn update_windowed() -> Result<String, eyre::Error> {
     let mut play_settings = db::get_play_settings()?;
     play_settings.windowed = inquire::Confirm::new("Enable Windowed Mode?")
         .with_default(play_settings.windowed)
-        .prompt()
-        .unwrap();
+        .prompt()?;
     db::save_play_settings(play_settings)?;
 
     Ok("Successfully updated Windowed Mode".green().to_string())
@@ -242,8 +230,7 @@ pub fn update_additional_arguments() -> Result<String, eyre::Error> {
 pub fn reset_play_settings() -> Result<String, eyre::Error> {
     if inquire::Confirm::new("Are you sure you want to Reset your Play Settings?")
         .with_default(false)
-        .prompt()
-        .unwrap()
+        .prompt()?
     {
         let play_settings = db::get_play_settings()?;
         let new_play_settings = data::PlaySettings {
@@ -253,6 +240,6 @@ pub fn reset_play_settings() -> Result<String, eyre::Error> {
         db::save_play_settings(new_play_settings)?;
         Ok("Successfully Reset Play Settings".green().to_string())
     } else {
-        Ok("Reset Play Settings not confirmed.".to_string())
+        Ok("Reset Play Settings not confirmed".to_string())
     }
 }

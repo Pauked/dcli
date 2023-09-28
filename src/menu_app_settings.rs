@@ -3,7 +3,7 @@ use std::path::Path;
 use color_eyre::{eyre, owo_colors::OwoColorize};
 use colored::Colorize;
 use eyre::Context;
-use inquire::validator::Validation;
+use inquire::{validator::Validation, InquireError};
 use log::{debug, info};
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
@@ -15,7 +15,7 @@ use crate::{
 pub fn check_app_can_run(force: bool) -> Result<String, eyre::Report> {
     db::create_db()?;
     if !force && db::is_empty_app_settings_table()? {
-        info!("{}", "No app settings found, running init...".red());
+        info!("{}", "No app settings found, running 'init'".red());
         init()?;
     }
     Ok("App is ready to run".to_string())
@@ -52,7 +52,7 @@ pub fn init() -> Result<String, eyre::Report> {
     db::create_db()?;
     let mut app_settings = db::get_app_settings()?;
 
-    info!("We'll ask you some questions, and then you'll be ready to go.");
+    info!("We'll ask you some questions, and then you'll be ready to go");
 
     let engine_search_folder = init_engines(
         &app_settings.engine_search_folder.unwrap_or("".to_string()),
@@ -145,7 +145,7 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
                 if paths::folder_exists(input) {
                     Ok(Validation::Valid)
                 } else {
-                    Ok(Validation::Invalid("Folder does not exist.".into()))
+                    Ok(Validation::Invalid("Folder does not exist".into()))
                 }
             })
             .with_default(default_folder)
@@ -279,7 +279,7 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
                 if paths::folder_exists(input) {
                     Ok(Validation::Valid)
                 } else {
-                    Ok(Validation::Invalid("Folder does not exist.".into()))
+                    Ok(Validation::Invalid("Folder does not exist".into()))
                 }
             })
             .with_default(default_folder)
@@ -512,20 +512,21 @@ pub fn list_app_settings() -> Result<String, eyre::Report> {
 
 pub fn reset(force: bool) -> Result<String, eyre::Report> {
     if !db::database_exists() {
-        return Ok("Database does not exist. Nothing to reset".to_string());
+        return Ok("Database does not exist. Nothing to reset"
+            .yellow()
+            .to_string());
     }
 
     // Prompt the user for confirmation the reset, unless force is set
     if force
         || inquire::Confirm::new("Do you want to reset the database? All data will be deleted")
             .with_default(false)
-            .prompt()
-            .unwrap()
+            .prompt()?
     {
         db::reset_db().wrap_err("Failed to reset database")?;
         Ok("Successfully reset database".green().to_string())
     } else {
-        Ok("Database reset not confirmed".to_string())
+        Err(InquireError::OperationCanceled).wrap_err("Database reset not confirmed".to_string())
     }
 }
 
@@ -533,7 +534,7 @@ pub fn set_default_engine() -> Result<String, eyre::Report> {
     let engine_list = db::get_engines()?;
     if engine_list.is_empty() {
         return Ok(
-            "Cannot set Default Engine. There are no Engines found. Please add one."
+            "Cannot set Default Engine. There are no Engines found. Please add one"
                 .red()
                 .to_string(),
         );
@@ -564,7 +565,7 @@ pub fn set_default_iwad() -> Result<String, eyre::Report> {
     let iwad_list = db::get_iwads()?;
     if iwad_list.is_empty() {
         return Ok(
-            "Cannot set Default IWAD. There are no IWADs found. Please add one."
+            "Cannot set Default IWAD. There are no IWADs found. Please add one"
                 .red()
                 .to_string(),
         );
@@ -610,7 +611,9 @@ pub fn remove_profile_from_app_settings(profile_id: i32) -> Result<String, eyre:
     }
     if default_profile_tidied || last_profile_tidied {
         db::save_app_settings(app_settings).wrap_err("Failed to remove Default Profile")?;
-        return Ok("Successfully removed Profile from App Settings".to_string());
+        return Ok("Successfully removed Profile from App Settings"
+            .green()
+            .to_string());
     }
 
     Ok("".to_string())
@@ -622,7 +625,9 @@ fn remove_engine_from_app_settings(engine_id: i32) -> Result<String, eyre::Repor
         if id == engine_id {
             app_settings.default_engine_id = None;
             db::save_app_settings(app_settings).wrap_err("Failed to remove Default Engine")?;
-            return Ok("Successfully removed Engine from App Settings".to_string());
+            return Ok("Successfully removed Engine from App Settings"
+                .green()
+                .to_string());
         }
     }
 
@@ -635,7 +640,9 @@ fn remove_iwad_from_app_settings(iwad_id: i32) -> Result<String, eyre::Report> {
         if id == iwad_id {
             app_settings.default_iwad_id = None;
             db::save_app_settings(app_settings).wrap_err("Failed to remove Default IWAD")?;
-            return Ok("Successfully removed IWAD from App Settings".to_string());
+            return Ok("Successfully removed IWAD from App Settings"
+                .green()
+                .to_string());
         }
     }
 
@@ -648,7 +655,9 @@ pub fn remove_editor_from_app_settings(editor_id: i32) -> Result<String, eyre::R
         if id == editor_id {
             app_settings.default_editor_id = None;
             db::save_app_settings(app_settings).wrap_err("Failed to remove Default Editor")?;
-            return Ok("Successfully removed Editor from App Settings".to_string());
+            return Ok("Successfully removed Editor from App Settings"
+                .green()
+                .to_string());
         }
     }
 
