@@ -1,6 +1,8 @@
 # DCLI v0.3.5
 [/] Make menus less crashy if user aborts
 [/] Write Readme in repo root
+[/] Test script Windows (CLI usage)
+[ ] Test script MacOS
 [x] Block deleting of Engine/IWAD/Map if linked in Profiles.
 [ ] Option to delete Maps (multi select?)
 [ ] Option to delete Engines
@@ -8,11 +10,20 @@
 [x] Args to run init
 [x] Args to add and delete Profiles
 [x] Rename PWADs to Maps
+[x] Set Menu Mode in App Settings
+[ ] Make message output consistent
 
 # DCLI v0.4
 [ ] Have a profile switch of "include play settings?", default to on.
+[ ] CLI for Editor
+[ ] CLI for Delete Engines/IWADs/Maps
+[ ] CLI for all App Settings
+[ ] Map Play Queue - user selected
 
-# Nice to haves
+# Future Dev / Nice to haves
+[ ] Map Play Queue - Cacowards
+[ ] Map Play Queue - random
+[ ] Download map from Doomworld / idgames, uncompress and add to maps list
 [ ] Extend hardcoded list of engines
 [ ] Option to auto create Profiles by multi-selecting Maps and combining with Default Engine/Default IWAD
 [ ] Remember last position in a given menu!
@@ -20,12 +31,15 @@
 [ ] Define a quick access menu
 [ ] Track usage of options to generate a "most used options menu"
 [ ] Handling of savegames, ability to read information from and provide options to select
+[ ] Next iteration of dcli to be dui. Full TUI app instead of simple console app.
 
-## Savegame notes:
+## Save game notes:
  - dsda-doom - save files are .dsg. subfolder of app, dsda-doom\IWAD name\Map name
- - GzDoom - save files are .zds. Zip file containing JSON files. info.json is what I need! Folders - C:\Users\user\Saved Games\GZDoom\doom.id.doom2.tnt\
+ - GzDoom - save files are .zds. Zip file containing JSON files.
+    - info.json is what I need!
+    - Folders - C:\Users\<user>\Saved Games\GZDoom\doom.id.doom2.tnt\
 
-# Original notes
+# General notes
 Flow on first use:
  - Find/pick engines
  - Find/pick IWADS
@@ -42,7 +56,7 @@ What do I want in the config?
  - List of wads played
  - Wad profiles of engine and wad
 
- What do I want from the app?
+What do I want from the app?
  - Play last engine and wad
  - To track wads played
  - To track time played at a WAD and Engine level
@@ -51,9 +65,9 @@ What do I want in the config?
     - One based on my ordering, one based on random, one based on DoomWorld scores.
  - Be able to find and download wads from DoomWorld, etc.
 
-Orginal thoughts:
+# Orginal thoughts
 - Windows support
-- MacOs support
+- MacOS support
 - Ability to pick wad to play
 - Ability to pick engine to use
 - Ability to pick editor
