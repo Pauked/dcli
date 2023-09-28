@@ -4,9 +4,9 @@
 [x] Test script Windows (CLI usage)
 [x] Test script MacOS
 [x] Block deleting of Engine/IWAD/Map if linked in Profiles.
-[ ] Option to delete Maps (multi select?)
-[ ] Option to delete Engines
-[ ] Option to delete IWADs
+[x] Option to delete Maps via UI
+[x] Option to delete Engines
+[x] Option to delete IWADs
 [x] Args to run init
 [x] Args to add and delete Profiles
 [x] Rename PWADs to Maps
@@ -14,6 +14,7 @@
 [x] Make message output consistent (first pass)
 
 # DCLI v0.4
+[ ] On add of Editor, prompt to set default
 [ ] Have a profile switch of "include play settings?", default to on.
 [ ] CLI for Editor
 [ ] CLI for Delete Engines/IWADs/Maps
@@ -88,3 +89,5 @@ Useful links:
 https://dsdarchive.com/guides/dsda_doom
 https://www.doomworld.com/forum/topic/116534-dsda-doom-guide-usage-recording-demos-and-some-extra-info/
 https://zdoom.org/wiki/Command_line_parameters
+https://eternity.youfailit.net/wiki/List_of_command_line_parameters
+https://www.chocolate-doom.org/wiki/index.php/Command_line_arguments

@@ -1,5 +1,9 @@
 #!/bin/bash
-
+# To run the script in a terminal, type ./test_macos.sh
+#
+# If not runnable/permission denied, check permissions.
+# Use "chmod 755 test_macos.sh" to make executable.
+#
 # Test script to initialise the database with some profiles and run various commands.
 # Written for MacOS. Should run without errors.
 

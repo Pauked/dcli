@@ -29,7 +29,7 @@ $tnt_wad = "C:\Doom\Maps\Final Doom\Tnt.wad"
 & $dcli_path add-profile "Ancient Aliens" $dsda_doom_path $doom2_wad --maps  "aaliens.wad"
 & $dcli_path add-profile "Sigil" $dsda_doom_path $doom_wad --maps SIGIL_v1_21.wad,SIGIL_SHREDS.wad
 & $dcli_path add-profile "TNT: Revilution" $dsda_doom_path $tnt_wad --maps  "tntr.wad" --args " -deh C:\Doom\Maps\Tntr\tntr.deh"
-& $dcli_path add-profile "Heartland" $ee_path $doom2_wad --maps "heartland.pke"
+& $dcli_path add-profile "Heartland" $ee_path $doom2_wad --maps "heartland.pke" --args " -loadgame 7"
 & $dcli_path add-profile "RAMP 2021" $gzdoom_path $doom2_wad --maps ramp.pk3 --args " -loadgame save03.zds"
 & $dcli_path add-profile "UAC Ultra" $dsda_doom_path $doom2_wad --maps  "uacultra.wad"
 
