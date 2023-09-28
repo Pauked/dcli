@@ -11,6 +11,8 @@ use indicatif::{ProgressBar, ProgressStyle};
 use log::{debug, error};
 use walkdir::WalkDir;
 
+use crate::constants;
+
 pub fn get_current_exe() -> String {
     let exe_result = env::current_exe();
     match exe_result {
@@ -24,14 +26,29 @@ pub fn get_current_exe() -> String {
     String::new()
 }
 
+pub fn resolve_path(folder_path: &str) -> String {
+    if env::consts::OS == constants::OS_MACOS && folder_path.starts_with("~/") {
+        if let Some(home) = dirs::home_dir() {
+            // Replace ~ with the home directory
+            return folder_path.replacen('~', &home.to_string_lossy(), 1);
+        }
+    }
+
+    folder_path.to_string()
+}
+
+pub fn resolve_path_opt(folder_path: Option<String>) -> Option<String> {
+    folder_path.map(|path| resolve_path(&path))
+}
+
 pub fn folder_exists(folder_path: &str) -> bool {
     let path = Path::new(folder_path);
-    path.is_dir()
+    path.exists() && path.is_dir()
 }
 
 pub fn file_exists(file_path: &str) -> bool {
     let path = Path::new(file_path);
-    path.is_file()
+    path.exists() && path.is_file()
 }
 
 pub fn extract_path(full_path: &str) -> String {

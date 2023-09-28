@@ -1,8 +1,8 @@
 # DCLI v0.3.5
 [x] Make menus less crashy if user aborts (first pass)
 [/] Write Readme in repo root
-[/] Test script Windows (CLI usage)
-[ ] Test script MacOS
+[x] Test script Windows (CLI usage)
+[x] Test script MacOS
 [x] Block deleting of Engine/IWAD/Map if linked in Profiles.
 [ ] Option to delete Maps (multi select?)
 [ ] Option to delete Engines

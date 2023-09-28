@@ -89,19 +89,19 @@ pub fn init() -> Result<String, eyre::Report> {
 }
 
 pub fn cli_init(
-    engine_path: String,
-    iwad_path: String,
+    engine_path: &str,
+    iwad_path: &str,
     map_path: Option<String>,
     force: bool,
 ) -> Result<String, eyre::Report> {
     // Check the paths exist
-    if !paths::folder_exists(&engine_path) {
+    if !paths::folder_exists(engine_path) {
         return Err(eyre::eyre!(format!(
             "Engine path does not exist: {}",
             engine_path
         )));
     }
-    if !paths::folder_exists(&iwad_path) {
+    if !paths::folder_exists(iwad_path) {
         return Err(eyre::eyre!(format!(
             "IWAD path does not exist: {}",
             iwad_path
@@ -117,13 +117,13 @@ pub fn cli_init(
     // If Map is None then set to Iwad path
     let updated_map_path = match map_path {
         Some(path) => path,
-        None => iwad_path.clone(),
+        None => iwad_path.to_string(),
     };
 
     // Run individual init functions, need to amend to have a force/override option
     //  Force will skip any dialogs and will select all found files
-    let engine_search_folder = init_engines(&engine_path, force)?;
-    let iwad_search_folder = init_iwads(&iwad_path, force)?;
+    let engine_search_folder = init_engines(engine_path, force)?;
+    let iwad_search_folder = init_iwads(iwad_path, force)?;
     let map_search_folder = init_maps(&updated_map_path, force)?;
 
     // Update app_settings
@@ -140,16 +140,17 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
     let engine_search_folder: String = if force {
         default_folder.to_string()
     } else {
-        inquire::Text::new("Folder to search for Engines:")
+        let path = inquire::Text::new("Folder to search for Engines:")
             .with_validator(|input: &str| {
-                if paths::folder_exists(input) {
+                if paths::folder_exists(&paths::resolve_path(input)) {
                     Ok(Validation::Valid)
                 } else {
                     Ok(Validation::Invalid("Folder does not exist".into()))
                 }
             })
             .with_default(default_folder)
-            .prompt()?
+            .prompt()?;
+        paths::resolve_path(&path)
     };
 
     // TODO: User filter for exists (what do you want to search for?)
@@ -274,16 +275,17 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
     let iwad_search_folder: String = if force {
         default_folder.to_string()
     } else {
-        inquire::Text::new("Folder to search for IWADs (Internal WAD files):")
+        let path = inquire::Text::new("Folder to search for IWADs (Internal WAD files):")
             .with_validator(|input: &str| {
-                if paths::folder_exists(input) {
+                if paths::folder_exists(&paths::resolve_path(input)) {
                     Ok(Validation::Valid)
                 } else {
                     Ok(Validation::Invalid("Folder does not exist".into()))
                 }
             })
             .with_default(default_folder)
-            .prompt()?
+            .prompt()?;
+        paths::resolve_path(&path)
     };
 
     // TODO: User filter for exists (what do you want to search for?)
@@ -389,16 +391,17 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
     let map_search_folder: String = if force {
         default_folder.to_string()
     } else {
-        inquire::Text::new("Folder to search for Maps:")
+        let paths = inquire::Text::new("Folder to search for Maps:")
             .with_validator(|input: &str| {
-                if paths::folder_exists(input) {
+                if paths::folder_exists(&paths::resolve_path(input)) {
                     Ok(Validation::Valid)
                 } else {
                     Ok(Validation::Invalid("Folder does not exist".into()))
                 }
             })
             .with_default(default_folder)
-            .prompt()?
+            .prompt()?;
+        paths::resolve_path(&paths)
     };
 
     let maps = paths::find_files_with_extensions_in_folders(

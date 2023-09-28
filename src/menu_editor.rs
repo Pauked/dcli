@@ -126,16 +126,19 @@ pub fn add_editor() -> Result<String, eyre::Report> {
         .with_help_message("Just the file name, not the full path. E.g. 'builder.exe'")
         .prompt()?;
 
-    let editor_search_folder: String = inquire::Text::new("Folder to search for Editor:")
-        .with_validator(|input: &str| {
-            if paths::folder_exists(input) {
-                Ok(Validation::Valid)
-            } else {
-                Ok(Validation::Invalid("Folder does not exist".into()))
-            }
-        })
-        .with_default(&default_folder)
-        .prompt()?;
+    let editor_search_folder: String = {
+        let path = inquire::Text::new("Folder to search for Editor:")
+            .with_validator(|input: &str| {
+                if paths::folder_exists(&paths::resolve_path(input)) {
+                    Ok(Validation::Valid)
+                } else {
+                    Ok(Validation::Invalid("Folder does not exist".into()))
+                }
+            })
+            .with_default(&default_folder)
+            .prompt()?;
+        paths::resolve_path(&path)
+    };
 
     let editors = paths::find_file_in_folders(&editor_search_folder, vec![&editor_executable_name]);
     if editors.is_empty() {

@@ -2,7 +2,7 @@ use clap::{Parser, ValueEnum};
 use log::debug;
 
 use crate::{
-    constants, data, menu_app_settings, menu_editor, menu_profiles,
+    constants, data, menu_app_settings, menu_editor, menu_profiles, paths,
     tui::{self, MenuCommand},
 };
 
@@ -160,7 +160,12 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                     engine_path, iwad_path, map_path, force
                 );
                 Ok((
-                    menu_app_settings::cli_init(engine_path, iwad_path, map_path, force)?,
+                    menu_app_settings::cli_init(
+                        &paths::resolve_path(&engine_path),
+                        &paths::resolve_path(&iwad_path),
+                        paths::resolve_path_opt(map_path),
+                        force,
+                    )?,
                     CliRunMode::Quit,
                 ))
             }
@@ -201,7 +206,13 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                     name, engine, iwad, maps, args
                 );
                 Ok((
-                    menu_profiles::cli_new_profile(&name, &engine, &iwad, maps, args)?,
+                    menu_profiles::cli_new_profile(
+                        &name,
+                        &paths::resolve_path(&engine),
+                        &paths::resolve_path(&iwad),
+                        maps,
+                        args,
+                    )?,
                     CliRunMode::Quit,
                 ))
             }

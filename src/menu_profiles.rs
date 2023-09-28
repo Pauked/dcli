@@ -144,7 +144,10 @@ pub fn cli_new_profile(
 
     let engine_selection = match engines
         .iter()
-        .find(|&x| x.path.to_lowercase() == engine.to_lowercase())
+        // TODO: This was the original engine check. Full string match.
+        //       Changed to starts_with() to allow for MacOS quirks (see internal_path of GameEngine)
+        //.find(|&x| x.path.to_lowercase() == engine.to_lowercase())
+        .find(|&x| x.path.to_lowercase().starts_with(&engine.to_lowercase()))
     {
         Some(engine) => engine,
         None => {
