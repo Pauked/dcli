@@ -96,6 +96,12 @@ pub enum Action {
         #[arg(long, default_value = "false")]
         force: bool,
     },
+
+    AppSettings {
+        /// Menu mode
+        #[clap(value_enum, long)]
+        menu_mode: tui::MenuMode,
+    },
 }
 
 #[derive(ValueEnum, Clone, Debug, PartialEq)]
@@ -153,8 +159,10 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                     "Init engine_path '{}', iwad_path '{}', map_path '{:?}', force '{}'",
                     engine_path, iwad_path, map_path, force
                 );
-                let result = menu_app_settings::cli_init(engine_path, iwad_path, map_path, force)?;
-                Ok((result, CliRunMode::Quit))
+                Ok((
+                    menu_app_settings::cli_init(engine_path, iwad_path, map_path, force)?,
+                    CliRunMode::Quit,
+                ))
             }
             Action::Reset { force } => {
                 let result = tui::run_menu_command_with_force(MenuCommand::Reset, force)?;
@@ -192,13 +200,19 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                     "AddProfile: name '{}', engine '{}', iwad '{}', maps '{:?}', args '{:?}'",
                     name, engine, iwad, maps, args
                 );
-                let result = menu_profiles::cli_new_profile(&name, &engine, &iwad, maps, args)?;
-                Ok((result, CliRunMode::Quit))
+                Ok((
+                    menu_profiles::cli_new_profile(&name, &engine, &iwad, maps, args)?,
+                    CliRunMode::Quit,
+                ))
             }
-            Action::DeleteProfile { name, force } => {
-                let result = menu_profiles::cli_delete_profile(&name, force)?;
-                Ok((result, CliRunMode::Quit))
-            }
+            Action::DeleteProfile { name, force } => Ok((
+                menu_profiles::cli_delete_profile(&name, force)?,
+                CliRunMode::Quit,
+            )),
+            Action::AppSettings { menu_mode } => Ok((
+                menu_app_settings::cli_update_menu_mode(menu_mode)?,
+                CliRunMode::Quit,
+            )),
         }
     } else {
         Ok((

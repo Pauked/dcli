@@ -33,6 +33,21 @@ pub fn update_menu_mode() -> Result<String, eyre::Report> {
     Ok(format!("Menu mode set to: {}", app_settings.menu_mode))
 }
 
+pub fn cli_update_menu_mode(menu_mode: tui::MenuMode) -> Result<String, eyre::Report> {
+    let mut app_settings = db::get_app_settings()?;
+
+    if app_settings.menu_mode == menu_mode {
+        return Ok(format!(
+            "Menu mode is already set to: {}",
+            app_settings.menu_mode
+        ));
+    }
+
+    app_settings.menu_mode = menu_mode;
+    db::save_app_settings(app_settings.clone())?;
+    Ok(format!("Menu mode set to: {}", app_settings.menu_mode))
+}
+
 pub fn init() -> Result<String, eyre::Report> {
     db::create_db()?;
     let mut app_settings = db::get_app_settings()?;

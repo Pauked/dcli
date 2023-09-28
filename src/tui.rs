@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use clap::ValueEnum;
 use colored::Colorize;
 use log::error;
 use log::info;
@@ -30,7 +31,7 @@ pub enum MenuLevel {
     AppSettingsUpdate,
 }
 
-#[derive(Clone, Debug, PartialEq, EnumString, Display, sqlx::Type)]
+#[derive(Clone, Debug, PartialEq, EnumString, Display, sqlx::Type, ValueEnum)]
 pub enum MenuMode {
     Full,
     Simple,
