@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use inquire::validator::Validation;
 
-use crate::{constants, data, db, paths};
+use crate::{constants, data, db, paths, tui};
 
 pub fn update_comp_level() -> Result<String, eyre::Report> {
     let selections = vec![
@@ -24,6 +24,7 @@ pub fn update_comp_level() -> Result<String, eyre::Report> {
 
     let comp_level = inquire::Select::new("Select a Compatibility Level:", selections)
         .with_starting_cursor(starting_cursor)
+        .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
     if comp_level == constants::MENU_NOT_SET {

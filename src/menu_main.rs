@@ -79,6 +79,7 @@ pub fn pick_and_play_profile() -> Result<String, eyre::Report> {
         );
     }
     let profile = inquire::Select::new("Pick the Profile you want to Play:", profile_list)
+        .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt_skippable()?;
 
     match profile {

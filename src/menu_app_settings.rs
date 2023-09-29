@@ -499,8 +499,9 @@ pub fn delete_engines() -> Result<String, eyre::Report> {
         return Ok("There are no Engines to delete".to_string());
     }
 
-    let engine_selection =
-        inquire::Select::new("Pick the Engine to Delete:", engine_list).prompt_skippable()?;
+    let engine_selection = inquire::Select::new("Pick the Engine to Delete:", engine_list)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt_skippable()?;
 
     if let Some(engine) = engine_selection {
         if db::is_engine_linked_to_profiles(engine.id)? {
@@ -534,8 +535,9 @@ pub fn delete_iwads() -> Result<String, eyre::Report> {
         return Ok("There are no IWADs to delete".to_string());
     }
 
-    let iwad_selection =
-        inquire::Select::new("Pick the IWAD to Delete:", iwad_list).prompt_skippable()?;
+    let iwad_selection = inquire::Select::new("Pick the IWAD to Delete:", iwad_list)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt_skippable()?;
 
     if let Some(iwad) = iwad_selection {
         if db::is_iwad_linked_to_profiles(iwad.id)? {
@@ -568,8 +570,9 @@ pub fn delete_maps() -> Result<String, eyre::Report> {
         return Ok("There are no Maps to delete".to_string());
     }
 
-    let map_selection =
-        inquire::Select::new("Pick the Map to Delete:", map_list).prompt_skippable()?;
+    let map_selection = inquire::Select::new("Pick the Map to Delete:", map_list)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt_skippable()?;
 
     if let Some(map) = map_selection {
         if db::is_map_linked_to_profiles(map.id)? {

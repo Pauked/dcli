@@ -150,10 +150,12 @@ pub fn get_map_selection(
             let mut temp_items = unwrapped_selected_items.clone();
 
             for i in 0..temp_items.len() {
+                // FIXME: Could ESC from here and get a crash
                 let selected = inquire::Select::new(
                     &format!("Pick Map #{} from your selected Maps:", i + 1),
                     temp_items.clone(),
                 )
+                .with_page_size(tui::MENU_PAGE_SIZE)
                 .prompt()
                 .unwrap();
 

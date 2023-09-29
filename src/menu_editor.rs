@@ -242,8 +242,9 @@ pub fn delete_editor() -> Result<String, eyre::Report> {
         return Ok("There are no Editors to delete".to_string());
     }
 
-    let editor_selection =
-        inquire::Select::new("Pick the Editor to Delete:", editor_list).prompt_skippable()?;
+    let editor_selection = inquire::Select::new("Pick the Editor to Delete:", editor_list)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt_skippable()?;
 
     if let Some(editor) = editor_selection {
         if inquire::Confirm::new(&format!(

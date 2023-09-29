@@ -387,8 +387,9 @@ pub fn delete_profile() -> Result<String, eyre::Report> {
         return Ok("There are no Profiles to delete".to_string());
     }
 
-    let profile_selection =
-        inquire::Select::new("Pick the Profile to Delete:", profile_list).prompt_skippable()?;
+    let profile_selection = inquire::Select::new("Pick the Profile to Delete:", profile_list)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt_skippable()?;
 
     if let Some(profile) = profile_selection {
         delete_profile_core(profile.id, &profile.name, false)
