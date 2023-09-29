@@ -21,7 +21,7 @@ $tnt_wad = "C:\Doom\Maps\Final Doom\Tnt.wad"
 & $dcli_path init "C:\Doom\Apps" "C:\Doom\Maps\" "C:\Doom\Maps\" --force
 
 # Change menu mode
-& $dcli_path app-settings --menu-mode full
+& $dcli_path set-app-settings --menu-mode full
 
 # Add individual profiles
 & $dcli_path add-profile "Classic Doom" $dsda_doom_path $doom_wad
@@ -33,5 +33,11 @@ $tnt_wad = "C:\Doom\Maps\Final Doom\Tnt.wad"
 & $dcli_path add-profile "RAMP 2021" $gzdoom_path $doom2_wad --maps ramp.pk3 --args " -loadgame save03.zds"
 & $dcli_path add-profile "UAC Ultra" $dsda_doom_path $doom2_wad --maps  "uacultra.wad"
 
+# Set defaults
+& $dcli_path set-default --engine $dsda_doom_path
+& $dcli_path set-default --iwad $doom2_wad
+& $dcli_path set-default --profile "Sigil"
+
 # Show what we added
 & $dcli_path list profiles
+& $dcli_path list app-settings

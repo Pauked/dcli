@@ -97,10 +97,28 @@ pub enum Action {
         force: bool,
     },
 
-    AppSettings {
+    SetAppSettings {
         /// Menu mode
         #[clap(value_enum, long)]
         menu_mode: tui::MenuMode,
+    },
+
+    SetDefault {
+        /// Engine path
+        #[arg(long)]
+        engine: Option<String>,
+
+        /// IWAD path
+        #[arg(long)]
+        iwad: Option<String>,
+
+        /// Profile name
+        #[arg(long)]
+        profile: Option<String>,
+
+        /// Editor path
+        #[arg(long)]
+        editor: Option<String>,
     },
 }
 
@@ -220,10 +238,40 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                 menu_profiles::cli_delete_profile(&name, force)?,
                 CliRunMode::Quit,
             )),
-            Action::AppSettings { menu_mode } => Ok((
+            Action::SetAppSettings { menu_mode } => Ok((
                 menu_app_settings::cli_update_menu_mode(menu_mode)?,
                 CliRunMode::Quit,
             )),
+            Action::SetDefault {
+                engine,
+                iwad,
+                profile,
+                editor,
+            } => {
+                if let Some(engine) = engine {
+                    Ok((
+                        menu_app_settings::cli_set_default_engine(&paths::resolve_path(&engine))?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(iwad) = iwad {
+                    Ok((
+                        menu_app_settings::cli_set_default_iwad(&paths::resolve_path(&iwad))?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(profile) = profile {
+                    Ok((
+                        menu_profiles::cli_set_default_profile(&profile)?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(editor) = editor {
+                    Ok((
+                        menu_editor::cli_set_default_editor(&paths::resolve_path(&editor))?,
+                        CliRunMode::Quit,
+                    ))
+                } else {
+                    Ok(("No arguments specified".to_string(), CliRunMode::Quit))
+                }
+            }
         }
     } else {
         Ok((

@@ -264,3 +264,12 @@ pub fn delete_editor() -> Result<String, eyre::Report> {
 
     Ok("Canceled Editor deletion".to_string())
 }
+
+pub fn cli_set_default_editor(path: &str) -> Result<String, eyre::Report> {
+    let editor = db::get_editor_by_path(path)?;
+
+    let mut app_settings = db::get_app_settings()?;
+    app_settings.default_editor_id = Some(editor.id);
+    db::save_app_settings(app_settings)?;
+    Ok(format!("Successfully set Editor '{}' as Default", editor))
+}

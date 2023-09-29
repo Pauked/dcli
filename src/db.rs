@@ -146,6 +146,19 @@ pub fn get_engine_by_id(id: i32) -> Result<data::Engine, eyre::Report> {
     })
 }
 
+pub fn get_engine_by_path(path: &str) -> Result<data::Engine, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query_as::<_, data::Engine>("SELECT * FROM engines WHERE path = $1 COLLATE NOCASE")
+            .bind(path.to_lowercase())
+            .fetch_one(&db)
+            .await
+            .wrap_err(format!("Failed to get engine with path '{}'", path))
+    })
+}
+
 pub fn is_engine_linked_to_profiles(id: i32) -> Result<bool, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
@@ -210,6 +223,19 @@ pub fn get_iwad_by_id(id: i32) -> Result<data::Iwad, eyre::Report> {
             .fetch_one(&db)
             .await
             .wrap_err(format!("Failed to get internal wad with id '{}'", id))
+    })
+}
+
+pub fn get_iwad_by_path(path: &str) -> Result<data::Iwad, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query_as::<_, data::Iwad>("SELECT * FROM iwads WHERE path = $1 COLLATE NOCASE")
+            .bind(path.to_lowercase())
+            .fetch_one(&db)
+            .await
+            .wrap_err(format!("Failed to get IWAD with path '{}'", path))
     })
 }
 
@@ -893,7 +919,7 @@ pub fn get_editors() -> Result<Vec<data::Editor>, eyre::Report> {
         sqlx::query_as::<_, data::Editor>("SELECT * FROM editors ORDER BY app_name")
             .fetch_all(&db)
             .await
-            .wrap_err("Failed to get list of all editors")
+            .wrap_err("Failed to get list of all Editors")
     })
 }
 
@@ -906,7 +932,20 @@ pub fn get_editor_by_id(id: i32) -> Result<data::Editor, eyre::Report> {
             .bind(id)
             .fetch_one(&db)
             .await
-            .wrap_err(format!("Failed to get editor with id '{}'", id))
+            .wrap_err(format!("Failed to get Editor with id '{}'", id))
+    })
+}
+
+pub fn get_editor_by_path(path: &str) -> Result<data::Editor, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query_as::<_, data::Editor>("SELECT * FROM editors WHERE path = $1 COLLATE NOCASE")
+            .bind(path.to_lowercase())
+            .fetch_one(&db)
+            .await
+            .wrap_err(format!("Failed to get Editor with path '{}'", path))
     })
 }
 

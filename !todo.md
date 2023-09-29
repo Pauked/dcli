@@ -12,14 +12,19 @@
 [x] Rename PWADs to Maps
 [x] Set Menu Mode in App Settings
 [x] Make message output consistent (first pass)
+[x] CLI Set Default Engine, IWAD, Profile, Editor
+[x] Improve App Settings Listing so that it's a two column display
 
 # DCLI v0.4
 [ ] On add of Editor, prompt to set default
 [ ] Have a profile switch of "include play settings?", default to on.
+[ ] CLI for Profile
 [ ] CLI for Editor
 [ ] CLI for Delete Engines/IWADs/Maps
 [ ] CLI for all App Settings
+[ ] CLI for Play Settings
 [ ] Map Play Queue - user selected
+[ ] List of Profiles highlights Default and Last Played
 
 # Future Dev / Nice to haves
 [ ] Map Play Queue - Cacowards

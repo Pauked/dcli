@@ -25,7 +25,7 @@ $dcli_path reset --force
 $dcli_path init "~/Dropbox/Games/Doom/Apps/" "~/Dropbox/Games/Doom/Maps/" "~/Dropbox/Games/Doom/Maps/" --force
 
 # Change menu mode
-$dcli_path app-settings --menu-mode full
+$dcli_path set-app-settings --menu-mode full
 
 # Add individual profiles
 $dcli_path add-profile "Classic Doom" $gzdoom_path $doom_wad
@@ -36,5 +36,11 @@ $dcli_path add-profile "TNT: Revilution" $gzdoom_path "$tnt_wad" --maps  "tntr.w
 $dcli_path add-profile "RAMP 2021" $gzdoom_path $doom2_wad --maps ramp.pk3 --args " -loadgame save03.zds"
 $dcli_path add-profile "UAC Ultra" $gzdoom_path $doom2_wad --maps uacultra.wad
 
+# Set defaults
+$dcli_path set-default --engine $gzdoom_path
+$dcli_path set-default --iwad $doom2_wad
+$dcli_path set-default --profile "Sigil"
+
 # Show what we added
 $dcli_path list profiles
+$dcli_path list app-settings

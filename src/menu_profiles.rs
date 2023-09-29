@@ -87,7 +87,7 @@ pub fn new_profile() -> Result<String, eyre::Report> {
     };
     let add_result = db::add_profile(profile.clone())?;
     let new_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
-    set_profile_as_default(new_profile_id)?;
+    set_profile_as_default(new_profile_id, &profile.name, false)?;
 
     Ok(format!(
         "Successfully created a new Profile - '{}'",
@@ -226,18 +226,35 @@ pub fn cli_new_profile(
     ))
 }
 
-pub fn set_profile_as_default(profile_id: i32) -> Result<String, eyre::Report> {
-    if inquire::Confirm::new("Would you like to set this as your Default Profile?")
-        .with_default(false)
-        .prompt()?
+pub fn set_profile_as_default(
+    profile_id: i32,
+    profile_name: &str,
+    force: bool,
+) -> Result<String, eyre::Report> {
+    if force
+        || inquire::Confirm::new("Would you like to set this as your Default Profile?")
+            .with_default(false)
+            .prompt()?
     {
         let mut app_settings = db::get_app_settings()?;
         app_settings.default_profile_id = Some(profile_id);
         db::save_app_settings(app_settings).wrap_err("Failed to set Default profile")?;
-        return Ok("Successfully set Profile as Default".to_string());
+        return Ok(format!(
+            "Successfully set Profile '{}' as Default",
+            profile_name
+        ));
     }
 
     Ok("No changes made to setting Profile as Default".to_string())
+}
+
+pub fn cli_set_default_profile(name: &str) -> Result<String, eyre::Report> {
+    let profile_result = db::get_profile_by_name(name);
+    if let Ok(profile) = profile_result {
+        set_profile_as_default(profile.id, &profile.name, true)
+    } else {
+        Ok(format!("Profile not found - '{}'", name))
+    }
 }
 
 pub fn edit_profile() -> Result<String, eyre::Report> {

@@ -5,7 +5,7 @@ use colored::Colorize;
 use eyre::Context;
 use inquire::{validator::Validation, InquireError};
 use log::{debug, info};
-use tabled::settings::{object::Rows, Modify, Style, Width};
+use tabled::settings::{object::Rows, Modify, Rotate, Style, Width};
 
 use crate::{
     data::{self},
@@ -637,20 +637,25 @@ pub fn list_maps() -> Result<String, eyre::Report> {
 }
 
 pub fn list_app_settings() -> Result<String, eyre::Report> {
-    let app_settings =
-        db::get_app_settings_display().wrap_err("Unable to settings listing".to_string())?;
+    let app_settings = db::get_app_settings_display()
+        .wrap_err("Unable to get App Settings listing".to_string())?;
 
+    // It should just be one record. We use Rotate Left to move the Header
+    // to be the first column. We then use Rotate Top to reorder the rows since
+    // what was the first header becomes the bottom most row after Rotate Left!
+    // (this Tabled crate is crazy!)
     let table = tabled::Table::new(vec![app_settings])
         .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
+        .with(Rotate::Left)
+        .with(Rotate::Top)
         .with(Style::modern())
         .to_string();
-    // let table = ExtendedTable::new(&vec![app_settings]).to_string();
     Ok(table)
 }
 
 pub fn reset(force: bool) -> Result<String, eyre::Report> {
     if !db::database_exists() {
-        return Ok("Canceled Rest. Database does not exist".to_string());
+        return Ok("Canceled Reset. Database does not exist".to_string());
     }
 
     // Prompt the user for confirmation the reset, unless force is set
@@ -693,6 +698,24 @@ pub fn set_default_engine() -> Result<String, eyre::Report> {
         }
         None => Ok("No changes made to setting Engine as Default".to_string()),
     }
+}
+
+pub fn cli_set_default_engine(path: &str) -> Result<String, eyre::Report> {
+    let engine = db::get_engine_by_path(path)?;
+
+    let mut app_settings = db::get_app_settings()?;
+    app_settings.default_engine_id = Some(engine.id);
+    db::save_app_settings(app_settings).wrap_err("Failed to set Default Engine")?;
+    Ok(format!("Successfully set Engine '{}' as Default", engine))
+}
+
+pub fn cli_set_default_iwad(path: &str) -> Result<String, eyre::Report> {
+    let iwad = db::get_iwad_by_path(path)?;
+
+    let mut app_settings = db::get_app_settings()?;
+    app_settings.default_iwad_id = Some(iwad.id);
+    db::save_app_settings(app_settings).wrap_err("Failed to set Default IWAD")?;
+    Ok(format!("Successfully set IWAD '{}' as Default", iwad))
 }
 
 pub fn set_default_iwad() -> Result<String, eyre::Report> {

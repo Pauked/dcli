@@ -187,7 +187,7 @@ pub type MapStrings = (String, String, String, String, String);
 pub struct ProfileDisplay {
     #[tabled(skip)]
     pub id: i32,
-    #[tabled(rename = "Name")]
+    #[tabled(rename = "Profile Name")]
     pub name: String,
     #[tabled(skip)]
     pub engine_id: i32,
