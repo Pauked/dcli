@@ -14,6 +14,8 @@
 [x] Make message output consistent (first pass)
 [x] CLI Set Default Engine, IWAD, Profile, Editor
 [x] Improve App Settings Listing so that it's a two column display
+[x] List Play Settings in UI and CLI
+[x] Expand complevels to include all complevels (excluding PrBoom+ 12-16)
 
 # DCLI v0.4
 [ ] On add of Editor, prompt to set default
@@ -90,9 +92,14 @@ What do I want from the app?
 - Built in mini-WIKI of Doom help.
     - Weapon stats, monster stats
 
-Useful links:
+# Engine links
 https://dsdarchive.com/guides/dsda_doom
 https://www.doomworld.com/forum/topic/116534-dsda-doom-guide-usage-recording-demos-and-some-extra-info/
 https://zdoom.org/wiki/Command_line_parameters
 https://eternity.youfailit.net/wiki/List_of_command_line_parameters
 https://www.chocolate-doom.org/wiki/index.php/Command_line_arguments
+https://github.com/coelckers/prboom-plus/blob/master/prboom2/doc/README.command-line
+https://doomwiki.org/wiki/Doom_Classic_Unity_port
+
+
+https://doomwiki.org/wiki/Comparison_of_source_ports

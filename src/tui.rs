@@ -20,6 +20,8 @@ use crate::menu_profiles;
 use crate::menu_view_readme;
 
 pub const MENU_PAGE_SIZE: usize = 15;
+pub const MENU_CLR: &str = "clr";
+pub const MENU_CLR_MESSAGE: &str = "clr to clear";
 
 pub enum MenuLevel {
     Main,

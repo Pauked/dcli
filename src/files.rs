@@ -69,11 +69,12 @@ pub fn get_version_from_exe_name(
     game_engine_type: doom_data::GameEngineType,
 ) -> Result<data::FileVersion, eyre::Report> {
     match game_engine_type {
-        doom_data::GameEngineType::Doom => todo!("Doom version not implemented yet!"),
         doom_data::GameEngineType::PrBoomPlus => Ok(finder::get_prboom_file_version(exe_name)?),
         doom_data::GameEngineType::GzDoom
         | doom_data::GameEngineType::CrispyDoom
-        | doom_data::GameEngineType::EternityEngine => Ok(finder::get_file_version(exe_name)?),
+        | doom_data::GameEngineType::EternityEngine
+        | doom_data::GameEngineType::DoomRetro
+        | doom_data::GameEngineType::Woof => Ok(finder::get_file_version(exe_name)?),
         doom_data::GameEngineType::Unknown => Err(eyre::eyre!("Unknown game engine type")),
     }
 }

@@ -5,7 +5,7 @@ use plist::Value;
 use powershell_script::PsScriptBuilder;
 use regex::Regex;
 
-use crate::{constants, data};
+use crate::{constants, data, paths};
 
 fn run_powershell_cmd(powershell_cmd: &str) -> Result<Vec<String>, eyre::Report> {
     if env::consts::OS != constants::OS_WINDOWS {
@@ -71,14 +71,21 @@ fn get_windows_file_version_information(
 
 fn get_windows_file_description_information(full_path: &str) -> Result<String, eyre::Report> {
     let stdout_result = run_powershell_cmd(&format!(
-        r#"(Get-Item "{}").VersionInfo | Format-List -Property FileDescription"#,
+        r#"(Get-Item "{}").VersionInfo | Format-List -Property FileDescription, ProductName"#,
         full_path
     ));
 
     match stdout_result {
         Ok(stdout_strings) => {
             let app_name = get_property_from_stdout(stdout_strings.clone(), "FileDescription :");
-            Ok(app_name)
+            if !app_name.is_empty() {
+                return Ok(app_name);
+            };
+            let app_name = get_property_from_stdout(stdout_strings, "ProductName     :");
+            if !app_name.is_empty() {
+                return Ok(app_name);
+            };
+            Ok(paths::extract_file_name(full_path).to_string())
         }
         Err(e) => Err(e),
     }

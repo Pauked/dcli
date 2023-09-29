@@ -9,15 +9,13 @@ pub const EXT_PK3: &str = "pk3";
 pub const EXT_PKE: &str = "pke";
 pub const EXT_TXT: &str = "txt";
 
-pub const GAME_FILES: [&str; 3]  = [EXT_WAD, EXT_PK3, EXT_PKE];
+pub const GAME_FILES: [&str; 3] = [EXT_WAD, EXT_PK3, EXT_PKE];
 
 pub const IWAD_IDENTIFIER: [u8; 4] = *b"IWAD";
 pub const PWAD_IDENTIFIER: [u8; 4] = *b"PWAD";
 
 #[derive(Clone, Debug, PartialEq, sqlx::Type, Display)]
 pub enum GameEngineType {
-    #[strum(serialize = "DOS Doom")]
-    Doom,
     #[strum(serialize = "GzDoom")]
     GzDoom,
     #[strum(serialize = "PrBoom+")]
@@ -26,6 +24,10 @@ pub enum GameEngineType {
     CrispyDoom,
     #[strum(serialize = "Eternity Engine")]
     EternityEngine,
+    #[strum(serialize = "Doom Retro")]
+    DoomRetro,
+    #[strum(serialize = "Woof!")]
+    Woof,
     Unknown,
 }
 
@@ -67,12 +69,6 @@ pub fn get_engine_list(operating_system: OperatingSystem) -> Vec<GameEngine> {
     // ];
     let result = vec![
         GameEngine {
-            exe_name: "doom.exe".to_string(),
-            internal_path: None,
-            game_engine_type: GameEngineType::Doom,
-            operating_system: OperatingSystem::Windows,
-        },
-        GameEngine {
             exe_name: "gzdoom.exe".to_string(),
             internal_path: None,
             game_engine_type: GameEngineType::GzDoom,
@@ -94,6 +90,18 @@ pub fn get_engine_list(operating_system: OperatingSystem) -> Vec<GameEngine> {
             exe_name: "eternity.exe".to_string(),
             internal_path: None,
             game_engine_type: GameEngineType::EternityEngine,
+            operating_system: OperatingSystem::Windows,
+        },
+        GameEngine {
+            exe_name: "doomretro.exe".to_string(),
+            internal_path: None,
+            game_engine_type: GameEngineType::DoomRetro,
+            operating_system: OperatingSystem::Windows,
+        },
+        GameEngine {
+            exe_name: "woof.exe".to_string(),
+            internal_path: None,
+            game_engine_type: GameEngineType::Woof,
             operating_system: OperatingSystem::Windows,
         },
         GameEngine {

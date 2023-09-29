@@ -2,7 +2,7 @@ use clap::{Parser, ValueEnum};
 use log::debug;
 
 use crate::{
-    constants, data, menu_app_settings, menu_editor, menu_profiles, paths,
+    constants, data, menu_app_settings, menu_editor, menu_play_settings, menu_profiles, paths,
     tui::{self, MenuCommand},
 };
 
@@ -130,6 +130,7 @@ pub enum ListData {
     Profiles,
     Editors,
     AppSettings,
+    PlaySettings,
 }
 
 pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> {
@@ -209,6 +210,7 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                     ListData::Profiles => menu_profiles::list_profiles(list_type),
                     ListData::Editors => menu_editor::list_editors(),
                     ListData::AppSettings => menu_app_settings::list_app_settings(),
+                    ListData::PlaySettings => menu_play_settings::list_play_settings(),
                 }?;
                 Ok((result, CliRunMode::Quit))
             }

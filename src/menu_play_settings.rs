@@ -1,18 +1,27 @@
 use std::str::FromStr;
 
+use eyre::Context;
 use inquire::validator::Validation;
+use tabled::settings::{object::Rows, Modify, Rotate, Style, Width};
 
 use crate::{constants, data, db, paths, tui};
 
 pub fn update_comp_level() -> Result<String, eyre::Report> {
     let selections = vec![
         constants::MENU_NOT_SET.to_string(),
-        data::CompLevel::Default.to_string(),
-        data::CompLevel::DoomAndDoom2.to_string(),
+        data::CompLevel::DoomV12.to_string(),
+        data::CompLevel::DoomV1666.to_string(),
+        data::CompLevel::DoomV19.to_string(),
         data::CompLevel::UltimateDoom.to_string(),
         data::CompLevel::FinalDoom.to_string(),
+        data::CompLevel::DosDoom.to_string(),
+        data::CompLevel::TasDoom.to_string(),
         data::CompLevel::Boom.to_string(),
+        data::CompLevel::BoomV201.to_string(),
+        data::CompLevel::BoomV202.to_string(),
+        data::CompLevel::LxDoom.to_string(),
         data::CompLevel::Mbf.to_string(),
+        data::CompLevel::PrBoomPlus.to_string(),
         data::CompLevel::Mbf21.to_string(),
     ];
 
@@ -39,20 +48,26 @@ pub fn update_comp_level() -> Result<String, eyre::Report> {
 
 pub fn update_config_file() -> Result<String, eyre::Error> {
     let mut play_settings = db::get_play_settings()?;
-    play_settings.config_file = inquire::Text::new("Enter Config File Path:")
+    let config_file = inquire::Text::new("Enter Config File Path:")
         .with_validator(|input: &str| {
-            if paths::file_exists(input) {
+            if input.to_lowercase() == tui::MENU_CLR || paths::file_exists(input) {
                 Ok(Validation::Valid)
             } else {
                 Ok(Validation::Invalid("Config File does not exist".into()))
             }
         })
-        .with_default(&play_settings.config_file.unwrap_or("".to_string()))
-        .with_help_message("Include the full path and file name")
+        .with_default(&play_settings.config_file.clone().unwrap_or("".to_string()))
+        .with_help_message(&format!(
+            "Include the full path and file name. {}",
+            tui::MENU_CLR_MESSAGE
+        ))
         .prompt_skippable()?;
+
+    play_settings.warp =
+        config_file.filter(|config_file| config_file.to_lowercase() != tui::MENU_CLR);
     db::save_play_settings(play_settings)?;
 
-    Ok("Successfully updated Warp".to_string())
+    Ok("Successfully updated Config File".to_string())
 }
 
 pub fn update_fast_monsters() -> Result<String, eyre::Error> {
@@ -87,10 +102,15 @@ pub fn update_respawn_monsters() -> Result<String, eyre::Error> {
 
 pub fn update_warp_to_level() -> Result<String, eyre::Error> {
     let mut play_settings = db::get_play_settings()?;
-    play_settings.warp = inquire::Text::new("Enter Warp value:")
+    let warp = inquire::Text::new("Enter Warp value:")
         .with_default(&play_settings.warp.unwrap_or("".to_string()))
-        .with_help_message("Typically in the format of m (1-32) or e m (1-4, 1-9)")
+        .with_help_message(&format!(
+            "Typically in the format of m (1-32) or e m (1-4, 1-9). {}",
+            tui::MENU_CLR_MESSAGE
+        ))
         .prompt_skippable()?;
+
+    play_settings.warp = warp.filter(|warp| warp.to_lowercase() != tui::MENU_CLR);
     db::save_play_settings(play_settings)?;
 
     Ok("Successfully updated Warp".to_string())
@@ -238,4 +258,17 @@ pub fn reset_play_settings() -> Result<String, eyre::Error> {
     } else {
         Ok("Reset Play Settings not confirmed".to_string())
     }
+}
+
+pub fn list_play_settings() -> Result<String, eyre::Report> {
+    let play_settings =
+        db::get_play_settings().wrap_err("Unable to get Play Settings listing".to_string())?;
+
+    let table = tabled::Table::new(vec![play_settings])
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
+        .with(Rotate::Left)
+        .with(Rotate::Top)
+        .with(Style::modern())
+        .to_string();
+    Ok(table)
 }

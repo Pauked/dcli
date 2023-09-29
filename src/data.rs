@@ -339,18 +339,32 @@ pub fn display_option_comp_level(value: &Option<CompLevel>) -> String {
 
 #[derive(Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type)]
 pub enum CompLevel {
-    #[strum(serialize = "Default (0)")]
-    Default = 0,
-    #[strum(serialize = "Doom and Doom 2 (2)")]
-    DoomAndDoom2 = 2,
+    #[strum(serialize = "Doom v1.2 (0)")]
+    DoomV12 = 0,
+    #[strum(serialize = "Doom v1.666 (1)")]
+    DoomV1666 = 1,
+    #[strum(serialize = "Doom v1.9 (2)")]
+    DoomV19 = 2,
     #[strum(serialize = "Ultimate Doom (3)")]
     UltimateDoom = 3,
-    #[strum(serialize = "Final Doom (4)")]
+    #[strum(serialize = "Final Doom & Doom95 (4)")]
     FinalDoom = 4,
-    #[strum(serialize = "Boom (9)")]
-    Boom = 9,
+    #[strum(serialize = "DOSDoom (5)")]
+    DosDoom = 5,
+    #[strum(serialize = "TASDoom (6)")]
+    TasDoom = 6,
+    #[strum(serialize = "Boom (6)")]
+    Boom = 7,
+    #[strum(serialize = "Boom v2.02 (8)")]
+    BoomV201 = 8,
+    #[strum(serialize = "Boom v2.01 (9)")]
+    BoomV202 = 9,
+    #[strum(serialize = "LxDoom (10)")]
+    LxDoom = 10,
     #[strum(serialize = "MBF (11)")]
     Mbf = 11,
+    #[strum(serialize = "PrBoom+ (17)")]
+    PrBoomPlus = 17,
     #[strum(serialize = "MBF 21 (21)")]
     Mbf21 = 21,
 }
@@ -371,22 +385,43 @@ pub enum CompLevel {
     - DSDA specific options
 */
 
-#[derive(Clone, Debug, FromRow, Default)]
+#[derive(Clone, Debug, FromRow, Default, Tabled)]
 pub struct PlaySettings {
+    #[tabled(skip)]
     pub id: i32,
+    #[tabled(
+        rename = "Compatibility Level",
+        display_with = "display_option_comp_level"
+    )]
     pub comp_level: Option<CompLevel>,
+    #[tabled(rename = "Config File", display_with = "display_option_string")]
     pub config_file: Option<String>,
+    #[tabled(rename = "Fast Monsters")]
     pub fast_monsters: bool,
+    #[tabled(rename = "No Monsters")]
     pub no_monsters: bool,
+    #[tabled(rename = "Respawn Monsters")]
     pub respawn_monsters: bool,
+    #[tabled(rename = "Warp to Level", display_with = "display_option_string")]
     pub warp: Option<String>,
+    #[tabled(rename = "Skill", display_with = "display_option_u8")]
     pub skill: Option<u8>,
+    #[tabled(rename = "Turbo", display_with = "display_option_u8")]
     pub turbo: Option<u8>,
+    #[tabled(rename = "Timer", display_with = "display_option_u32")]
     pub timer: Option<u32>,
+    #[tabled(rename = "Screen Width", display_with = "display_option_u32")]
     pub width: Option<u32>,
+    #[tabled(rename = "Screen Height", display_with = "display_option_u32")]
     pub height: Option<u32>,
+    #[tabled(rename = "Full Screen")]
     pub full_screen: bool,
+    #[tabled(rename = "Windowed")]
     pub windowed: bool,
+    #[tabled(
+        rename = "Additional Arguments",
+        display_with = "display_option_string"
+    )]
     pub additional_arguments: Option<String>,
 }
 
