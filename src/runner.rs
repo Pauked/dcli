@@ -108,8 +108,11 @@ pub fn play_from_engine_iwad_and_map(
     if play_settings.respawn_monsters {
         cmd.arg("-respawn");
     }
-    if play_settings.warp.is_some() {
-        cmd.arg("-warp").arg(play_settings.warp.unwrap());
+    if let Some(warp) = &play_settings.warp {
+        cmd.arg("-warp");
+        warp.split_whitespace().for_each(|arg| {
+            cmd.arg(arg);
+        });
     }
     if play_settings.skill.is_some() {
         cmd.arg("-skill")

@@ -18,7 +18,7 @@ $tnt_wad = "C:\Doom\Maps\Final Doom\Tnt.wad"
 & $dcli_path reset --force
 
 # Init the app
-& $dcli_path init "C:\Doom\Apps" "C:\Doom\Maps\" "C:\Doom\Maps\" --force
+& $dcli_path init "C:\Doom\Apps" "C:\Doom\Maps" "C:\Doom\Maps" --force
 
 # Change menu mode
 & $dcli_path set-app-settings --menu-mode full
@@ -28,6 +28,7 @@ $tnt_wad = "C:\Doom\Maps\Final Doom\Tnt.wad"
 & $dcli_path add-profile "Classic Doom 2" $dsda_doom_path $doom2_wad
 & $dcli_path add-profile "Ancient Aliens" $dsda_doom_path $doom2_wad --maps  "aaliens.wad"
 & $dcli_path add-profile "Sigil" $dsda_doom_path $doom_wad --maps SIGIL_v1_21.wad,SIGIL_SHREDS.wad
+& $dcli_path add-profile "Phobos Mission Control" $dsda_doom_path $doom_wad --maps e1m4b.wad --args " -warp 1 4"
 & $dcli_path add-profile "TNT: Revilution" $dsda_doom_path $tnt_wad --maps  "tntr.wad" --args " -deh C:\Doom\Maps\Tntr\tntr.deh"
 & $dcli_path add-profile "Heartland" $ee_path $doom2_wad --maps "heartland.pke" --args " -loadgame 7"
 & $dcli_path add-profile "RAMP 2021" $gzdoom_path $doom2_wad --maps ramp.pk3 --args " -loadgame save03.zds"
