@@ -355,9 +355,9 @@ pub enum CompLevel {
     TasDoom = 6,
     #[strum(serialize = "Boom (6)")]
     Boom = 7,
-    #[strum(serialize = "Boom v2.02 (8)")]
+    #[strum(serialize = "Boom v2.01 (8)")]
     BoomV201 = 8,
-    #[strum(serialize = "Boom v2.01 (9)")]
+    #[strum(serialize = "Boom v2.02 (9)")]
     BoomV202 = 9,
     #[strum(serialize = "LxDoom (10)")]
     LxDoom = 10,
