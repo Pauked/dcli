@@ -1,6 +1,7 @@
 use std::{
     env,
     ffi::OsStr,
+    path::Path,
     process::{Command, Stdio},
 };
 
@@ -50,11 +51,24 @@ pub fn play_from_engine_iwad_and_map(
     let engine = db::get_engine_by_id(engine_id)?;
     let iwad = db::get_iwad_by_id(iwad_id)?;
 
+    // For MacOS, the path is split up into the Engine path and the internal path
+    // need to merge them together in order to run the app
+    let final_engine_path: String = {
+        match engine.internal_path {
+            Some(internal_path) => Path::new(&engine.path)
+                .join(internal_path)
+                .to_str()
+                .unwrap()
+                .to_string(),
+            None => engine.path,
+        }
+    };
+
     // Pre-run checks, do the files we want to use exist?
-    if !paths::file_exists(&engine.path) {
+    if !paths::file_exists(&final_engine_path) {
         return Err(eyre::eyre!(
             "Play aborted, Engine not found - '{}'",
-            engine.path
+            final_engine_path
         ));
     }
     if !paths::file_exists(&iwad.path) {
@@ -67,7 +81,7 @@ pub fn play_from_engine_iwad_and_map(
     // TODO: Refactor to be based off selected Doom Engine config (each engine may have different arguments for the same thing)
 
     // Build up Command based on Profile settings
-    let mut cmd = Command::new(&engine.path);
+    let mut cmd = Command::new(final_engine_path.clone());
     cmd.arg("-iwad").arg(iwad.path);
 
     // Multiple Maps may be selected, so we need to add them all
@@ -145,7 +159,7 @@ pub fn play_from_engine_iwad_and_map(
     let display_args = get_display_args(&cmd);
     let run_message = format!(
         "Engine '{}', Args '{}'",
-        engine.path.magenta(),
+        final_engine_path.magenta(),
         display_args.blue()
     );
 

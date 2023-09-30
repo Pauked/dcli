@@ -2,20 +2,24 @@ CREATE TABLE IF NOT EXISTS engines (
     id INTEGER PRIMARY KEY NOT NULL,
     app_name TEXT NOT NULL,
     path TEXT NOT NULL UNIQUE,
+    internal_path TEXT NULL,
     version TEXT NOT NULL,
     game_engine_type TEXT NOT NULL
 );
+
 CREATE TABLE IF NOT EXISTS iwads (
     id INTEGER PRIMARY KEY NOT NULL,
     path TEXT NOT NULL UNIQUE,
     internal_wad_type TEXT NOT NULL
 );
+
 CREATE TABLE IF NOT EXISTS maps (
     id INTEGER PRIMARY KEY NOT NULL,
     title TEXT NOT NULL,
     author TEXT NOT NULL,
     path TEXT NOT NULL UNIQUE
 );
+
 CREATE TABLE IF NOT EXISTS editors (
     id INTEGER PRIMARY KEY NOT NULL,
     app_name TEXT NOT NULL,
@@ -24,6 +28,7 @@ CREATE TABLE IF NOT EXISTS editors (
     additional_arguments TEXT NULL,
     version TEXT NOT NULL
 );
+
 CREATE TABLE IF NOT EXISTS profiles (
     id INTEGER PRIMARY KEY NOT NULL,
     name TEXT NOT NULL UNIQUE,
@@ -45,6 +50,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     FOREIGN KEY (map_id3) REFERENCES maps (id),
     FOREIGN KEY (map_id5) REFERENCES maps (id)
 );
+
 CREATE TABLE IF NOT EXISTS app_settings (
     id INTEGER PRIMARY KEY NOT NULL,
     default_profile_id INTEGER NULL,
@@ -63,6 +69,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
     FOREIGN KEY (default_engine_id) REFERENCES engines (id),
     FOREIGN KEY (default_iwad_id) REFERENCES iwads (id)
 );
+
 CREATE TABLE IF NOT EXISTS play_settings (
     id INTEGER PRIMARY KEY NOT NULL,
     comp_level TEXT NULL,
@@ -80,6 +87,7 @@ CREATE TABLE IF NOT EXISTS play_settings (
     windowed BOOLEAN NOT NULL,
     additional_arguments TEXT NULL
 );
+
 CREATE TABLE IF NOT EXISTS track_menu (
     id INTEGER PRIMARY KEY NOT NULL,
     option_name TEXT NOT NULL UNIQUE,

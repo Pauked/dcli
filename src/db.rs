@@ -75,10 +75,11 @@ pub fn add_engine(engine: &data::Engine) -> Result<sqlx::sqlite::SqliteQueryResu
         let db = get_db().await;
 
         sqlx::query(
-            "INSERT INTO engines (app_name, path, version, game_engine_type) VALUES (?,?,?,?)",
+            "INSERT INTO engines (app_name, path, internal_path, version, game_engine_type) VALUES (?,?,?,?,?)",
         )
         .bind(&engine.app_name)
         .bind(&engine.path)
+        .bind(&engine.internal_path)
         .bind(&engine.version)
         .bind(&engine.game_engine_type)
         .execute(&db)

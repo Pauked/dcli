@@ -140,8 +140,9 @@ pub fn add_editor() -> Result<String, eyre::Report> {
         paths::resolve_path(&path)
     };
 
-    let editors = paths::find_file_in_folders(&editor_search_folder, vec![&editor_executable_name]);
-    if editors.is_empty() {
+    let editor_executables =
+        paths::find_file_in_folders(&editor_search_folder, vec![&editor_executable_name]);
+    if editor_executables.is_empty() {
         return Err(eyre::eyre!(format!(
             "No Editor matches found using recursive search in folder - '{}'",
             &editor_search_folder
@@ -161,22 +162,25 @@ pub fn add_editor() -> Result<String, eyre::Report> {
     // Work out the indexes of what is already selected
     let db_editors = db::get_editors()?;
     let mut db_defaults = vec![];
-    for (index, editor) in editors.iter().enumerate() {
-        if db_editors.iter().any(|db| &db.path == editor) {
+    for (index, editor_executable) in editor_executables.iter().enumerate() {
+        if db_editors.iter().any(|db| &db.path == editor_executable) {
             db_defaults.push(index);
         }
     }
 
     // Create a new list with version details
     let mut editors_extended: Vec<data::Editor> = Vec::new();
-    for editor in editors {
-        info!("Getting version information for Editor: '{}'", editor);
-        let file_version = finder::get_file_version(&editor)?;
+    for editor_executable in editor_executables {
+        info!(
+            "Getting version information for Editor: '{}'",
+            editor_executable
+        );
+        let file_version = finder::get_file_version(&editor_executable)?;
 
         editors_extended.push(data::Editor {
             id: 0,
             app_name: file_version.app_name.clone(),
-            path: editor,
+            path: editor_executable,
             version: file_version.display_version(),
             load_file_argument: load_file_argument.clone(),
             additional_arguments: additional_arguments.clone(),

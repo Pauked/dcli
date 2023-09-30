@@ -38,6 +38,8 @@ pub struct Engine {
     pub app_name: String,
     #[tabled(rename = "Path")]
     pub path: String,
+    #[tabled(rename = "Internal Path", display_with = "display_option_string")]
+    pub internal_path: Option<String>,
     #[tabled(rename = "Version")]
     pub version: String,
     #[tabled(rename = "Engine Type")]
@@ -60,6 +62,7 @@ impl Default for Engine {
             id: 0,
             app_name: constants::DEFAULT_NOT_SET.to_string(),
             path: constants::DEFAULT_NOT_SET.to_string(),
+            internal_path: None,
             version: "-".to_string(),
             game_engine_type: doom_data::GameEngineType::Unknown,
         }

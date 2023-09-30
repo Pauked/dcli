@@ -95,6 +95,8 @@ pub enum MenuCommand {
     ListMaps,
     #[strum(serialize = "List App Settings")]
     ListAppSettings,
+    #[strum(serialize = "List Play Settings")]
+    ListPlaySettings,
     #[strum(serialize = "Update Stored Data >>")]
     UpdateStoredData,
     #[strum(serialize = "Update Engines")]
@@ -427,6 +429,7 @@ pub fn menu_prompt(
                 (MenuCommand::ListProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::ListEditors.to_string(), MenuMode::Full),
                 (MenuCommand::ListAppSettings.to_string(), MenuMode::Simple),
+                (MenuCommand::ListPlaySettings.to_string(), MenuMode::Simple),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),
             ];
             (
@@ -581,6 +584,7 @@ pub fn run_menu_command_with_force(
         MenuCommand::ListIwads => menu_app_settings::list_iwads(),
         MenuCommand::ListMaps => menu_app_settings::list_maps(),
         MenuCommand::ListAppSettings => menu_app_settings::list_app_settings(),
+        MenuCommand::ListPlaySettings => menu_play_settings::list_play_settings(),
         MenuCommand::Init => menu_app_settings::init(),
         MenuCommand::UpdateStoredData => menu(MenuLevel::AppSettingsUpdate),
         MenuCommand::UpdateEngines => {

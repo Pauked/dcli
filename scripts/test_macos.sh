@@ -30,10 +30,10 @@ $dcli_path set-app-settings --menu-mode full
 # Add individual profiles
 $dcli_path add-profile "Classic Doom" $gzdoom_path $doom_wad
 $dcli_path add-profile "Classic Doom 2" $gzdoom_path $doom2_wad
-$dcli_path add-profile "Ancient Aliens" $gzdoom_path $doom2_wad --maps  "aaliens.wad"
+$dcli_path add-profile "Ancient Aliens" $gzdoom_path $doom2_wad --maps "aaliens.wad"
 $dcli_path add-profile "Sigil" $gzdoom_path $doom_wad --maps SIGIL_v1_21.wad,SIGIL_SHREDS.wad
 $dcli_path add-profile "Phobos Mission Control" $gzdoom_path $doom_wad --maps e1m4b.wad --args " -warp 1 4"
-$dcli_path add-profile "TNT: Revilution" $gzdoom_path "$tnt_wad" --maps  "tntr.wad" --args " -deh ~/Dropbox/Games/Doom/Maps/Tntr/tntr.deh"
+$dcli_path add-profile "TNT: Revilution" $gzdoom_path "$tnt_wad" --maps "tntr.wad" --args " -deh ~/Dropbox/Games/Doom/Maps/Tntr/tntr.deh"
 $dcli_path add-profile "RAMP 2021" $gzdoom_path $doom2_wad --maps ramp.pk3 --args " -loadgame save03.zds"
 $dcli_path add-profile "UAC Ultra" $gzdoom_path $doom2_wad --maps uacultra.wad
 

@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use color_eyre::{eyre, owo_colors::OwoColorize};
 use colored::Colorize;
 use eyre::Context;
@@ -160,8 +158,8 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
         .map(|e| e.exe_name.as_str())
         .collect::<Vec<&str>>();
 
-    let engines = paths::find_file_in_folders(&engine_search_folder, doom_engine_files);
-    if engines.is_empty() {
+    let engines_executables = paths::find_file_in_folders(&engine_search_folder, doom_engine_files);
+    if engines_executables.is_empty() {
         return Err(eyre::eyre!(format!(
             "No Engine matches found using recursive search in folder - '{}'",
             &engine_search_folder
@@ -171,35 +169,31 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
     // Work out the indexes of what is already selected
     let db_engines = db::get_engines()?;
     let mut db_defaults = vec![];
-    for (index, engine) in engines.iter().enumerate() {
-        if db_engines.iter().any(|db| &db.path == engine) {
+    for (index, engine_executable) in engines_executables.iter().enumerate() {
+        if db_engines.iter().any(|db| &db.path == engine_executable) {
             db_defaults.push(index);
         }
     }
 
     // Create a new list with version details
     let mut engines_extended: Vec<data::Engine> = Vec::new();
-    for engine in engines {
-        info!("Getting version information for Engine: '{}'", engine);
-        let game_engine = files::get_game_engine_from_exe_name(doom_engine_list.clone(), &engine)?;
-        let file_version =
-            files::get_version_from_exe_name(&engine, game_engine.game_engine_type.clone())?;
-
-        let final_engine_path: String = {
-            match game_engine.internal_path {
-                Some(internal_path) => Path::new(&engine)
-                    .join(internal_path)
-                    .to_str()
-                    .unwrap()
-                    .to_string(),
-                None => engine,
-            }
-        };
+    for engine_executable in engines_executables {
+        info!(
+            "Getting version information for Engine: '{}'",
+            engine_executable
+        );
+        let game_engine =
+            files::get_game_engine_from_exe_name(doom_engine_list.clone(), &engine_executable)?;
+        let file_version = files::get_version_from_exe_name(
+            &engine_executable,
+            game_engine.game_engine_type.clone(),
+        )?;
 
         engines_extended.push(data::Engine {
             id: 0,
             app_name: file_version.app_name.clone(),
-            path: final_engine_path,
+            path: engine_executable,
+            internal_path: game_engine.internal_path.clone(),
             version: file_version.display_version(),
             game_engine_type: game_engine.game_engine_type,
         });
@@ -704,7 +698,7 @@ pub fn set_default_engine() -> Result<String, eyre::Report> {
 }
 
 pub fn cli_set_default_engine(path: &str) -> Result<String, eyre::Report> {
-    let engine = db::get_engine_by_path(path)?;
+    let engine = db::get_engine_by_path(path).wrap_err("Unable to set Default Engine")?;
 
     let mut app_settings = db::get_app_settings()?;
     app_settings.default_engine_id = Some(engine.id);

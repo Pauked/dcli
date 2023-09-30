@@ -8,7 +8,7 @@ if ($LASTEXITCODE -eq 0) {
     $targetPath = $env:LocalDcli
 
     # Copy to local folder
-    Copy-Item $sourceApp -Destination $targetPath
+    Copy-Item $sourceApp -Destination $targetPath -Force
 
     Write-Host "Build and Deploy Successful!"
 }
