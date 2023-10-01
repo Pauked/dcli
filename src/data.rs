@@ -163,6 +163,7 @@ pub struct Profile {
     pub date_created: DateTime<Utc>,
     pub date_edited: DateTime<Utc>,
     pub date_last_run: Option<DateTime<Utc>>,
+    pub run_count: i32,
     pub additional_arguments: Option<String>,
 }
 
@@ -234,6 +235,8 @@ pub struct ProfileDisplay {
         display_with = "display_option_utc_datetime_to_local"
     )]
     pub date_last_run: Option<DateTime<Utc>>,
+    #[tabled(rename = "Run Count")]
+    pub run_count: i32,
 }
 
 impl fmt::Display for ProfileDisplay {

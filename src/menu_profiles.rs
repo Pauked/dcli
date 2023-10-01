@@ -84,6 +84,7 @@ pub fn new_profile() -> Result<String, eyre::Report> {
         date_created: Utc::now(),
         date_edited: Utc::now(),
         date_last_run: None,
+        run_count: 0,
     };
     let add_result = db::add_profile(profile.clone())?;
     let new_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
@@ -214,6 +215,7 @@ pub fn cli_new_profile(
         date_created: Utc::now(),
         date_edited: Utc::now(),
         date_last_run: None,
+        run_count: 0,
     };
     db::add_profile(profile.clone())?;
 
@@ -347,6 +349,7 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
         date_created: profile_display.date_created,
         date_edited: Utc::now(),
         date_last_run: profile_display.date_last_run,
+        run_count: profile_display.run_count,
     };
     db::update_profile(profile)?;
 
@@ -451,21 +454,21 @@ pub fn list_profiles(list_type: data::ListType) -> Result<String, eyre::Report> 
             let mut builder = Builder::default();
             builder.set_header([
                 "Name",
-                "Engine App Name",
-                "Engine Version",
+                "Engine",
                 "IWAD File",
                 "Map Files",
                 "Additional Args",
+                "Run Count",
                 "Date Last Run",
             ]);
             for profile in profiles {
                 builder.push_record([
                     profile.name,
-                    profile.engine_app_name,
-                    profile.engine_version,
+                    format!("{} ({})", profile.engine_app_name, profile.engine_version),
                     profile.iwad_file,
                     data::display_combined_tabled_map_strings(&profile.map_files),
                     profile.additional_arguments,
+                    profile.run_count.to_string(),
                     data::display_option_utc_datetime_to_local(&profile.date_last_run),
                 ]);
             }

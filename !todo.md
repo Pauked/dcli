@@ -17,6 +17,7 @@
 [x] List Play Settings in UI and CLI
 [x] Expand complevels to include all complevels (excluding PrBoom+ 12-16)
 [x] Arg for play-profile <profile name>
+[x] Run count on Profile
 
 # DCLI v0.4
 [ ] On add of Editor, prompt to set default
@@ -34,13 +35,14 @@
 [ ] Map Play Queue - random
 [ ] Download map from Doomworld / idgames, uncompress and add to maps list
 [ ] Extend hardcoded list of engines
-[ ] Option to auto create Profiles by multi-selecting Maps and combining with Default Engine/Default IWAD
+[ ] Option to auto create Profiles by multi-selecting Maps (can do single select correctly) and combining with Default Engine/Default IWAD
 [ ] Remember last position in a given menu!
-[ ] Colour code menu options
-[ ] Define a quick access menu
+[ ] Colour code menu options (to make quick selection easier)
+[ ] Define a quick access menu (use defined selection of options to be displayed in a menu)
 [ ] Track usage of options to generate a "most used options menu"
 [ ] Handling of savegames, ability to read information from and provide options to select
 [ ] Next iteration of dcli to be dui. Full TUI app instead of simple console app.
+[ ] Shared database for Windows and MacOS. Need to consider base paths, sub folders of files, etc.
 
 ## Save game notes:
  - dsda-doom - save files are .dsg. subfolder of app, dsda-doom\IWAD name\Map name

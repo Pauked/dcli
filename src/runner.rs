@@ -29,8 +29,8 @@ pub fn play_from_profile(
         profile.additional_arguments,
     )?;
 
-    // Update the profile's last run date
-    db::update_profile_date_last_run(profile_id)?;
+    // Update the profile's last run date and run count
+    db::update_profile_date_last_run_and_run_count(profile_id, profile.run_count + 1)?;
 
     // Update last run profile on the app settings
     if update_last_profile {

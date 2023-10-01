@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     date_created DATETIME NOT NULL,
     date_edited DATETIME NOT NULL,
     date_last_run DATETIME NULL,
+    run_count INTEGER DEFAULT 0 NOT NULL,
     FOREIGN KEY (engine_id) REFERENCES engines (id),
     FOREIGN KEY (iwad_id) REFERENCES maps (id),
     FOREIGN KEY (map_id) REFERENCES maps (id),

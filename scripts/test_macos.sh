@@ -17,8 +17,11 @@ gzdoom_path="~/Dropbox/Games/Doom/Apps/GzDoom4100Mac/gzdoom.app"
 doom_wad="~/Dropbox/Games/Doom/Maps/Doom.wad"
 doom2_wad="~/Dropbox/Games/Doom/Maps/Doom2.wad"
 tnt_wad="~/Dropbox/Games/Doom/Maps/Final Doom/Tnt.wad"
+$heretic_wad = "~/Dropbox/Games/Doom/Maps/Heretic.wad"
+$hexen_wad = "~/Dropbox/Games/Doom/Maps/Hexen.wad"
+$hexdd_wad = "~/Dropbox/Games/Doom/Maps/HexDD.wad"
 
-# Delete the db so we have a clean slate
+# Delete the db so we have a clean slate (force will skip any confirmation prompts)
 $dcli_path reset --force
 
 # Init the app
@@ -36,6 +39,9 @@ $dcli_path add-profile "Phobos Mission Control" $gzdoom_path $doom_wad --maps e1
 $dcli_path add-profile "TNT: Revilution" $gzdoom_path "$tnt_wad" --maps "tntr.wad" --args " -deh ~/Dropbox/Games/Doom/Maps/Tntr/tntr.deh"
 $dcli_path add-profile "RAMP 2021" $gzdoom_path $doom2_wad --maps ramp.pk3 --args " -loadgame save03.zds"
 $dcli_path add-profile "UAC Ultra" $gzdoom_path $doom2_wad --maps uacultra.wad
+$dcli_path add-profile "Heretic" $gzdoom_path $heretic_wad
+$dcli_path add-profile "Hexen" $gzdoom_path $hexen_wad
+$dcli_path add-profile "Hexen: Deathkings of the Dark Citadel" $gzdoom_path $hexdd_wad
 
 # Set defaults
 $dcli_path set-default --engine $gzdoom_path

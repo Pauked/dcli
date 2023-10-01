@@ -192,6 +192,7 @@ pub fn pick_and_play_map() -> Result<String, eyre::Report> {
             date_created: Utc::now(),
             date_edited: Utc::now(),
             date_last_run: None,
+            run_count: 0,
         };
         let add_result = db::add_profile(profile)?;
         let new_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
