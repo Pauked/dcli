@@ -16,6 +16,7 @@
 [x] Improve App Settings Listing so that it's a two column display
 [x] List Play Settings in UI and CLI
 [x] Expand complevels to include all complevels (excluding PrBoom+ 12-16)
+[x] Arg for play-profile <profile name>
 
 # DCLI v0.4
 [ ] On add of Editor, prompt to set default

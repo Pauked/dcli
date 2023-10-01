@@ -2,7 +2,8 @@ use clap::{Parser, ValueEnum};
 use log::debug;
 
 use crate::{
-    constants, data, menu_app_settings, menu_editor, menu_play_settings, menu_profiles, paths,
+    constants, data, menu_app_settings, menu_editor, menu_main, menu_play_settings, menu_profiles,
+    paths,
     tui::{self, MenuCommand},
 };
 
@@ -26,6 +27,12 @@ pub enum Action {
 
     /// Play Doom with the Last Run Profile.
     PlayLast,
+
+    /// Play Doom with the specified Profile.
+    PlayProfile {
+        /// Profile name
+        profile_name: String,
+    },
 
     /// Open the Editor with the Default Profile. Takes the first Map in Profile.
     #[clap(short_flag = 'm')]
@@ -68,7 +75,6 @@ pub enum Action {
         full: bool,
     },
 
-    #[clap(short_flag = 'a')]
     AddProfile {
         /// Profile name
         name: String,
@@ -158,6 +164,10 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
             )),
             Action::PlayLast => Ok((
                 tui::run_menu_command(MenuCommand::PlayLastProfile)?,
+                CliRunMode::Quit,
+            )),
+            Action::PlayProfile { profile_name } => Ok((
+                menu_main::cli_play_selected_profile(&profile_name)?,
                 CliRunMode::Quit,
             )),
             Action::Editor => Ok((

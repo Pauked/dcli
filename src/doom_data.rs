@@ -56,17 +56,6 @@ pub struct GameEngine {
 }
 
 pub fn get_engine_list(operating_system: OperatingSystem) -> Vec<GameEngine> {
-    // https://github.com/coelckers/prboom-plus/blob/master/prboom2/doc/README.command-line
-    // https://zdoom.org/wiki/Command_line_parameters
-    // https://doomwiki.org/wiki/Comparison_of_source_ports
-
-    // vec![
-    //     "doom.exe",
-    //     "gzdoom.exe",
-    //     "dsda-doom.exe",
-    //     "prboom-plus.exe",
-    //     "glboom-plus.exe",
-    // ];
     let result = vec![
         GameEngine {
             exe_name: "gzdoom.exe".to_string(),
@@ -110,14 +99,6 @@ pub fn get_engine_list(operating_system: OperatingSystem) -> Vec<GameEngine> {
             game_engine_type: GameEngineType::GzDoom,
             operating_system: OperatingSystem::Mac,
         },
-        // GameEngine {
-        //     exe_name: "prboom-plus.exe".to_string(),
-        //     game_engine_type: GameEngineType::PrBoom,
-        // },
-        // GameEngine {
-        //     exe_name: "glboom-plus.exe".to_string(),
-        //     game_engine_type: GameEngineType::PrBoom,
-        // },
     ];
 
     result

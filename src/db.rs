@@ -109,7 +109,7 @@ pub fn update_engine_version(
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("UPDATE engines SET version = $1 WHERE id=$2 COLLATE NOCASE")
+        sqlx::query("UPDATE engines SET version = $1 WHERE id=$2")
             .bind(version)
             // .bind(Utc::now())
             .bind(id)
@@ -287,7 +287,7 @@ pub fn delete_map(path: &str) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::R
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("DELETE FROM maps WHERE path=$1 COLLATE NOCASE")
+        sqlx::query("DELETE FROM maps WHERE path = $1 COLLATE NOCASE")
             .bind(path.to_lowercase())
             .execute(&db)
             .await
@@ -384,7 +384,7 @@ fn update_app_settings(
             "UPDATE app_settings SET default_profile_id = $1, last_profile_id = $2,
         default_engine_id = $3, default_iwad_id = $4, default_editor_id = $5,
         engine_search_folder = $6, iwad_search_folder = $7, map_search_folder = $8,
-        editor_search_folder = $9, menu_mode = $10 WHERE id = $11 COLLATE NOCASE",
+        editor_search_folder = $9, menu_mode = $10 WHERE id = $11",
         )
         .bind(app_settings.default_profile_id)
         .bind(app_settings.last_profile_id)
@@ -530,7 +530,7 @@ pub fn update_profile(
             "UPDATE profiles SET name = $2, engine_id = $3, iwad_id = $4,
             map_id = $5, map_id2 = $6, map_id3 = $7, map_id4 = $8, map_id5 = $9,
             additional_arguments = $10, date_created = $11, date_edited = $12,
-            date_last_run = $13 WHERE id=$1 COLLATE NOCASE",
+            date_last_run = $13 WHERE id=$1",
         )
         .bind(profile.id)
         .bind(&profile.name)
@@ -574,7 +574,7 @@ pub fn update_profile_date_last_run(
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("UPDATE profiles SET date_last_run = $1 WHERE id=$2 COLLATE NOCASE")
+        sqlx::query("UPDATE profiles SET date_last_run = $1 WHERE id=$2")
             .bind(Utc::now())
             .bind(id)
             .execute(&db)
@@ -616,8 +616,8 @@ pub fn get_profile_by_name(name: &str) -> Result<data::Profile, eyre::Report> {
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query_as::<_, data::Profile>("SELECT * FROM profiles WHERE name = ?")
-            .bind(name)
+        sqlx::query_as::<_, data::Profile>("SELECT * FROM profiles WHERE name = $1 COLLATE NOCASE")
+            .bind(name.to_lowercase())
             .fetch_one(&db)
             .await
             .wrap_err(format!("Failed to get profile with name '{}'", name))
@@ -900,7 +900,7 @@ pub fn update_editor_version(
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("UPDATE editors SET version = $1 WHERE id=$2 COLLATE NOCASE")
+        sqlx::query("UPDATE editors SET version = $1 WHERE id=$2")
             .bind(version)
             .bind(id)
             .execute(&db)

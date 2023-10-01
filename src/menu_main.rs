@@ -88,6 +88,11 @@ pub fn pick_and_play_profile() -> Result<String, eyre::Report> {
     }
 }
 
+pub fn cli_play_selected_profile(profile_name: &str) -> Result<String, eyre::Report> {
+    let profile = db::get_profile_by_name(profile_name)?;
+    runner::play_from_profile(profile.id, true)
+}
+
 pub fn pick_and_play_map() -> Result<String, eyre::Report> {
     let engine_list = db::get_engines()?;
     if engine_list.is_empty() {
