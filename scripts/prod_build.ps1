@@ -51,37 +51,28 @@ function CopyFilesToTemp($files, $tempDir, $appName) {
     }
 }
 
-# Determine OS and compress accordingly
+# Determine OS and prepare OS-specific variables
 if ($env:IsWindows) {
     $appBinary = "$releaseDir/$appName.exe"
-    $archivePath = "$releaseDir/$compressedFileName.zip"
     $filesToInclude += $appBinary
-
-    # Check if the zip file exists, and if so, delete it
-    if (Test-Path $archivePath) {
-        Remove-Item $archivePath
-    }
-
-    # Create a temporary directory
-    $tempDir = "$releaseDir/tempWindows"
-
 } elseif ($env:IsMacOS) {
     $appBinary = "$releaseDir/$appName"
-    $archivePath = "$releaseDir/$compressedFileName.dmg"
     $filesToInclude += $appBinary
-
-    # Check if the dmg file exists, and if so, delete it
-    if (Test-Path $archivePath) {
-        Remove-Item $archivePath
-    }
-
-    # Create a temporary directory
-    $tempDir = "$releaseDir/tempMacOS"
-
 } else {
     Write-Output "Unsupported OS"
     exit
 }
+
+# Common archive path for both OS types
+$archivePath = "$releaseDir/$compressedFileName.zip"
+
+# Check if the zip file exists, and if so, delete it
+if (Test-Path $archivePath) {
+    Remove-Item $archivePath
+}
+
+# Create a temporary directory
+$tempDir = "$releaseDir/temp"
 
 # Ensure the temporary directory is clean
 if (Test-Path $tempDir) {
@@ -91,13 +82,8 @@ if (Test-Path $tempDir) {
 New-Item -ItemType Directory -Force -Path $tempDir
 CopyFilesToTemp -files $filesToInclude -tempDir $tempDir -appName $appName
 
-# OS-specific compression logic
-if ($env:IsWindows) {
-    Compress-Archive -Path "$tempDir/*" -DestinationPath $archivePath
-} elseif ($env:IsMacOS) {
-    $dmgCmd = "hdiutil create $archivePath -volname $appName -srcfolder $tempDir"
-    Invoke-Expression $dmgCmd
-}
+# Compress the files into a .zip for both OS types
+Compress-Archive -Path "$tempDir/*" -DestinationPath $archivePath
 
 # Clean up the temporary directory
 Remove-Item -Recurse -Force $tempDir

@@ -13,11 +13,7 @@ Cargo.lock
 .idea/
 App.toml
 .DS_Store
-
-sqlite.db
-
-sqlite.db-shm
-
-sqlite.db-wal
-
 .vscode/
+dcli.db
+dcli.db-shm
+dcli.db-wal

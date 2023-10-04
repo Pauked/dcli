@@ -10,8 +10,8 @@ use sqlx::{
 
 use crate::{constants, data, paths};
 
-const DB_URL: &str = "sqlite://sqlite.db";
-const DB_FILE: &str = "sqlite.db";
+const DB_URL: &str = "sqlite://dcli.db";
+const DB_FILE: &str = "dcli.db";
 
 static MIGRATOR: Migrator = sqlx::migrate!(); // this will pick up migrations from the ./migrations directory
 
