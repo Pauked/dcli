@@ -86,7 +86,10 @@ pub fn find_file_in_folders(
     find_files: Vec<&str>,
     search_message: &str,
 ) -> Vec<String> {
-    debug!("find_file_in_folders: '{}'", root_folder);
+    debug!(
+        "find_file_in_folders: '{}', '{:?}', '{}'",
+        root_folder, find_files, search_message
+    );
     let mut results: Vec<String> = Vec::new();
 
     // Create a new progress bar
@@ -98,22 +101,27 @@ pub fn find_file_in_folders(
     let mut found_count = 0;
 
     for entry in WalkDir::new(root_folder) {
-        if let Ok(entry) = entry {
-            // Check if the file name matches
-            for file in &find_files {
-                if entry.file_name().to_string_lossy().to_lowercase() == file.to_lowercase() {
-                    found_count += 1;
-                    results.push(entry.path().display().to_string());
+        match entry {
+            Ok(entry) => {
+                // Check if the file name matches
+                for file in &find_files {
+                    if entry.file_name().to_string_lossy().to_lowercase() == file.to_lowercase() {
+                        found_count += 1;
+                        results.push(entry.path().display().to_string());
+                    }
                 }
-            }
 
-            // Set the message to the currently-searched directory
-            pb.set_message(format!(
-                "({}) Searching for {}: '{}'",
-                get_matches_count(found_count),
-                search_message,
-                truncate_middle(&entry.path().display().to_string(), 80)
-            ));
+                // Set the message to the currently-searched directory
+                pb.set_message(format!(
+                    "({}) Searching for {}: '{}'",
+                    get_matches_count(found_count),
+                    search_message,
+                    truncate_middle(&entry.path().display().to_string(), 80)
+                ));
+            }
+            Err(e) => {
+                debug!("Error reading directory entry: {:?}", e);
+            }
         }
 
         pb.inc(1); // Increase the spinner's step
@@ -129,8 +137,8 @@ pub fn find_files_with_extensions_in_folders(
     search_message: &str,
 ) -> Vec<String> {
     debug!(
-        "find_files_with_extensions_in_folders: '{}' / '{:?}'",
-        root_folder, extensions
+        "find_files_with_extensions_in_folders: '{}' / '{:?}', '{}'",
+        root_folder, extensions, search_message
     );
     let mut results: Vec<String> = Vec::new();
 
@@ -143,23 +151,28 @@ pub fn find_files_with_extensions_in_folders(
     let mut found_count = 0;
 
     for entry in WalkDir::new(root_folder) {
-        if let Ok(entry) = entry {
-            if let Some(ext) = entry.path().extension() {
-                for extension in extensions.clone() {
-                    if ext.to_string_lossy().to_lowercase() == extension.to_lowercase() {
-                        found_count += 1;
-                        results.push(entry.path().display().to_string());
+        match entry {
+            Ok(entry) => {
+                if let Some(ext) = entry.path().extension() {
+                    for extension in extensions.clone() {
+                        if ext.to_string_lossy().to_lowercase() == extension.to_lowercase() {
+                            found_count += 1;
+                            results.push(entry.path().display().to_string());
+                        }
                     }
                 }
-            }
 
-            // Set the message to the currently-searched directory
-            pb.set_message(format!(
-                "({}) Searching for {}: '{}'",
-                get_matches_count(found_count),
-                search_message,
-                truncate_middle(&entry.path().display().to_string(), 80)
-            ));
+                // Set the message to the currently-searched directory
+                pb.set_message(format!(
+                    "({}) Searching for {}: '{}'",
+                    get_matches_count(found_count),
+                    search_message,
+                    truncate_middle(&entry.path().display().to_string(), 80)
+                ));
+            }
+            Err(e) => {
+                debug!("Error reading directory entry: {:?}", e);
+            }
         }
 
         pb.inc(1); // Increase the spinner's step
