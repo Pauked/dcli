@@ -1,5 +1,7 @@
 use std::{fs::File, io::Read, path::Path};
 
+use log::debug;
+
 use crate::{constants, data, doom_data, finder, paths};
 
 pub fn get_map_readme_file_name(map_path: &str) -> Result<Option<String>, eyre::Report> {
@@ -123,7 +125,8 @@ fn is_valid_wad(file: &str, wad_identifier: &[u8; 4]) -> Result<bool, eyre::Repo
     let path = Path::new(file);
     let extension = path.extension().unwrap_or_default();
 
-    if extension.to_ascii_lowercase() == doom_data::EXT_WAD {
+    if extension.to_ascii_lowercase() == doom_data::EXT_WAD && paths::file_exists(file) {
+        debug!("Checking if '{}' is a valid WAD file", file);
         let mut file = File::open(path)?;
         let mut identifier = [0u8; 4];
         file.read_exact(&mut identifier)?;

@@ -345,7 +345,10 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
     let db_iwads = db::get_iwads()?;
     let mut db_defaults = vec![];
     for (index, iwad) in confirmed_iwads.iter().enumerate() {
-        if db_iwads.iter().any(|db| &db.path == iwad) {
+        if db_iwads
+            .iter()
+            .any(|db| db.path.to_lowercase() == iwad.to_lowercase())
+        {
             db_defaults.push(index);
         }
     }
@@ -481,7 +484,9 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
             continue;
         }
 
-        let existing_map = db_maps.iter().find(|e| e.path.to_lowercase() == map);
+        let existing_map = db_maps
+            .iter()
+            .find(|e| e.path.to_lowercase() == map.to_lowercase());
 
         match existing_map {
             Some(_) => {
