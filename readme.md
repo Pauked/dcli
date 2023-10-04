@@ -2,9 +2,9 @@
 
 dcli is a console app for quickly launching Doom games and mods. It has the following features:
 
-- It allows combinations of Engines, IWADs and Map files to be saved as Profiles and launched with a single command.
+- It allows combinations of Engines, IWADs and Map files to be saved as **Profiles** and launched with a single command.
 - It can be run interactively via a console UI or with command line arguments.
-- It has a list of Play Settings that allow you to easily configure items such as Compability Level, Warp to a map, enable Fast Monster, No Monsters or Respawn, and Skill level across Profiles.
+- It has a list of **Play Settings** that allow you to easily configure items such as Compability Level, Warp to a map, enable Fast Monster, No Monsters or Respawn, and Skill level across Profiles.
 - Access to Editors (such as Ultimate Doom Builder, and Slade) can be configured to open maps for viewing and editing.
 - The ability to view map readme's in your default text editor based on picking the map.
 
@@ -25,9 +25,9 @@ Who doesn't like a command line? The following commands will run the initial set
 
 Use ``--help`` to get a list of the available options. For more detailed examples, see the following scripts:
 
-- [Windows PowerShell script](/scripts/test_windows.ps1)
-- [Windows batch file](/scripts/test_windows.bat)
-- [macOS bash script](/scripts/test_macos.sh)
+- [Windows PowerShell script](scripts/test_windows.ps1)
+- [Windows batch file](scripts/test_windows.bat)
+- [macOS bash script](scripts/test_macos.sh)
 
 ## Quick Start - Console UI
 
@@ -53,15 +53,15 @@ The menus have two modes. Simple and Full. The default is Full. To switch to Sim
 
 The full menu mode looks as follows. It lists your Default Profile and the Last Profile you played and contains all of the app functionality.
 
-![dcli main menu in full mode](https://github.com/Pauked/dcli/docs/dcli-full-main-menu.png)
+![dcli main menu in full mode](docs/dcli-full-main-menu.png)
 
 #### Simple Menu Mode
 
 The Simple menu mode focuses on playing Doom. The Editor and App Settings options are hidden. The menu looks as follows:
 
-![dcli main menu in simple mode](https://github.com/Pauked/dcli/docs/dcli-simple-main-menu.png)
+![dcli main menu in simple mode](docs/dcli-simple-main-menu.png)
 
-From here, you should be good to go! Enjoy Doom!
+From here, you should be good to go! Let's play Doom!
 
 ## Supported Engines
 
@@ -70,7 +70,7 @@ dcli will search for the following Engines:
 - **Windows** - GZDoom, dsda-Doom, Crispy Doom, Eternity Engine, Doom Retro, Woof
 - **macOs** - GZDoom
 
-The above list of Engines is hard coded and the support for arguments across Engines is currently basic and makes assumptions that they are the same. If there is an Engine you would like adding or you find an Engine that doesn't work properly, please raise an issue. For more detail on what is configured, see [doom_data.rs](https://github.com/Pauked/dcli/src/doom_data.rs).
+The above list of Engines is hard coded and the support for arguments across Engines is currently basic and makes assumptions that they are the same. If there is an Engine you would like adding or you find an Engine that doesn't work properly, please raise an issue. For more detail on what is configured, see [doom_data.rs](https://github.com/Pauked/dcli/blob/main/src/doom_data.rs).
 
 ## Supported IWADs
 
@@ -95,8 +95,8 @@ dcli will search for the following map extensions:
 - .PK3
 - .PKE
 
-WAD files will be checked for PWAD identifier. No checking is (currently) done on PK3 and PKE files.
+WAD files will be checked for the PWAD identifier. No checking is currently done on PK3 and PKE files.
 
 ## Why dcli?
 
- The feature set is based around me wanting to quickly fire up Doom from my StreamDeck so I can continue playing a megawad without having to tinker with config or remember command line arguments. Then when playing I'd want to open the WAD file in an editor to look for how a secret works or to open the maps readme to check something. dcli can do that but having written it, I now can't forget the command line arguments.
+ The feature set is based around me wanting to quickly fire up Doom from my StreamDeck so I can continue playing a megawad without having to tinker with config or remember command line arguments. When playing I want to open the WAD file in an editor to look for how a secret works or to view the maps readme to check something. dcli can do that for me. And having written this app, I can't forget the command line arguments.

@@ -17,50 +17,87 @@ $compressedFileName = "$appName-v$version"
 # Where the build will be
 $releaseDir = "target/release"
 
+# Common files to be compressed/archived
+$filesToInclude = @(
+    "docs/dcli-full-main-menu.png",
+    "docs/dcli-simple-main-menu.png",
+    "scripts/test_macos.sh",
+    "scripts/test_windows.ps1",
+    "scripts/test_windows.bat",
+    "readme.md"
+)
+
+function CopyFilesToTemp($files, $tempDir, $appName) {
+    foreach ($file in $files) {
+        # Determine destination path
+        if ($file -match "$appName(\.exe)?$") {
+            # If the file is the application binary, place it directly in $tempDir
+            $dest = "$tempDir/$appName"
+            if ($file -match "\.exe$") {
+                # Append .exe if it's a Windows binary
+                $dest += ".exe"
+            }
+        } else {
+            # Otherwise, maintain the original folder structure
+            $dest = "$tempDir/$file"
+        }
+
+        # Ensure destination directory exists
+        $destDir = [System.IO.Path]::GetDirectoryName($dest)
+        New-Item -ItemType Directory -Force -Path $destDir
+
+        # Copy the file
+        Copy-Item -Path $file -Destination $dest
+    }
+}
+
 # Determine OS and compress accordingly
 if ($env:IsWindows) {
-    # List of files to be compressed/archived for Windows
-    $filesToInclude = @(
-        "$releaseDir/$appName.exe",
-        # "readme.txt",
-        "readme.md"
-    )
+    $appBinary = "$releaseDir/$appName.exe"
+    $archivePath = "$releaseDir/$compressedFileName.zip"
+    $filesToInclude += $appBinary
 
     # Check if the zip file exists, and if so, delete it
-    $zipPath = "$releaseDir/$compressedFileName.zip"
-    if (Test-Path $zipPath) {
-        Remove-Item $zipPath
+    if (Test-Path $archivePath) {
+        Remove-Item $archivePath
     }
 
-    # Use Windows compression for .zip
-    Compress-Archive -Path $filesToInclude -DestinationPath $zipPath
+    # Create a temporary directory
+    $tempDir = "$releaseDir/tempWindows"
+
 } elseif ($env:IsMacOS) {
-    # List of files to be compressed/archived for macOS
-    $filesToInclude = @(
-        "$releaseDir/$appName",
-        # "readme.txt",
-        "readme.md"
-    )
+    $appBinary = "$releaseDir/$appName"
+    $archivePath = "$releaseDir/$compressedFileName.dmg"
+    $filesToInclude += $appBinary
 
     # Check if the dmg file exists, and if so, delete it
-    $dmgPath = "$releaseDir/$compressedFileName.dmg"
-    if (Test-Path $dmgPath) {
-        Remove-Item $dmgPath
+    if (Test-Path $archivePath) {
+        Remove-Item $archivePath
     }
 
-    # Create a temporary directory to hold the files before building the dmg
-    $tempDir = "$releaseDir/temp"
-    New-Item -ItemType Directory -Force -Path $tempDir
-    foreach ($file in $filesToInclude) {
-        Copy-Item -Path $file -Destination $tempDir
-    }
+    # Create a temporary directory
+    $tempDir = "$releaseDir/tempMacOS"
 
-    # Build a .dmg for macOS
-    $dmgCmd = "hdiutil create $dmgPath -volname $appName -srcfolder $tempDir"
-    Invoke-Expression $dmgCmd
-
-    # Clean up the temporary directory
-    Remove-Item -Recurse -Force $tempDir
 } else {
     Write-Output "Unsupported OS"
+    exit
 }
+
+# Ensure the temporary directory is clean
+if (Test-Path $tempDir) {
+    Remove-Item -Recurse -Force $tempDir
+}
+
+New-Item -ItemType Directory -Force -Path $tempDir
+CopyFilesToTemp -files $filesToInclude -tempDir $tempDir -appName $appName
+
+# OS-specific compression logic
+if ($env:IsWindows) {
+    Compress-Archive -Path "$tempDir/*" -DestinationPath $archivePath
+} elseif ($env:IsMacOS) {
+    $dmgCmd = "hdiutil create $archivePath -volname $appName -srcfolder $tempDir"
+    Invoke-Expression $dmgCmd
+}
+
+# Clean up the temporary directory
+Remove-Item -Recurse -Force $tempDir
