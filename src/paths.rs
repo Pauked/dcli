@@ -81,7 +81,11 @@ pub fn get_temp_dir() -> String {
     temp_dir.display().to_string()
 }
 
-pub fn find_file_in_folders(root_folder: &str, find_files: Vec<&str>) -> Vec<String> {
+pub fn find_file_in_folders(
+    root_folder: &str,
+    find_files: Vec<&str>,
+    search_message: &str,
+) -> Vec<String> {
     debug!("find_file_in_folders: '{}'", root_folder);
     let mut results: Vec<String> = Vec::new();
 
@@ -105,8 +109,9 @@ pub fn find_file_in_folders(root_folder: &str, find_files: Vec<&str>) -> Vec<Str
 
             // Set the message to the currently-searched directory
             pb.set_message(format!(
-                "({}) Searching: '{}'",
+                "({}) Searching for {}: '{}'",
                 get_matches_count(found_count),
+                search_message,
                 truncate_middle(&entry.path().display().to_string(), 80)
             ));
         }
@@ -121,6 +126,7 @@ pub fn find_file_in_folders(root_folder: &str, find_files: Vec<&str>) -> Vec<Str
 pub fn find_files_with_extensions_in_folders(
     root_folder: &str,
     extensions: Vec<&str>,
+    search_message: &str,
 ) -> Vec<String> {
     debug!(
         "find_files_with_extensions_in_folders: '{}' / '{:?}'",
@@ -149,8 +155,9 @@ pub fn find_files_with_extensions_in_folders(
 
             // Set the message to the currently-searched directory
             pb.set_message(format!(
-                "({}) Searching: '{}'",
+                "({}) Searching for {}: '{}'",
                 get_matches_count(found_count),
+                search_message,
                 truncate_middle(&entry.path().display().to_string(), 80)
             ));
         }
@@ -171,21 +178,34 @@ fn get_matches_count(found_count: i32) -> String {
 }
 
 fn truncate_middle(input: &str, size_limit: usize) -> String {
-    let input_len = input.len();
+    // Yes this method is horrible. It is coping with folder paths that may
+    // contain unicode characters and if truncated incorrectly will cause a
+    // "assertion failed: self.is_char_boundary(n)" error.
 
-    if input_len <= size_limit {
+    if input.len() <= size_limit {
         // No need to truncate, return the original string.
         return input.to_string();
     }
 
-    let middle_index = input_len / 2;
-    let half_size_limit = size_limit / 2;
-    let start_index = middle_index - half_size_limit;
-    let end_index = middle_index + half_size_limit;
+    // debug!("truncate_middle: '{}' / {}", input, size_limit);
+    let half_size_limit = size_limit.saturating_sub(2) / 2; // Make space for ".."
 
-    // Remove the middle section from the string.
-    let mut output: String = input.to_string();
-    output.replace_range(start_index..end_index, "..");
+    // Find the start and end byte indices directly, adjusting for character boundaries.
+    let mut start_byte_index = input.len() / 2 - half_size_limit;
+    while !input.is_char_boundary(start_byte_index) && start_byte_index < input.len() {
+        start_byte_index += 1;
+    }
+
+    let mut end_byte_index = input.len() / 2 + half_size_limit;
+    while !input.is_char_boundary(end_byte_index) && end_byte_index > 0 {
+        end_byte_index -= 1;
+    }
+
+    // Construct the truncated string.
+    let mut output = String::with_capacity(size_limit);
+    output.push_str(&input[..start_byte_index]);
+    output.push_str("..");
+    output.push_str(&input[end_byte_index..]);
     output
 }
 

@@ -1,4 +1,5 @@
 # DCLI v0.3.5
+
 [x] Make menus less crashy if user aborts (first pass)
 [x] Write Readme in repo root
 [x] Test script Windows (CLI usage)
@@ -16,12 +17,14 @@
 [x] Improve App Settings Listing so that it's a two column display
 [x] List Play Settings in UI and CLI
 [x] Expand complevels to include all complevels (excluding PrBoom+ 12-16)
-[x] Arg for play-profile <profile name>
+[x] Arg for play-profile [profile name]
 [x] Run count on Profile
 [x] Update of Maps option doesn't give any feedback (excluding IWADs)
-[x] Improve formatting in Select lists. Looks messy/hard to read
+[x] Improve formatting in Select lists. Looks messy/hard to read.
+[x] Bugs in handling existing files (Engines, IWADs, etc) if search is done again on different folders (db lookup to remove is faulty)
 
-# DCLI v0.4
+## DCLI v0.4
+
 [ ] On add of Editor, prompt to set default
 [ ] Have a profile switch of "include play settings?", default to on.
 [ ] CLI for Profile (edit)
@@ -32,7 +35,8 @@
 [ ] Map Play Queue - user selected
 [ ] List of Profiles highlights Default and Last Played
 
-# Future Dev / Nice to haves
+## Future Dev / Nice to haves
+
 [ ] Map Play Queue - Cacowards
 [ ] Map Play Queue - random
 [ ] Download map from Doomworld / idgames, uncompress and add to maps list
@@ -46,65 +50,72 @@
 [ ] Next iteration of dcli to be dui. Full TUI app instead of simple console app.
 [ ] Shared database for Windows and macOS. Need to consider base paths, sub folders of files, etc.
 
-## Save game notes:
- - dsda-doom - save files are .dsg. subfolder of app, dsda-doom\IWAD name\Map name
- - GDoom - save files are .zds. Zip file containing JSON files.
-    - info.json is what I need!
-    - Folders - C:\Users\<user>\Saved Games\GZDoom\doom.id.doom2.tnt\
+## Save game notes
 
-# General notes
+- dsda-doom - save files are .dsg. subfolder of app, dsda-doom\IWAD name\Map name
+- GDoom - save files are .zds. Zip file containing JSON files.
+  - info.json is what I need!
+  - Folders - C:\Users\<user>\Saved Games\GZDoom\doom.id.doom2.tnt\
+
+## General notes
+
 Flow on first use:
- - Find/pick engines
- - Find/pick IWADS
- - Pick paths for user WADs
+
+- Find/pick engines
+- Find/pick IWADS
+- Pick paths for user WADs
 
 Settings / Profiles
- - Think about how profiles work.
- - Profiles for environment (Mac, Windows)
- - Profiles for WADS and Engine combos.
+
+- Think about how profiles work.
+- Profiles for environment (Mac, Windows)
+- Profiles for WADS and Engine combos.
 
 What do I want in the config?
- - List of engines...
- - List of editors...
- - List of wads played
- - Wad profiles of engine and wad
+
+- List of engines...
+- List of editors...
+- List of wads played
+- Wad profiles of engine and wad
 
 What do I want from the app?
- - Play last engine and wad
- - To track wads played
- - To track time played at a WAD and Engine level
- - Have last played based on machine name
- - Play queues, different queues to play wads.
-    - One based on my ordering, one based on random, one based on DoomWorld scores.
- - Be able to find and download wads from DoomWorld, etc.
 
-# Orginal thoughts
+- Play last engine and wad
+- To track wads played
+- To track time played at a WAD and Engine level
+- Have last played based on machine name
+- Play queues, different queues to play wads.
+  - One based on my ordering, one based on random, one based on DoomWorld scores.
+- Be able to find and download wads from DoomWorld, etc.
+
+## Orginal thoughts
+
 - Windows support
 - macOS support
 - Ability to pick wad to play
 - Ability to pick engine to use
 - Ability to pick editor
 - Ability to run Doom
-    - With IWAD
-    - With User WAD
-    - To play demo
-    - To open on map level at difficulty
+  - With IWAD
+  - With User WAD
+  - To play demo
+  - To open on map level at difficulty
 - Run engine with PLAY settings
 - Run editor
 - Track amount of time playing. Record against WAD
 - Short arg options
 - Short cmd options in CLI
 - Built in mini-WIKI of Doom help.
-    - Weapon stats, monster stats
+  - Weapon stats, monster stats
 
-# Engine links
-https://dsdarchive.com/guides/dsda_doom
-https://www.doomworld.com/forum/topic/116534-dsda-doom-guide-usage-recording-demos-and-some-extra-info/
-https://zdoom.org/wiki/Command_line_parameters
-https://eternity.youfailit.net/wiki/List_of_command_line_parameters
-https://www.chocolate-doom.org/wiki/index.php/Command_line_arguments
-https://github.com/coelckers/prboom-plus/blob/master/prboom2/doc/README.command-line
-https://doomwiki.org/wiki/Doom_Classic_Unity_port
+## Engine links
 
+<https://dsdarchive.com/guides/dsda_doom>
+<https://www.doomworld.com/forum/topic/116534-dsda-doom-guide-usage-recording-demos-and-some-extra-info/>
+<https://zdoom.org/wiki/Command_line_parameters>
+<https://eternity.youfailit.net/wiki/List_of_command_line_parameters>
+<https://www.chocolate-doom.org/wiki/index.php/Command_line_arguments>
+<https://github.com/coelckers/prboom-plus/blob/master/prboom2/doc/README.command-line>
+<https://doomwiki.org/wiki/Doom_Classic_Unity_port>
 
-https://doomwiki.org/wiki/Comparison_of_source_ports
+<https://doomwiki.org/wiki/Comparison_of_source_ports>

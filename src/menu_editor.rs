@@ -143,8 +143,11 @@ pub fn add_editor() -> Result<String, eyre::Report> {
         paths::resolve_path(&path)
     };
 
-    let editor_executables =
-        paths::find_file_in_folders(&editor_search_folder, vec![&editor_executable_name]);
+    let editor_executables = paths::find_file_in_folders(
+        &editor_search_folder,
+        vec![&editor_executable_name],
+        "Editors",
+    );
     if editor_executables.is_empty() {
         return Err(eyre::eyre!(format!(
             "No Editor matches found using recursive search in folder - '{}'",
@@ -181,25 +184,36 @@ pub fn add_editor() -> Result<String, eyre::Report> {
             "Getting version information for Editor: '{}'",
             editor_executable
         );
-        let file_version = finder::get_file_version(&editor_executable)?;
+        let file_version = finder::get_file_version(&editor_executable);
 
-        editors_extended.push(data::Editor {
-            id: 0,
-            app_name: file_version.app_name.clone(),
-            path: editor_executable,
-            version: file_version.display_version(),
-            load_file_argument: load_file_argument.clone(),
-            additional_arguments: additional_arguments.clone(),
-        });
-        info!(
-            "  {}",
-            editors_extended
-                .last()
-                .unwrap()
-                .simple_display()
-                .blue()
-                .to_string()
-        );
+        match file_version {
+            Ok(file_version) => {
+                editors_extended.push(data::Editor {
+                    id: 0,
+                    app_name: file_version.app_name.clone(),
+                    path: editor_executable,
+                    version: file_version.display_version(),
+                    load_file_argument: load_file_argument.clone(),
+                    additional_arguments: additional_arguments.clone(),
+                });
+                info!(
+                    "  {}",
+                    editors_extended
+                        .last()
+                        .unwrap()
+                        .simple_display()
+                        .blue()
+                        .to_string()
+                );
+            }
+            Err(e) => {
+                info!(
+                    "  Skipping Editor, unable to get version information: {}",
+                    e.to_string().red()
+                );
+                debug!("Error: {:?}", e);
+            }
+        }
     }
 
     // Multi-select prompt to user
@@ -279,25 +293,33 @@ pub fn cli_add_editor(
         ));
     };
 
-    let file_version = finder::get_file_version(path)?;
+    let file_version = finder::get_file_version(path);
     let additional_arguments = args.map(|args_unwrapped| args_unwrapped.join(" "));
 
-    let editor = data::Editor {
-        id: 0,
-        app_name: file_version.app_name.clone(),
-        path: path.to_string(),
-        version: file_version.display_version(),
-        load_file_argument: load_file_argument.clone(),
-        additional_arguments: additional_arguments.clone(),
-    };
+    match file_version {
+        Ok(file_version) => {
+            let editor = data::Editor {
+                id: 0,
+                app_name: file_version.app_name.clone(),
+                path: path.to_string(),
+                version: file_version.display_version(),
+                load_file_argument: load_file_argument.clone(),
+                additional_arguments: additional_arguments.clone(),
+            };
 
-    db::add_editor(&editor)?;
-    debug!("Added Editor: {:?}", editor);
+            db::add_editor(&editor)?;
+            debug!("Added Editor: {:?}", editor);
 
-    Ok(format!(
-        "Successfully added Editor - '{}'",
-        editor.simple_display(),
-    ))
+            Ok(format!(
+                "Successfully added Editor - '{}'",
+                editor.simple_display(),
+            ))
+        }
+        Err(e) => Ok(format!(
+            "Cannot add Editor, unable to get version information: '{}'",
+            e,
+        )),
+    }
 }
 
 fn delete_editor_core(

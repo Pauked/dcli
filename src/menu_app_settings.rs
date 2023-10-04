@@ -167,7 +167,8 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
         .map(|e| e.exe_name.as_str())
         .collect::<Vec<&str>>();
 
-    let engines_executables = paths::find_file_in_folders(&engine_search_folder, doom_engine_files);
+    let engines_executables =
+        paths::find_file_in_folders(&engine_search_folder, doom_engine_files, "Engines");
     if engines_executables.is_empty() {
         return Err(eyre::eyre!(format!(
             "No Engine matches found using recursive search in folder - '{}'",
@@ -199,25 +200,36 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
         let file_version = files::get_version_from_exe_name(
             &engine_executable,
             game_engine.game_engine_type.clone(),
-        )?;
-
-        engines_extended.push(data::Engine {
-            id: 0,
-            app_name: file_version.app_name.clone(),
-            path: engine_executable,
-            internal_path: game_engine.internal_path.clone(),
-            version: file_version.display_version(),
-            game_engine_type: game_engine.game_engine_type,
-        });
-        info!(
-            "  {}",
-            engines_extended
-                .last()
-                .unwrap()
-                .simple_display()
-                .blue()
-                .to_string()
         );
+
+        match file_version {
+            Ok(file_version) => {
+                engines_extended.push(data::Engine {
+                    id: 0,
+                    app_name: file_version.app_name.clone(),
+                    path: engine_executable,
+                    internal_path: game_engine.internal_path.clone(),
+                    version: file_version.display_version(),
+                    game_engine_type: game_engine.game_engine_type,
+                });
+                info!(
+                    "  {}",
+                    engines_extended
+                        .last()
+                        .unwrap()
+                        .simple_display()
+                        .blue()
+                        .to_string()
+                );
+            }
+            Err(e) => {
+                info!(
+                    "  Skipping Engine, unable to get version information: {}",
+                    e.to_string().red()
+                );
+                debug!("Error: {:?}", e);
+            }
+        }
     }
     //info!("Found engines: {:?}", engines_extended);
 
@@ -225,16 +237,19 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
     let selections = if force {
         engines_extended.clone()
     } else {
-        inquire::MultiSelect::new("Pick the Engines you want to save:", engines_extended)
-            .with_default(&db_defaults)
-            .with_page_size(tui::MENU_PAGE_SIZE)
-            .with_formatter(&|i| {
-                i.iter()
-                    .map(|e| e.value.short_display())
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            })
-            .prompt()?
+        inquire::MultiSelect::new(
+            "Pick the Engines you want to save:",
+            engines_extended.clone(),
+        )
+        .with_default(&db_defaults)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| {
+            i.iter()
+                .map(|e| e.value.short_display())
+                .collect::<Vec<String>>()
+                .join(", ")
+        })
+        .prompt()?
     };
 
     // Remove entries that were not selected but have entries in the database...
@@ -243,6 +258,9 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
         if !selections
             .iter()
             .any(|e| e.path.to_lowercase() == db_engine.path.to_lowercase())
+            && engines_extended
+                .iter()
+                .any(|e| e.path.to_lowercase() == db_engine.path.to_lowercase())
         {
             if db::is_engine_linked_to_profiles(db_engine.id)? {
                 info!(
@@ -323,7 +341,7 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
         .map(|e| e.file_name.as_str())
         .collect::<Vec<&str>>();
 
-    let iwads = paths::find_file_in_folders(&iwad_search_folder, iwad_files);
+    let iwads = paths::find_file_in_folders(&iwad_search_folder, iwad_files, "IWADs");
     if iwads.is_empty() {
         return Err(eyre::eyre!(format!(
             "No IWAD matches found using recursive search in folder - '{}'",
@@ -357,7 +375,7 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
     let selections = if force {
         confirmed_iwads.clone()
     } else {
-        inquire::MultiSelect::new("Pick the IWADs you want to save:", confirmed_iwads)
+        inquire::MultiSelect::new("Pick the IWADs you want to save:", confirmed_iwads.clone())
             .with_default(&db_defaults)
             .with_page_size(tui::MENU_PAGE_SIZE)
             // TODO: Add formatter?
@@ -370,6 +388,9 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
         if !selections
             .iter()
             .any(|s| s.eq_ignore_ascii_case(&db_iwad.path))
+            && confirmed_iwads
+                .iter()
+                .any(|e| e.to_lowercase() == db_iwad.path.to_lowercase())
         {
             if db::is_iwad_linked_to_profiles(db_iwad.id)? {
                 info!(
@@ -445,6 +466,7 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
     let maps = paths::find_files_with_extensions_in_folders(
         &map_search_folder,
         doom_data::GAME_FILES.to_vec(),
+        "Maps",
     );
     if maps.is_empty() {
         return Err(eyre::eyre!(format!(
@@ -453,23 +475,8 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
         )));
     }
 
-    // Get what we have in the datanse
+    // Get what we have in the database
     let db_maps = db::get_maps()?;
-
-    // Remove entries that were not selected but have entries in the database
-    for db_map in &db_maps {
-        if !maps.iter().any(|s| s.eq_ignore_ascii_case(&db_map.path)) {
-            if db::is_map_linked_to_profiles(db_map.id)? {
-                info!(
-                    "  Cannot delete Map as it is linked to one or more Profiles: '{}'",
-                    db_map.path
-                );
-                continue;
-            }
-            db::delete_map(&db_map.path)?;
-            debug!("Deleted map: {:?}", db_map)
-        }
-    }
 
     let mut count = 0;
 
@@ -480,7 +487,7 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
         }
 
         if !files::map_file_extension(&map)? {
-            info!("Skipping invalid map file: {}", &map.yellow());
+            info!("Skipping invalid Map file: {}", &map.yellow());
             continue;
         }
 
@@ -493,7 +500,7 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
                 info!("Map already exists, no need to add: {}", map.yellow());
             }
             None => {
-                info!("Getting map title and author for Map: '{}'", map);
+                info!("Getting title and author for Map: '{}'", map);
                 let (title, author) = files::get_details_from_readme(&map)?;
                 let map = data::Map {
                     id: 0,
