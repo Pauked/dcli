@@ -1,8 +1,8 @@
 [package]
 name = "dcli"
-version = "0.3.0"
+version = "0.3.5"
 edition = "2021"
-description = "Play Doom quickly and easily"
+description = "Play Doom Quick"
 authors = ["Paul"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

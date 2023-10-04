@@ -35,7 +35,6 @@ pub enum Action {
     },
 
     /// Open the Editor with the Default Profile. Takes the first Map in Profile.
-    #[clap(short_flag = 'm')]
     Editor,
 
     /// Open the Editor with the Last Run Profile. Takes the first Map in Profile.
@@ -103,6 +102,28 @@ pub enum Action {
         force: bool,
     },
 
+    AddEditor {
+        /// Editor path
+        path: String,
+
+        /// Load file argument to pass to the Edior
+        #[arg(long)]
+        load_file_arg: Option<String>,
+
+        /// Additional arguments to pass to the Editor
+        #[arg(long)]
+        addtional_args: Option<Vec<String>>,
+    },
+
+    DeleteEditor {
+        /// Editor path
+        path: String,
+
+        /// Force editor delete and skip confirmation prompt.
+        #[arg(long, default_value = "false")]
+        force: bool,
+    },
+
     SetAppSettings {
         /// Menu mode
         #[clap(value_enum, long)]
@@ -126,6 +147,7 @@ pub enum Action {
         #[arg(long)]
         editor: Option<String>,
     },
+    // Remove default?
 }
 
 #[derive(ValueEnum, Clone, Debug, PartialEq)]
@@ -236,7 +258,7 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                     name, engine, iwad, maps, args
                 );
                 Ok((
-                    menu_profiles::cli_new_profile(
+                    menu_profiles::cli_add_profile(
                         &name,
                         &paths::resolve_path(&engine),
                         &paths::resolve_path(&iwad),
@@ -248,6 +270,22 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
             }
             Action::DeleteProfile { name, force } => Ok((
                 menu_profiles::cli_delete_profile(&name, force)?,
+                CliRunMode::Quit,
+            )),
+            Action::AddEditor {
+                path,
+                load_file_arg: load_file_argument,
+                addtional_args: additional_arguments,
+            } => Ok((
+                menu_editor::cli_add_editor(
+                    &paths::resolve_path(&path),
+                    load_file_argument,
+                    additional_arguments,
+                )?,
+                CliRunMode::Quit,
+            )),
+            Action::DeleteEditor { path, force } => Ok((
+                menu_editor::cli_delete_editor(&paths::resolve_path(&path), force)?,
                 CliRunMode::Quit,
             )),
             Action::SetAppSettings { menu_mode } => Ok((

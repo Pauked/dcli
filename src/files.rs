@@ -1,6 +1,6 @@
 use std::{fs::File, io::Read, path::Path};
 
-use crate::{data, doom_data, finder, paths};
+use crate::{constants, data, doom_data, finder, paths};
 
 pub fn get_map_readme_file_name(map_path: &str) -> Result<Option<String>, eyre::Report> {
     let path = Path::new(map_path);
@@ -41,7 +41,7 @@ fn check_readme_line(line: &str, key: &str) -> Option<String> {
 pub fn get_details_from_readme(map_path: &str) -> Result<(String, String), eyre::Report> {
     let mut title = paths::extract_file_name(map_path);
     let mut title_found = false;
-    let mut author = "Unknown".to_string();
+    let mut author = constants::DEFAULT_UNKNOWN.to_string();
     let mut author_found = false;
 
     if let Some(readme) = get_map_readme_file_name(map_path)? {

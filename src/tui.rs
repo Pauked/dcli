@@ -172,9 +172,7 @@ pub enum MenuCommand {
     #[strum(serialize = "View from Pick Map")]
     ViewFromPickMap,
 
-    // CLI
-    // #[strum(serialize = "CLI Add Profile")]
-    // CliAddProfile,
+    // Back and Quit
     #[strum(serialize = "Back <ESC>")]
     Back,
     #[strum(serialize = "Quit <ESC>")]
@@ -210,7 +208,7 @@ pub fn menu_prompt(
             (
                 selections,
                 "Main Menu".to_string(),
-                "Lets play Doom!".green().to_string(),
+                "Let's play Doom!".truecolor(75, 159, 63).to_string(),
             )
         }
         MenuLevel::Profiles => {
@@ -505,7 +503,11 @@ pub fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
     clearscreen::clear().unwrap();
     loop {
         let app_settings = db::get_app_settings()?;
-        info!("Welcome to {}", constants::APP_NAME.bright_green());
+        info!(
+            "{} {}",
+            "Welcome to".bold(),
+            constants::APP_NAME.truecolor(75, 159, 63).bold()
+        );
         //info!("({} menu mode)", app_settings.menu_mode);
         if let (MenuLevel::Main, MenuMode::Full) = (&menu_level, &app_settings.menu_mode) {
             info!("{}", "Profiles".bright_white());
@@ -568,7 +570,7 @@ pub fn run_menu_command_with_force(
         MenuCommand::AppSettings => menu(MenuLevel::AppSettings),
 
         // Profile Menu
-        MenuCommand::NewProfile => menu_profiles::new_profile(),
+        MenuCommand::NewProfile => menu_profiles::add_profile(),
         MenuCommand::EditProfile => menu_profiles::edit_profile(),
         MenuCommand::DeleteProfile => menu_profiles::delete_profile(),
         MenuCommand::SetDefaultProfile => menu_profiles::set_default_profile(),

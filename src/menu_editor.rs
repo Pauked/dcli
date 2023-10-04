@@ -1,3 +1,4 @@
+use colored::Colorize;
 use eyre::Context;
 use inquire::validator::Validation;
 use log::{debug, info};
@@ -24,6 +25,7 @@ fn open_editor_from_map_id(map_id: i32) -> Result<String, eyre::Report> {
 
     let editor = inquire::Select::new("Pick the Editor to use:", editor_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     match editor {
@@ -91,6 +93,7 @@ pub fn set_default_editor() -> Result<String, eyre::Report> {
     let editor = inquire::Select::new("Pick the Editor to mark as Default:", editor_list)
         .with_starting_cursor(starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     match editor {
@@ -111,7 +114,7 @@ pub fn list_editors() -> Result<String, eyre::Report> {
     }
 
     let table = tabled::Table::new(editors)
-        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30)))
         .with(Style::modern())
         .to_string();
     Ok(table)
@@ -163,7 +166,10 @@ pub fn add_editor() -> Result<String, eyre::Report> {
     let db_editors = db::get_editors()?;
     let mut db_defaults = vec![];
     for (index, editor_executable) in editor_executables.iter().enumerate() {
-        if db_editors.iter().any(|db| &db.path == editor_executable) {
+        if db_editors
+            .iter()
+            .any(|db| db.path.to_lowercase() == editor_executable.to_lowercase())
+        {
             db_defaults.push(index);
         }
     }
@@ -185,7 +191,15 @@ pub fn add_editor() -> Result<String, eyre::Report> {
             load_file_argument: load_file_argument.clone(),
             additional_arguments: additional_arguments.clone(),
         });
-        info!("Done - {}", editors_extended.last().unwrap().to_string());
+        info!(
+            "  {}",
+            editors_extended
+                .last()
+                .unwrap()
+                .simple_display()
+                .blue()
+                .to_string()
+        );
     }
 
     // Multi-select prompt to user
@@ -193,30 +207,32 @@ pub fn add_editor() -> Result<String, eyre::Report> {
         inquire::MultiSelect::new("Pick the Editors you want to save:", editors_extended)
             .with_default(&db_defaults)
             .with_page_size(tui::MENU_PAGE_SIZE)
+            .with_formatter(&|i| {
+                i.iter()
+                    .map(|e| e.value.simple_display())
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            })
             .prompt()?;
 
-    // Remove entries that were not selected but have entries in the database
-    for db_editor in &db_editors {
-        if !selections
-            .iter()
-            .any(|e| e.path.to_lowercase() == db_editor.path.to_lowercase())
-        {
-            menu_app_settings::remove_editor_from_app_settings(db_editor.id)?;
-            db::delete_editor(db_editor.id)?;
-            debug!("Deleted editor: {:?}", db_editor);
-        }
-    }
+    let mut count = 0;
 
     // Save engines to  engines table
     for selection in selections {
-        let editor = db_editors.iter().find(|e| e.path == selection.path);
+        let editor = db_editors
+            .iter()
+            .find(|e| e.path.to_lowercase() == selection.path.to_lowercase());
         match editor {
             Some(existing) => {
-                debug!("Editor already exists, no need to add: {}", selection);
+                info!(
+                    "  Editor already exists, no need to add: {}",
+                    selection.simple_display().yellow()
+                );
                 if existing.version != selection.version {
                     debug!(
-                        "Updating Editor version from '{}' to '{}'",
-                        existing.version, selection.version
+                        "  Updating Editor version from '{}' to '{}'",
+                        existing.version.blue(),
+                        selection.version.green()
                     );
                     db::update_editor_version(existing.id, &selection.version)?;
                 }
@@ -224,20 +240,88 @@ pub fn add_editor() -> Result<String, eyre::Report> {
             None => {
                 db::add_editor(&selection)?;
                 debug!("Added Editor: {:?}", selection);
+                info!("Added Editor: {}", selection.simple_display().blue());
+                count += 1;
             }
         }
     }
-
-    // FIXME: This is getting blanked by menu display...
-    info!("{}", list_editors()?);
 
     // Save the updated app setting
     let mut app_settings = db::get_app_settings()?;
     app_settings.editor_search_folder = Some(editor_search_folder);
     db::save_app_settings(app_settings)?;
+
+    // Feedback to user
+    if count > 0 {
+        let result_message = format!("Successfully added {} Editors", count);
+        info!("{}", result_message.green());
+    }
     inquire::Text::new("Press any key to continue...").prompt_skippable()?;
 
     Ok("Successfully updated Editors".to_string())
+}
+
+pub fn cli_add_editor(
+    path: &str,
+    load_file_argument: Option<String>,
+    args: Option<Vec<String>>,
+) -> Result<String, eyre::Report> {
+    if !paths::file_exists(path) {
+        return Ok(format!("Cannot add Editor '{}'. Does not exist", path));
+    };
+
+    // Check it doesn't exist already
+    let editor_result = db::get_editor_by_path(path);
+    if editor_result.is_ok() {
+        return Ok(format!(
+            "Cannot add Editor '{}'. Editor already exists",
+            path
+        ));
+    };
+
+    let file_version = finder::get_file_version(path)?;
+    let additional_arguments = args.map(|args_unwrapped| args_unwrapped.join(" "));
+
+    let editor = data::Editor {
+        id: 0,
+        app_name: file_version.app_name.clone(),
+        path: path.to_string(),
+        version: file_version.display_version(),
+        load_file_argument: load_file_argument.clone(),
+        additional_arguments: additional_arguments.clone(),
+    };
+
+    db::add_editor(&editor)?;
+    debug!("Added Editor: {:?}", editor);
+
+    Ok(format!(
+        "Successfully added Editor - '{}'",
+        editor.simple_display(),
+    ))
+}
+
+fn delete_editor_core(
+    editor_id: i32,
+    editor_app_name: &str,
+    force: bool,
+) -> Result<String, eyre::Report> {
+    if force
+        || inquire::Confirm::new(&format!(
+            "Are you sure you want to delete this Editor - '{}'? This cannot be undone",
+            editor_app_name
+        ))
+        .with_default(false)
+        .prompt()?
+    {
+        // Check if "Default Editor" and remove link if so
+        menu_app_settings::remove_editor_from_app_settings(editor_id)?;
+
+        db::delete_editor(editor_id)
+            .wrap_err(format!("Failed to delete Editor - '{}", editor_app_name))?;
+        return Ok(format!("Successfully deleted Editor '{}'", editor_app_name));
+    }
+
+    Ok("Canceled Editor deletion".to_string())
 }
 
 pub fn delete_editor() -> Result<String, eyre::Report> {
@@ -248,26 +332,23 @@ pub fn delete_editor() -> Result<String, eyre::Report> {
 
     let editor_selection = inquire::Select::new("Pick the Editor to Delete:", editor_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     if let Some(editor) = editor_selection {
-        if inquire::Confirm::new(&format!(
-            "Are you sure you want to delete this Editor - '{}'? This cannot be undone",
-            editor.app_name
-        ))
-        .with_default(false)
-        .prompt()?
-        {
-            // Check if "Default Editor" and remove link if so
-            menu_app_settings::remove_editor_from_app_settings(editor.id)?;
-
-            db::delete_editor(editor.id)
-                .wrap_err(format!("Failed to delete Editor - '{}", editor))?;
-            return Ok(format!("Successfully deleted Editor '{}'", editor));
-        }
+        delete_editor_core(editor.id, &editor.app_name, false)
+    } else {
+        Ok("No changes made to deleting Editor".to_string())
     }
+}
 
-    Ok("Canceled Editor deletion".to_string())
+pub fn cli_delete_editor(editor_path: &str, force: bool) -> Result<String, eyre::Report> {
+    let editor_result = db::get_editor_by_path(editor_path);
+    if let Ok(editor) = editor_result {
+        delete_editor_core(editor.id, &editor.app_name, force)
+    } else {
+        Ok(format!("Editor not found - '{}'", editor_path))
+    }
 }
 
 pub fn cli_set_default_editor(path: &str) -> Result<String, eyre::Report> {
@@ -276,5 +357,8 @@ pub fn cli_set_default_editor(path: &str) -> Result<String, eyre::Report> {
     let mut app_settings = db::get_app_settings()?;
     app_settings.default_editor_id = Some(editor.id);
     db::save_app_settings(app_settings)?;
-    Ok(format!("Successfully set Editor '{}' as Default", editor))
+    Ok(format!(
+        "Successfully set Editor '{}' as Default",
+        editor.simple_display()
+    ))
 }

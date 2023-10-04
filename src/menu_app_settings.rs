@@ -7,7 +7,7 @@ use tabled::settings::{object::Rows, Modify, Rotate, Style, Width};
 
 use crate::{
     data::{self},
-    db, doom_data, files, paths, tui,
+    db, doom_data, files, menu_profiles, paths, tui,
 };
 
 pub fn check_app_can_run(force: bool) -> Result<String, eyre::Report> {
@@ -78,6 +78,15 @@ pub fn init() -> Result<String, eyre::Report> {
     // Set default engine and iwad for quick play
     set_default_engine()?;
     set_default_iwad()?;
+
+    // Create a profile
+    if inquire::Confirm::new("Would you like to create a Profile?")
+        .with_default(false)
+        .with_help_message("Profiles combine Engines, IWADs and Maps for quick play")
+        .prompt()?
+    {
+        menu_profiles::add_profile()?;
+    }
 
     // Completed init!
     info!("{}", "Successfully run init and app configured!".green());
@@ -170,7 +179,10 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
     let db_engines = db::get_engines()?;
     let mut db_defaults = vec![];
     for (index, engine_executable) in engines_executables.iter().enumerate() {
-        if db_engines.iter().any(|db| &db.path == engine_executable) {
+        if db_engines
+            .iter()
+            .any(|db| db.path.to_lowercase() == engine_executable.to_lowercase())
+        {
             db_defaults.push(index);
         }
     }
@@ -197,7 +209,15 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
             version: file_version.display_version(),
             game_engine_type: game_engine.game_engine_type,
         });
-        info!("  {}", engines_extended.last().unwrap().blue().to_string());
+        info!(
+            "  {}",
+            engines_extended
+                .last()
+                .unwrap()
+                .simple_display()
+                .blue()
+                .to_string()
+        );
     }
     //info!("Found engines: {:?}", engines_extended);
 
@@ -208,6 +228,12 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
         inquire::MultiSelect::new("Pick the Engines you want to save:", engines_extended)
             .with_default(&db_defaults)
             .with_page_size(tui::MENU_PAGE_SIZE)
+            .with_formatter(&|i| {
+                i.iter()
+                    .map(|e| e.value.short_display())
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            })
             .prompt()?
     };
 
@@ -235,17 +261,20 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
 
     // Save engines to  engines table
     for selection in selections {
-        let existing_engine = db_engines.iter().find(|e| e.path == selection.path);
+        let existing_engine = db_engines
+            .iter()
+            .find(|e| e.path.to_lowercase() == selection.path.to_lowercase());
         match existing_engine {
             Some(existing) => {
                 info!(
                     "  Engine already exists, no need to add: {}",
-                    selection.blue()
+                    selection.simple_display().yellow()
                 );
                 if existing.version != selection.version {
                     info!(
                         "  Updating Engine version from '{}' to '{}'",
-                        existing.version, selection.version
+                        existing.version.blue(),
+                        selection.version.green()
                     );
                     db::update_engine_version(existing.id, &selection.version)?;
                 }
@@ -253,14 +282,12 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
             None => {
                 db::add_engine(&selection)?;
                 debug!("Added Engine: {:?}", selection);
-                info!("Added Engine: {}", selection.blue());
+                info!("Added Engine: {}", selection.simple_display().blue());
                 count += 1;
             }
         }
     }
 
-    // FIXME: This is getting blanked by menu display...
-    // info!("{}", list_engines()?);
     if count > 0 {
         let result_message = format!("Successfully added {} Engines", count);
         info!("{}", result_message.green());
@@ -330,6 +357,7 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
         inquire::MultiSelect::new("Pick the IWADs you want to save:", confirmed_iwads)
             .with_default(&db_defaults)
             .with_page_size(tui::MENU_PAGE_SIZE)
+            // TODO: Add formatter?
             .prompt()?
     };
 
@@ -360,11 +388,16 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
         let internal_wad_type =
             files::get_internal_wad_type_from_file_name(iwad_list.clone(), &selection)?;
 
-        let existing_iwad = db_iwads.iter().find(|e| e.path == selection);
+        let existing_iwad = db_iwads
+            .iter()
+            .find(|e| e.path.to_lowercase() == selection.to_lowercase());
 
         match existing_iwad {
             Some(_) => {
-                debug!("IWAD already exists, no need to add: {}", selection);
+                info!(
+                    "IWAD already exists, no need to add: {}",
+                    selection.yellow()
+                );
             }
             None => {
                 let iwad = data::Iwad {
@@ -375,17 +408,12 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
 
                 db::add_iwad(&iwad)?;
                 debug!("  IWAD: {:?}", iwad);
-                info!(
-                    "Added IWAD: {} - {}",
-                    iwad.internal_wad_type.blue(),
-                    iwad.path.blue()
-                );
+                info!("Added IWAD: {}", iwad.simple_display().blue());
                 count += 1;
             }
         }
     }
 
-    //info!("{}", list_iwads()?);
     if count > 0 {
         let result_message = format!("Successfully added {} IWADs", count);
         info!("{}", result_message.green());
@@ -453,11 +481,11 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
             continue;
         }
 
-        let existing_map = db_maps.iter().find(|e| e.path == map);
+        let existing_map = db_maps.iter().find(|e| e.path.to_lowercase() == map);
 
         match existing_map {
             Some(_) => {
-                debug!("Map already exists, no need to add: {}", map);
+                info!("Map already exists, no need to add: {}", map.yellow());
             }
             None => {
                 info!("Getting map title and author for Map: '{}'", map);
@@ -470,15 +498,14 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
                 };
 
                 db::add_map(&map)?;
+                info!("Added Map: {}", map.simple_display().blue());
                 debug!("  Map {:?}", map);
-                info!("Added Map: {} - {}", map.title.blue(), map.path.blue());
 
                 count += 1;
             }
         }
     }
 
-    // info!("{}", list_maps()?);
     if count > 0 {
         let result_message = format!("Successfully added {} Maps", count);
         info!("{}", result_message.green());
@@ -495,6 +522,7 @@ pub fn delete_engines() -> Result<String, eyre::Report> {
 
     let engine_selection = inquire::Select::new("Pick the Engine to Delete:", engine_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     if let Some(engine) = engine_selection {
@@ -531,6 +559,7 @@ pub fn delete_iwads() -> Result<String, eyre::Report> {
 
     let iwad_selection = inquire::Select::new("Pick the IWAD to Delete:", iwad_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     if let Some(iwad) = iwad_selection {
@@ -566,6 +595,7 @@ pub fn delete_maps() -> Result<String, eyre::Report> {
 
     let map_selection = inquire::Select::new("Pick the Map to Delete:", map_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     if let Some(map) = map_selection {
@@ -599,7 +629,7 @@ pub fn list_engines() -> Result<String, eyre::Report> {
     }
 
     let table = tabled::Table::new(engines)
-        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30)))
         .with(Style::modern())
         .to_string();
     Ok(table)
@@ -613,7 +643,7 @@ pub fn list_iwads() -> Result<String, eyre::Report> {
     }
 
     let table = tabled::Table::new(iwads)
-        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30)))
         .with(Style::modern())
         .to_string();
     Ok(table)
@@ -627,7 +657,7 @@ pub fn list_maps() -> Result<String, eyre::Report> {
     }
 
     let table = tabled::Table::new(maps)
-        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(30)))
         .with(Style::modern())
         .to_string();
     Ok(table)
@@ -642,7 +672,7 @@ pub fn list_app_settings() -> Result<String, eyre::Report> {
     // what was the first header becomes the bottom most row after Rotate Left!
     // (this Tabled crate is crazy!)
     let table = tabled::Table::new(vec![app_settings])
-        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50)))
         .with(Rotate::Left)
         .with(Rotate::Top)
         .with(Style::modern())
@@ -682,9 +712,10 @@ pub fn set_default_engine() -> Result<String, eyre::Report> {
         None => 0,
     };
 
-    let engine = inquire::Select::new("Pick the Engine to mark as Default:", engine_list)
+    let engine = inquire::Select::new("Pick an Engine to mark as Default:", engine_list)
         .with_starting_cursor(starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     match engine {
@@ -703,7 +734,10 @@ pub fn cli_set_default_engine(path: &str) -> Result<String, eyre::Report> {
     let mut app_settings = db::get_app_settings()?;
     app_settings.default_engine_id = Some(engine.id);
     db::save_app_settings(app_settings).wrap_err("Failed to set Default Engine")?;
-    Ok(format!("Successfully set Engine '{}' as Default", engine))
+    Ok(format!(
+        "Successfully set Engine '{}' as Default",
+        engine.simple_display()
+    ))
 }
 
 pub fn cli_set_default_iwad(path: &str) -> Result<String, eyre::Report> {
@@ -712,7 +746,10 @@ pub fn cli_set_default_iwad(path: &str) -> Result<String, eyre::Report> {
     let mut app_settings = db::get_app_settings()?;
     app_settings.default_iwad_id = Some(iwad.id);
     db::save_app_settings(app_settings).wrap_err("Failed to set Default IWAD")?;
-    Ok(format!("Successfully set IWAD '{}' as Default", iwad))
+    Ok(format!(
+        "Successfully set IWAD '{}' as Default",
+        iwad.simple_display()
+    ))
 }
 
 pub fn set_default_iwad() -> Result<String, eyre::Report> {
@@ -730,6 +767,7 @@ pub fn set_default_iwad() -> Result<String, eyre::Report> {
     let iwad = inquire::Select::new("Pick the IWAD to mark as Default:", iwad_list)
         .with_starting_cursor(starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     match iwad {

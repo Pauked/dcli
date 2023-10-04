@@ -24,7 +24,7 @@ $hexdd_wad = "C:\Doom\Maps\HexDD.wad"
 & $dcli_path init "C:\Doom\Apps" "C:\Doom\Maps" "C:\Doom\Maps" --force
 
 # Change menu mode
-& $dcli_path set-app-settings --menu-mode full
+& $dcli_path set-app-settings --menu-mode simple
 
 # Add individual profiles
 & $dcli_path add-profile "Classic Doom" $dsda_doom_path $doom_wad
@@ -41,11 +41,30 @@ $hexdd_wad = "C:\Doom\Maps\HexDD.wad"
 & $dcli_path add-profile "Hexen" $gzdoom_path $hexen_wad
 & $dcli_path add-profile "Hexen: Deathkings of the Dark Citadel" $gzdoom_path $hexdd_wad
 
+# Add an editor
+& $dcli_path add-editor "C:\Doom\Editors\Slade\slade.exe"
+& $dcli_path add-editor "C:\Doom\Editors\UltimateDoomBuilder\builder.exe"
+
 # Set defaults
 & $dcli_path set-default --engine $dsda_doom_path
 & $dcli_path set-default --iwad $doom2_wad
 & $dcli_path set-default --profile "Sigil"
+& $dcli_path set-default --editor "C:\Doom\Editors\UltimateDoomBuilder\builder.exe"
 
 # Show what we added
 & $dcli_path list profiles
 & $dcli_path list app-settings
+
+# Uncomment to run the following commands.
+# Commented out to prevent many copies of Doom running at once.
+
+# Now let's play!
+# This will run the specified profile
+# & $dcli_path play-profile "Ancient Aliens"
+
+# This will play the default profile, which is "Sigil".
+# Default profiles are not marked as last run when run.
+# & $dcli_path play
+
+# This will play the last profile run, which is "Ancient Aliens"
+# & $dcli_path play-last

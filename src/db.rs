@@ -429,35 +429,35 @@ pub fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre::Repo
     let default_profile: String = match app_settings.default_profile_id {
         Some(id) => {
             let profile = get_profile_display_by_id(id)?;
-            profile.to_string()
+            profile.simple_display()
         }
         None => constants::DEFAULT_NOT_SET.to_string(),
     };
     let last_profile = match app_settings.last_profile_id {
         Some(id) => {
             let profile = get_profile_display_by_id(id)?;
-            profile.to_string()
+            profile.simple_display()
         }
         None => constants::DEFAULT_NOT_SET.to_string(),
     };
     let default_engine = match app_settings.default_engine_id {
         Some(id) => {
             let engine = get_engine_by_id(id)?;
-            engine.to_string()
+            engine.simple_display()
         }
         None => constants::DEFAULT_NOT_SET.to_string(),
     };
     let default_iwad = match app_settings.default_iwad_id {
         Some(id) => {
             let iwad = get_iwad_by_id(id)?;
-            iwad.to_string()
+            iwad.simple_display()
         }
         None => constants::DEFAULT_NOT_SET.to_string(),
     };
     let default_editor = match app_settings.default_editor_id {
         Some(id) => {
             let editor = get_editor_by_id(id)?;
-            editor.to_string()
+            editor.simple_display()
         }
         None => constants::DEFAULT_NOT_SET.to_string(),
     };
@@ -571,7 +571,7 @@ pub fn delete_profile(id: i32) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::
 
 pub fn update_profile_date_last_run_and_run_count(
     id: i32,
-    run_count: i32
+    run_count: i32,
 ) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {

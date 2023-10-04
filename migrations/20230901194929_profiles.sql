@@ -88,9 +88,3 @@ CREATE TABLE IF NOT EXISTS play_settings (
     windowed BOOLEAN NOT NULL,
     additional_arguments TEXT NULL
 );
-
-CREATE TABLE IF NOT EXISTS track_menu (
-    id INTEGER PRIMARY KEY NOT NULL,
-    option_name TEXT NOT NULL UNIQUE,
-    usage INTEGER NOT NULL
-);

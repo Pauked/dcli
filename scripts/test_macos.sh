@@ -5,7 +5,7 @@
 # Use "chmod 755 test_macos.sh" to make executable.
 #
 # Test script to initialise the database with some profiles and run various commands.
-# Written for MacOS. Should run without errors.
+# Written for macOS. Should run without errors.
 
 # Set top level variables
 dcli_path="./target/debug/dcli"
@@ -17,9 +17,9 @@ gzdoom_path="~/Dropbox/Games/Doom/Apps/GzDoom4100Mac/gzdoom.app"
 doom_wad="~/Dropbox/Games/Doom/Maps/Doom.wad"
 doom2_wad="~/Dropbox/Games/Doom/Maps/Doom2.wad"
 tnt_wad="~/Dropbox/Games/Doom/Maps/Final Doom/Tnt.wad"
-$heretic_wad = "~/Dropbox/Games/Doom/Maps/Heretic.wad"
-$hexen_wad = "~/Dropbox/Games/Doom/Maps/Hexen.wad"
-$hexdd_wad = "~/Dropbox/Games/Doom/Maps/HexDD.wad"
+heretic_wad="~/Dropbox/Games/Doom/Maps/Heretic.wad"
+hexen_wad="~/Dropbox/Games/Doom/Maps/Hexen.wad"
+hexdd_wad="~/Dropbox/Games/Doom/Maps/HexDD.wad"
 
 # Delete the db so we have a clean slate (force will skip any confirmation prompts)
 $dcli_path reset --force
@@ -28,7 +28,7 @@ $dcli_path reset --force
 $dcli_path init "~/Dropbox/Games/Doom/Apps/" "~/Dropbox/Games/Doom/Maps/" "~/Dropbox/Games/Doom/Maps/" --force
 
 # Change menu mode
-$dcli_path set-app-settings --menu-mode full
+$dcli_path set-app-settings --menu-mode simple
 
 # Add individual profiles
 $dcli_path add-profile "Classic Doom" $gzdoom_path $doom_wad
@@ -51,3 +51,17 @@ $dcli_path set-default --profile "Sigil"
 # Show what we added
 $dcli_path list profiles
 $dcli_path list app-settings
+
+# Uncomment to run the following commands.
+# Commented out to prevent many copies of Doom running at once.
+
+# Now let's play!
+# This will run the specified profile
+# $dcli_path play-profile "Ancient Aliens"
+
+# This will play the default profile, which is "Sigil".
+# Default profiles are not marked as last run when run.
+# $dcli_path play
+
+# This will play the last profile run, which is "Ancient Aliens"
+# $dcli_path play-last

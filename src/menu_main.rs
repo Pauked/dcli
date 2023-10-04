@@ -27,7 +27,7 @@ pub fn get_default_profile_text() -> Result<String, eyre::Report> {
     let profile_display = db::get_profile_display_by_id(app_settings.default_profile_id.unwrap())?;
     Ok(format!(
         "Default - {}",
-        profile_display.to_string().green().bold()
+        profile_display.simple_display().truecolor(55, 55, 255) // Blue
     ))
 }
 
@@ -47,7 +47,7 @@ pub fn get_last_profile_text() -> Result<String, eyre::Report> {
     let profile_display = db::get_profile_display_by_id(app_settings.last_profile_id.unwrap())?;
     Ok(format!(
         "Last    - {}",
-        profile_display.to_string().purple().bold()
+        profile_display.simple_display().truecolor(255, 143, 59) // Orange
     ))
 }
 
@@ -80,6 +80,7 @@ pub fn pick_and_play_profile() -> Result<String, eyre::Report> {
     }
     let profile = inquire::Select::new("Pick the Profile you want to Play:", profile_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     match profile {
@@ -117,6 +118,7 @@ pub fn pick_and_play_map() -> Result<String, eyre::Report> {
     let engine_selection = inquire::Select::new("Pick the Engine you want to use:", engine_list)
         .with_starting_cursor(starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt()?;
 
     // let engine_selection = {
@@ -140,6 +142,7 @@ pub fn pick_and_play_map() -> Result<String, eyre::Report> {
     let iwad_selection = inquire::Select::new("Pick the IWAD you want to use:", iwad_list)
         .with_starting_cursor(starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt()?;
 
     // let iwad_selection = {
@@ -158,6 +161,7 @@ pub fn pick_and_play_map() -> Result<String, eyre::Report> {
     let map_selection =
         inquire::Select::new("Pick the Map you want to use (optional):", map_list.clone())
             .with_page_size(tui::MENU_PAGE_SIZE)
+            .with_formatter(&|i| i.value.simple_display())
             .prompt_skippable()?;
     let map_id = map_selection.as_ref().map(|map| map.id);
 
@@ -195,9 +199,9 @@ pub fn pick_and_play_map() -> Result<String, eyre::Report> {
             run_count: 0,
         };
         let add_result = db::add_profile(profile)?;
-        let new_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
+        let add_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
 
-        runner::play_from_profile(new_profile_id, true)
+        runner::play_from_profile(add_profile_id, true)
     } else {
         runner::play_from_engine_iwad_and_map(
             engine_selection.id,

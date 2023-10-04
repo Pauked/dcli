@@ -42,7 +42,7 @@ fn run() -> eyre::Result<String> {
     let (cli_result, cli_run_mode) = cli::run_cli_action(args)?;
     match cli_run_mode {
         cli::CliRunMode::Tui => {
-            info!("Welcome to {}", constants::APP_NAME.bright_yellow());
+            info!("{} {}", "Welcome to".bold(), constants::APP_NAME.truecolor(75, 159, 63).bold());
             menu_app_settings::check_app_can_run(false)?;
             tui::menu(tui::MenuLevel::Main)
         }

@@ -51,7 +51,7 @@ pub fn play_from_engine_iwad_and_map(
     let engine = db::get_engine_by_id(engine_id)?;
     let iwad = db::get_iwad_by_id(iwad_id)?;
 
-    // For MacOS, the path is split up into the Engine path and the internal path
+    // For macOS, the path is split up into the Engine path and the internal path
     // need to merge them together in order to run the app
     let final_engine_path: String = {
         match engine.internal_path {
@@ -206,7 +206,7 @@ pub fn open_map_readme(map_path: &str) -> Result<String, eyre::Report> {
                     "cmd"
                 } else {
                     return Err(eyre::eyre!(format!(
-                        "open_map_readme is only supported on Windows and MacOS, not on '{}'",
+                        "open_map_readme is only supported on Windows and macOS, not on '{}'",
                         env::consts::OS
                     )));
                 }

@@ -1,8 +1,8 @@
 # DCLI v0.3.5
 [x] Make menus less crashy if user aborts (first pass)
-[/] Write Readme in repo root
+[x] Write Readme in repo root
 [x] Test script Windows (CLI usage)
-[x] Test script MacOS
+[x] Test script macOS
 [x] Block deleting of Engine/IWAD/Map if linked in Profiles.
 [x] Option to delete Maps via UI
 [x] Option to delete Engines
@@ -18,13 +18,15 @@
 [x] Expand complevels to include all complevels (excluding PrBoom+ 12-16)
 [x] Arg for play-profile <profile name>
 [x] Run count on Profile
+[x] Update of Maps option doesn't give any feedback (excluding IWADs)
+[x] Improve formatting in Select lists. Looks messy/hard to read
 
 # DCLI v0.4
 [ ] On add of Editor, prompt to set default
 [ ] Have a profile switch of "include play settings?", default to on.
-[ ] CLI for Profile
-[ ] CLI for Editor
-[ ] CLI for Delete Engines/IWADs/Maps
+[ ] CLI for Profile (edit)
+[ ] CLI for Editor (edit)
+[ ] CLI for Engines/IWADs/Maps (delete)
 [ ] CLI for all App Settings
 [ ] CLI for Play Settings
 [ ] Map Play Queue - user selected
@@ -42,11 +44,11 @@
 [ ] Track usage of options to generate a "most used options menu"
 [ ] Handling of savegames, ability to read information from and provide options to select
 [ ] Next iteration of dcli to be dui. Full TUI app instead of simple console app.
-[ ] Shared database for Windows and MacOS. Need to consider base paths, sub folders of files, etc.
+[ ] Shared database for Windows and macOS. Need to consider base paths, sub folders of files, etc.
 
 ## Save game notes:
  - dsda-doom - save files are .dsg. subfolder of app, dsda-doom\IWAD name\Map name
- - GzDoom - save files are .zds. Zip file containing JSON files.
+ - GDoom - save files are .zds. Zip file containing JSON files.
     - info.json is what I need!
     - Folders - C:\Users\<user>\Saved Games\GZDoom\doom.id.doom2.tnt\
 
@@ -78,7 +80,7 @@ What do I want from the app?
 
 # Orginal thoughts
 - Windows support
-- MacOS support
+- macOS support
 - Ability to pick wad to play
 - Ability to pick engine to use
 - Ability to pick editor

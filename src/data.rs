@@ -11,6 +11,11 @@ use crate::{
     tui::{self, MenuMode},
 };
 
+const DISPLAY_WIDTH1: usize = 30;
+const DISPLAY_WIDTH2: usize = 25;
+const DISPLAY_WIDTH_VERSION: usize = 12;
+const DISPLAY_WIDTH_IWAD: usize = 12;
+
 #[derive(Clone, Debug)]
 pub struct FileVersion {
     pub app_name: String,
@@ -46,12 +51,27 @@ pub struct Engine {
     pub game_engine_type: doom_data::GameEngineType,
 }
 
+impl Engine {
+    pub fn simple_display(&self) -> String {
+        format!("{}, [{}] {}", self.app_name, self.version, self.path,)
+    }
+    pub fn short_display(&self) -> String {
+        format!("{} [{}]", self.app_name, self.version,)
+    }
+}
+
 impl fmt::Display for Engine {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let width = DISPLAY_WIDTH1;
+        let width2 = DISPLAY_WIDTH_VERSION;
         write!(
             f,
-            "{} ({} [{}], {})",
-            self.app_name, self.path, self.version, self.game_engine_type
+            "{:<width$} | [{:<width2$}] {:<}",
+            truncate_string(&self.app_name, width),
+            truncate_string(&self.version, width2),
+            &self.path,
+            width = width,
+            width2 = width2,
         )
     }
 }
@@ -79,9 +99,22 @@ pub struct Iwad {
     pub internal_wad_type: doom_data::InternalWadType,
 }
 
+impl Iwad {
+    pub fn simple_display(&self) -> String {
+        format!("{}, {}", self.internal_wad_type, self.path)
+    }
+}
+
 impl fmt::Display for Iwad {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} ({})", self.internal_wad_type, self.path)
+        let width = DISPLAY_WIDTH1;
+        write!(
+            f,
+            "{:<width$} | {}",
+            truncate_string(&self.internal_wad_type.to_string(), width),
+            self.path,
+            width = width,
+        )
     }
 }
 
@@ -107,9 +140,22 @@ pub struct Map {
     pub path: String,
 }
 
+impl Map {
+    pub fn simple_display(&self) -> String {
+        format!("{}, {}", self.title, self.path)
+    }
+}
+
 impl fmt::Display for Map {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} by '{}' ({})", self.title, self.author, self.path)
+        let width = DISPLAY_WIDTH1;
+        write!(
+            f,
+            "{:<width$} | {:<}",
+            truncate_string(&self.title, width),
+            &self.path,
+            width = width,
+        )
     }
 }
 
@@ -143,9 +189,25 @@ pub struct Editor {
     pub version: String,
 }
 
+impl Editor {
+    pub fn simple_display(&self) -> String {
+        format!("{}, [{}] {}", self.app_name, self.version, self.path,)
+    }
+}
+
 impl fmt::Display for Editor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} ({} [{}])", self.app_name, self.path, self.version)
+        let width = DISPLAY_WIDTH1;
+        let width2 = DISPLAY_WIDTH_VERSION;
+        write!(
+            f,
+            "{:<width$} | [{:<width2$}] {:<} ",
+            truncate_string(&self.app_name, width),
+            truncate_string(&self.version, width2),
+            self.path,
+            width = width,
+            width2 = width2,
+        )
     }
 }
 
@@ -239,22 +301,52 @@ pub struct ProfileDisplay {
     pub run_count: i32,
 }
 
+impl ProfileDisplay {
+    pub fn simple_display(&self) -> String {
+        let maps = {
+            let temp = display_combined_map_strings_simple(&self.map_files);
+            if temp.is_empty() {
+                "".to_string()
+            } else {
+                format!(" ({})", temp)
+            }
+        };
+
+        format!(
+            "{}{} | {} | [{}] {}",
+            self.name, maps, self.iwad_file, self.engine_version, self.engine_file,
+        )
+    }
+}
+
 impl fmt::Display for ProfileDisplay {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let maps = display_combined_map_strings(&self.map_files);
-        if maps.is_empty() {
-            write!(
-                f,
-                "{} / {} [{}] / {}",
-                self.name, self.engine_file, self.engine_version, self.iwad_file
-            )
-        } else {
-            write!(
-                f,
-                "{} ({}) / {} [{}] / {}",
-                self.name, maps, self.engine_file, self.engine_version, self.iwad_file
-            )
-        }
+        let width = DISPLAY_WIDTH1;
+        let width2 = DISPLAY_WIDTH2;
+        let width3 = DISPLAY_WIDTH_IWAD;
+        let width4 = DISPLAY_WIDTH_VERSION;
+        let maps = {
+            let temp = display_combined_map_strings_simple(&self.map_files);
+            if temp.is_empty() {
+                "   ".to_string()
+            } else {
+                format!("({})", temp)
+            }
+        };
+        write!(
+            f,
+            "{:<width$} {:<width2$} | {:<width3$} | [{:<width4$}] {:<}",
+            truncate_string(&self.name, width),
+            truncate_string(&maps, width2),
+            truncate_string(&self.iwad_file, width3),
+            truncate_string(&self.engine_version, width4),
+            self.engine_file,
+            width = width,
+            width2 = width2,
+            width3 = width3,
+            width4 = width4,
+        )
+        // }
     }
 }
 
@@ -286,7 +378,7 @@ impl Default for AppSettings {
             iwad_search_folder: None,
             map_search_folder: None,
             editor_search_folder: None,
-            menu_mode: MenuMode::Simple,
+            menu_mode: MenuMode::Full,
         }
     }
 }
@@ -387,7 +479,7 @@ pub enum CompLevel {
     - respawn monsters
     - demo record,
     - demo playback
-    - GzDoom specific options
+    - GZDoom specific options
     - DSDA specific options
 */
 
@@ -442,14 +534,44 @@ pub fn display_combined_tabled_map_strings(data: &MapStrings) -> String {
     vec.join("\n")
 }
 
-pub fn display_combined_map_strings(data: &MapStrings) -> String {
-    let vec = [&data.0, &data.1, &data.2, &data.3, &data.4]
+// pub fn display_combined_map_strings(data: &MapStrings) -> String {
+//     let vec = [&data.0, &data.1, &data.2, &data.3, &data.4]
+//         .iter()
+//         .filter(|&&s| !s.is_empty() && s != constants::DEFAULT_NOT_SET)
+//         .map(|&s| s.as_str())
+//         .collect::<Vec<&str>>();
+
+//     vec.join(", ")
+// }
+
+pub fn display_combined_map_strings_simple(map_strings: &MapStrings) -> String {
+    let (first, second, third, fourth, fifth) = map_strings;
+
+    let extra_strings = [second, third, fourth, fifth];
+    let non_empty_extra_count = extra_strings
         .iter()
         .filter(|&&s| !s.is_empty() && s != constants::DEFAULT_NOT_SET)
-        .map(|&s| s.as_str())
-        .collect::<Vec<&str>>();
+        .count();
 
-    vec.join(", ")
+    match non_empty_extra_count {
+        0 => {
+            if first == constants::DEFAULT_NOT_SET {
+                return "".to_string();
+            }
+            first.to_string()
+        }
+        _ => format!("{}, +{}", first, non_empty_extra_count),
+    }
+}
+
+fn truncate_string(input: &str, max_length: usize) -> String {
+    if input.len() > max_length {
+        let front_len = (max_length - 3) / 2;
+        let back_start = input.len() - (max_length - 3 - front_len);
+        return format!("{}...{}", &input[..front_len], &input[back_start..]);
+    };
+
+    input.to_string()
 }
 
 pub fn display_utc_datetime_to_local(value: &DateTime<Utc>) -> String {

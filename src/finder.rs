@@ -172,7 +172,7 @@ pub fn get_file_version(full_path: &str) -> Result<data::FileVersion, eyre::Repo
     }
 
     Err(eyre::eyre!(format!(
-        "get_file_version is only supported on Windows and MacOS, not on '{}'",
+        "get_file_version is only supported on Windows and macOS, not on '{}'",
         env::consts::OS
     )))
 }

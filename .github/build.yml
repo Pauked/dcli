@@ -38,7 +38,7 @@ jobs:
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
         else
           DMG_NAME="app-name-${{ github.sha }}.dmg"
-          # For MacOS, we'll use the create-dmg tool
+          # For macOS, we'll use the create-dmg tool
           npx create-dmg target/release/your_app_name $DMG_NAME
           echo "DMG_NAME=$DMG_NAME" >> $GITHUB_ENV
         fi
@@ -50,7 +50,7 @@ jobs:
         name: windows-artifact
         path: target/release/${{ env.ZIP_NAME }}
 
-    - name: Upload Artifact (MacOS)
+    - name: Upload Artifact (macOS)
       if: matrix.os == 'macos-latest'
       uses: actions/upload-artifact@v2
       with:

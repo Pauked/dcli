@@ -249,11 +249,11 @@ pub fn reset_play_settings() -> Result<String, eyre::Error> {
         .prompt()?
     {
         let play_settings = db::get_play_settings()?;
-        let new_play_settings = data::PlaySettings {
+        let add_play_settings = data::PlaySettings {
             id: play_settings.id,
             ..Default::default()
         };
-        db::save_play_settings(new_play_settings)?;
+        db::save_play_settings(add_play_settings)?;
         Ok("Successfully Reset Play Settings".to_string())
     } else {
         Ok("Reset Play Settings not confirmed".to_string())

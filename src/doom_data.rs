@@ -16,7 +16,7 @@ pub const PWAD_IDENTIFIER: [u8; 4] = *b"PWAD";
 
 #[derive(Clone, Debug, PartialEq, sqlx::Type, Display)]
 pub enum GameEngineType {
-    #[strum(serialize = "GzDoom")]
+    #[strum(serialize = "GZDoom")]
     GzDoom,
     #[strum(serialize = "PrBoom+")]
     PrBoomPlus,
@@ -35,14 +35,14 @@ pub enum GameEngineType {
 pub enum OperatingSystem {
     Windows,
     Linux,
-    Mac,
+    MacOs,
 }
 
 pub fn get_operating_system() -> OperatingSystem {
     match env::consts::OS {
         constants::OS_WINDOWS => OperatingSystem::Windows,
         constants::OS_LINUX => OperatingSystem::Linux,
-        constants::OS_MACOS => OperatingSystem::Mac,
+        constants::OS_MACOS => OperatingSystem::MacOs,
         _ => panic!("Unsupported OS: {}", env::consts::OS),
     }
 }
@@ -97,7 +97,7 @@ pub fn get_engine_list(operating_system: OperatingSystem) -> Vec<GameEngine> {
             exe_name: "gzdoom.app".to_string(),
             internal_path: Some("Contents/MacOS/gzdoom".to_string()),
             game_engine_type: GameEngineType::GzDoom,
-            operating_system: OperatingSystem::Mac,
+            operating_system: OperatingSystem::MacOs,
         },
     ];
 
@@ -115,15 +115,15 @@ pub enum InternalWadType {
     DoomShareware,
     #[strum(serialize = "Doom II")]
     Doom2,
-    #[strum(serialize = "Final Doom - TNT: Evilution")]
+    #[strum(serialize = "TNT: Evilution (Final Doom)")]
     Tnt,
-    #[strum(serialize = "Final Doom - The Plutonia Experiment")]
+    #[strum(serialize = "The Plutonia Experiment (Final Doom)")]
     Plutonia,
     #[strum(serialize = "Heretic")]
     Heretic,
     #[strum(serialize = "Heretic Shareware")]
     HereticShareware,
-    #[strum(serialize = "Hexen Demo or Full")]
+    #[strum(serialize = "Hexen")]
     Hexen,
     #[strum(serialize = "Hexen: Deathkings of the Dark Citadel")]
     HexenDeathkings,

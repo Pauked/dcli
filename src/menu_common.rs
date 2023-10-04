@@ -17,6 +17,7 @@ fn pick_from_map_from_profile_map_ids(map_ids: data::MapIds) -> Result<i32, eyre
 
     let map_selection = inquire::Select::new("Pick the Map you want to use:", map_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     if let Some(map) = map_selection {
@@ -82,6 +83,7 @@ pub fn get_map_id_from_pick_profile(
 
     let profile_selection = inquire::Select::new(option_str, profile_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     if let Some(profile) = profile_selection {
@@ -100,6 +102,7 @@ pub fn get_map_id_from_pick_map(option_text: &str, error_str: &str) -> Result<i3
 
     let map_selection = inquire::Select::new(option_text, map_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     if let Some(map) = map_selection {
@@ -120,6 +123,12 @@ pub fn get_map_selection(
             .with_page_size(tui::MENU_PAGE_SIZE)
             .with_help_message("You can select up to five Maps")
             .with_validator(inquire::max_length!(5))
+            .with_formatter(&|i| {
+                i.iter()
+                    .map(|e| e.value.simple_display())
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            })
             .prompt_skippable()?;
 
     if let Some(unwrapped_selected_items) = selected_items {
@@ -156,6 +165,7 @@ pub fn get_map_selection(
                     temp_items.clone(),
                 )
                 .with_page_size(tui::MENU_PAGE_SIZE)
+                .with_formatter(&|i| i.value.simple_display())
                 .prompt()
                 .unwrap();
 

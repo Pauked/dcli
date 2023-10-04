@@ -9,7 +9,7 @@ use tabled::{
 
 use crate::{data, db, menu_app_settings, menu_common, paths, tui};
 
-pub fn new_profile() -> Result<String, eyre::Report> {
+pub fn add_profile() -> Result<String, eyre::Report> {
     let engines = db::get_engines()?;
     if engines.is_empty() {
         return Ok("There are no Engines to select. Please run 'init'".to_string());
@@ -53,11 +53,13 @@ pub fn new_profile() -> Result<String, eyre::Report> {
     let engine_selection = inquire::Select::new("Pick the Engine you want to use:", engines)
         .with_starting_cursor(engine_starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt()?;
 
     let iwad_selection = inquire::Select::new("Pick the IWAD you want to use:", iwads)
         .with_starting_cursor(iwad_starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt()?;
 
     let map_selection = menu_common::get_map_selection(maps, vec![])?;
@@ -87,8 +89,8 @@ pub fn new_profile() -> Result<String, eyre::Report> {
         run_count: 0,
     };
     let add_result = db::add_profile(profile.clone())?;
-    let new_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
-    set_profile_as_default(new_profile_id, &profile.name, false)?;
+    let add_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
+    set_profile_as_default(add_profile_id, &profile.name, false)?;
 
     Ok(format!(
         "Successfully created a new Profile - '{}'",
@@ -96,7 +98,7 @@ pub fn new_profile() -> Result<String, eyre::Report> {
     ))
 }
 
-pub fn cli_new_profile(
+pub fn cli_add_profile(
     name: &str,
     engine: &str,
     iwad: &str,
@@ -276,6 +278,7 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
 
     let profile_display = inquire::Select::new("Pick the Profile to Edit:", profile_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt()?;
 
     let engine_starting_cursor = engines
@@ -317,11 +320,13 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
     let engine_selection = inquire::Select::new("Pick the Engine you want to use:", engines)
         .with_starting_cursor(engine_starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt()?;
 
     let iwad_selection = inquire::Select::new("Pick the IWAD you want to use:", iwads)
         .with_starting_cursor(iwad_starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt()?;
 
     let map_selection = menu_common::get_map_selection(maps, default_maps)?;
@@ -356,7 +361,7 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
     Ok(format!("Successfully updated Profile - '{}'", profile_name))
 }
 
-pub fn delete_profile_core(
+fn delete_profile_core(
     profile_id: i32,
     profile_name: &str,
     force: bool,
@@ -389,6 +394,7 @@ pub fn delete_profile() -> Result<String, eyre::Report> {
 
     let profile_selection = inquire::Select::new("Pick the Profile to Delete:", profile_list)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     if let Some(profile) = profile_selection {
@@ -425,6 +431,7 @@ pub fn set_default_profile() -> Result<String, eyre::Report> {
     let profile = inquire::Select::new("Pick the Profile to mark as Default:", profile_list)
         .with_starting_cursor(starting_cursor)
         .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
         .prompt_skippable()?;
 
     match profile {
@@ -447,8 +454,10 @@ pub fn list_profiles(list_type: data::ListType) -> Result<String, eyre::Report> 
 
     let table = match list_type {
         data::ListType::Full => tabled::Table::new(profiles)
-            .with(Modify::new(Rows::new(1..)).with(Width::wrap(30).keep_words()))
+            .with(Modify::new(Rows::new(1..)).with(Width::wrap(30)))
             .with(Style::modern())
+            // .with(Rotate::Left)
+            // .with(Rotate::Top)
             .to_string(),
         data::ListType::Summary => {
             let mut builder = Builder::default();
@@ -458,23 +467,24 @@ pub fn list_profiles(list_type: data::ListType) -> Result<String, eyre::Report> 
                 "IWAD File",
                 "Map Files",
                 "Additional Args",
-                "Run Count",
-                "Date Last Run",
+                //"Run Count",
+                //"Date Last Run",
             ]);
             for profile in profiles {
                 builder.push_record([
                     profile.name,
-                    format!("{} ({})", profile.engine_app_name, profile.engine_version),
+                    profile.engine_app_name,
+                    //format!("{} ({})", profile.engine_app_name, profile.engine_version),
                     profile.iwad_file,
                     data::display_combined_tabled_map_strings(&profile.map_files),
                     profile.additional_arguments,
-                    profile.run_count.to_string(),
-                    data::display_option_utc_datetime_to_local(&profile.date_last_run),
+                    //profile.run_count.to_string(),
+                    //data::display_option_utc_datetime_to_local(&profile.date_last_run),
                 ]);
             }
             let mut table = builder.build();
             table
-                .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
+                .with(Modify::new(Rows::new(1..)).with(Width::wrap(25)))
                 .with(Style::modern())
                 .to_string()
         }

@@ -55,7 +55,7 @@ if ($env:IsWindows) {
         Copy-Item -Path $file -Destination $tempDir
     }
 
-    # Build a .dmg for MacOS
+    # Build a .dmg for macOS
     $dmgCmd = "hdiutil create $dmgPath -volname $appName -srcfolder $tempDir"
     Invoke-Expression $dmgCmd
 
