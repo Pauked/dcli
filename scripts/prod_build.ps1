@@ -11,9 +11,6 @@ $nameLine = $cargoTomlContent | Where-Object { $_ -like "name =*" }
 $version = ($versionLine -split '=')[1].Trim().Trim('"')
 $appName = ($nameLine -split '=')[1].Trim().Trim('"')
 
-# Output file name
-$compressedFileName = "$appName-v$version"
-
 # Where the build will be
 $releaseDir = "target/release"
 
@@ -52,24 +49,29 @@ function CopyFilesToTemp($files, $tempDir, $appName) {
 }
 
 # Determine OS and prepare OS-specific variables
+$osInfo = ""
 if ($env:IsWindows) {
     $appBinary = "$releaseDir/$appName.exe"
-    $filesToInclude += $appBinary
+    $osInfo = "win64"
 } elseif ($env:IsMacOS) {
     $appBinary = "$releaseDir/$appName"
-    $filesToInclude += $appBinary
+    $osInfo = "macOS"
 } else {
     Write-Output "Unsupported OS"
     exit
 }
 
-# Common archive path for both OS types
+# Append OS info to compressed file name
+$compressedFileName = "$appName-v$version-$osInfo"
 $archivePath = "$releaseDir/$compressedFileName.zip"
 
 # Check if the zip file exists, and if so, delete it
 if (Test-Path $archivePath) {
     Remove-Item $archivePath
 }
+
+# Adding application binary to files to include
+$filesToInclude += $appBinary
 
 # Create a temporary directory
 $tempDir = "$releaseDir/temp"

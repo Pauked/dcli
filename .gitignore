@@ -17,3 +17,4 @@ App.toml
 dcli.db
 dcli.db-shm
 dcli.db-wal
+readme.html

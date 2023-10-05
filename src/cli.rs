@@ -13,12 +13,19 @@ pub enum CliRunMode {
 }
 
 #[derive(Parser, Debug, PartialEq)]
-#[clap(about, author, name = constants::CRATE_NAME, version)]
+#[command(name = constants::CRATE_NAME)]
+#[command(author = constants::CRATE_AUTHORS)]
+#[command(version = constants::CRATE_VERSION)]
+#[command(
+    help_template = "{about-section}Version : {version}\nAuthor  : {author} \n\n{usage-heading} {usage} \n\n{all-args} {tab}"
+)]
+#[command(about, long_about = None)]
 pub struct Args {
     #[command(subcommand)]
     pub action: Option<Action>,
 }
 
+/// Doom Command Line Interface!
 #[derive(Parser, Debug, PartialEq)]
 pub enum Action {
     /// Play Doom with the Default Profile.
@@ -74,6 +81,7 @@ pub enum Action {
         full: bool,
     },
 
+    /// Add a new Profile to combine Engine, IWAD, and Maps.
     AddProfile {
         /// Profile name
         name: String,
@@ -93,6 +101,7 @@ pub enum Action {
         args: Option<Vec<String>>,
     },
 
+    /// Delete a Profile. Sad times.
     DeleteProfile {
         /// Profile name
         name: String,
@@ -102,6 +111,7 @@ pub enum Action {
         force: bool,
     },
 
+    /// Add a new Editor to view and edit maps.
     AddEditor {
         /// Editor path
         path: String,
@@ -115,6 +125,7 @@ pub enum Action {
         addtional_args: Option<Vec<String>>,
     },
 
+    /// Delete an Editor.
     DeleteEditor {
         /// Editor path
         path: String,
@@ -124,12 +135,14 @@ pub enum Action {
         force: bool,
     },
 
+    /// Set App Settings.
     SetAppSettings {
         /// Menu mode
         #[clap(value_enum, long)]
         menu_mode: tui::MenuMode,
     },
 
+    /// Set Defaults for Engine, IWAD, Profile, and Editor.
     SetDefault {
         /// Engine path
         #[arg(long)]
@@ -147,7 +160,6 @@ pub enum Action {
         #[arg(long)]
         editor: Option<String>,
     },
-    // Remove default?
 }
 
 #[derive(ValueEnum, Clone, Debug, PartialEq)]
