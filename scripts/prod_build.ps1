@@ -21,7 +21,7 @@ $filesToInclude = @(
     "scripts/test_macos.sh",
     "scripts/test_windows.ps1",
     "scripts/test_windows.bat",
-    "readme.md"
+    "readme.html"
 )
 
 function CopyFilesToTemp($files, $tempDir, $appName) {
@@ -61,6 +61,10 @@ if ($env:IsWindows) {
     exit
 }
 
+# Before creating ZIP, convert readme.md to readme.html using mangler
+$manglerCmd = "$env:LocalBuildTools\$env:ExeMangler readme.md readme.html"
+Invoke-Expression $manglerCmd
+
 # Append OS info to compressed file name
 $compressedFileName = "$appName-v$version-$osInfo"
 $archivePath = "$releaseDir/$compressedFileName.zip"
@@ -89,3 +93,6 @@ Compress-Archive -Path "$tempDir/*" -DestinationPath $archivePath
 
 # Clean up the temporary directory
 Remove-Item -Recurse -Force $tempDir
+
+# After ZIP creation, delete the readme.html if it's no longer needed
+Remove-Item -Path "readme.html" -Force
