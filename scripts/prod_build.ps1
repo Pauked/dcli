@@ -1,29 +1,4 @@
-$buildCmd = "cargo build --release"
-
-# Build the Rust project
-Invoke-Expression $buildCmd
-
-# Extract version number and name from Cargo.toml
-$cargoTomlContent = Get-Content -Path "Cargo.toml"
-$versionLine = $cargoTomlContent | Where-Object { $_ -like "version =*" }
-$nameLine = $cargoTomlContent | Where-Object { $_ -like "name =*" }
-
-$version = ($versionLine -split '=')[1].Trim().Trim('"')
-$appName = ($nameLine -split '=')[1].Trim().Trim('"')
-
-# Where the build will be
-$releaseDir = "target/release"
-
-# Common files to be compressed/archived
-$filesToInclude = @(
-    "docs/dcli-full-main-menu.png",
-    "docs/dcli-simple-main-menu.png",
-    "scripts/test_macos.sh",
-    "scripts/test_windows.ps1",
-    "scripts/test_windows.bat",
-    "readme.html"
-)
-
+# [Common Function Definitions]
 function CopyFilesToTemp($files, $tempDir, $appName) {
     foreach ($file in $files) {
         # Determine destination path
@@ -34,7 +9,8 @@ function CopyFilesToTemp($files, $tempDir, $appName) {
                 # Append .exe if it's a Windows binary
                 $dest += ".exe"
             }
-        } else {
+        }
+        else {
             # Otherwise, maintain the original folder structure
             $dest = "$tempDir/$file"
         }
@@ -48,51 +24,91 @@ function CopyFilesToTemp($files, $tempDir, $appName) {
     }
 }
 
-# Determine OS and prepare OS-specific variables
-$osInfo = ""
+function CleanupAndExit() {
+    Remove-Item -Recurse -Force $tempDir
+    Remove-Item -Path "readme.html" -Force
+    exit
+}
+
+# [Pre-build Tasks]
+$filesToInclude = @(
+    "docs/dcli-full-main-menu.png",
+    "docs/dcli-simple-main-menu.png",
+    "scripts/test_macos.sh",
+    "scripts/test_windows.ps1",
+    "scripts/test_windows.bat",
+    "readme.html"
+)
+
+$versionLine = (Get-Content -Path "Cargo.toml") | Where-Object { $_ -like "version =*" }
+$nameLine = (Get-Content -Path "Cargo.toml") | Where-Object { $_ -like "name =*" }
+
+$version = ($versionLine -split '=')[1].Trim().Trim('"')
+$appName = ($nameLine -split '=')[1].Trim().Trim('"')
+
+# Convert readme.md to readme.html using mangler
+$manglerCmd = "$env:LocalBuildTools\$env:ExeMangler readme.md readme.html"
+Invoke-Expression $manglerCmd
+
+# [Build Process]
 if ($env:IsWindows) {
-    $appBinary = "$releaseDir/$appName.exe"
+    Invoke-Expression "cargo build --release"
+    $appBinary = "target/release/$appName.exe"
     $osInfo = "win64"
-} elseif ($env:IsMacOS) {
-    $appBinary = "$releaseDir/$appName"
+    $compressionFormat = "zip"
+}
+elseif ($env:IsMacOS) {
+    # Build for both x86_64 and aarch64
+    Invoke-Expression "cargo build --release --target aarch64-apple-darwin"
+    Invoke-Expression "cargo build --release --target x86_64-apple-darwin"
+
+    # Combine the two binaries into a universal binary
+    Invoke-Expression "lipo -create -output target/release/$appName target/x86_64-apple-darwin/release/$appName target/aarch64-apple-darwin/release/$appName"
+
+    $appBinary = "target/release/$appName"
     $osInfo = "macOS"
-} else {
+    $compressionFormat = "dmg"
+}
+else {
     Write-Output "Unsupported OS"
     exit
 }
 
-# Before creating ZIP, convert readme.md to readme.html using mangler
-$manglerCmd = "$env:LocalBuildTools\$env:ExeMangler readme.md readme.html"
-Invoke-Expression $manglerCmd
-
-# Append OS info to compressed file name
+# [Packaging Process]
+# Prepare archive name
 $compressedFileName = "$appName-v$version-$osInfo"
-$archivePath = "$releaseDir/$compressedFileName.zip"
+$releaseDir = "target/release"
+$archivePath = "$releaseDir/$compressedFileName.$compressionFormat"
 
-# Check if the zip file exists, and if so, delete it
-if (Test-Path $archivePath) {
-    Remove-Item $archivePath
-}
+# Delete if the archive already exists
+if (Test-Path $archivePath) { Remove-Item $archivePath }
 
-# Adding application binary to files to include
+# Add the binary, which differs depending on the OS, to the files to include list
 $filesToInclude += $appBinary
-
-# Create a temporary directory
 $tempDir = "$releaseDir/temp"
 
-# Ensure the temporary directory is clean
-if (Test-Path $tempDir) {
-    Remove-Item -Recurse -Force $tempDir
-}
-
+# Ensure temp directory is empty and exists
+if (Test-Path $tempDir) { Remove-Item -Recurse -Force $tempDir }
 New-Item -ItemType Directory -Force -Path $tempDir
+
+# Copy files to temp directory
 CopyFilesToTemp -files $filesToInclude -tempDir $tempDir -appName $appName
 
-# Compress the files into a .zip for both OS types
-Compress-Archive -Path "$tempDir/*" -DestinationPath $archivePath
+if ($env:IsWindows) {
+    # Create ZIP using Compress-Archive
+    Compress-Archive -Path "$tempDir/*" -DestinationPath $archivePath
+}
+elseif ($env:IsMacOS) {
+    # Create DMG using hdiutil
+    $dmgPath = "$releaseDir/$compressedFileName.dmg"
 
-# Clean up the temporary directory
-Remove-Item -Recurse -Force $tempDir
+    # Check if the DMG file exists, and if so, delete it
+    if (Test-Path $dmgPath) {
+        Remove-Item $dmgPath
+    }
 
-# After ZIP creation, delete the readme.html if it's no longer needed
-Remove-Item -Path "readme.html" -Force
+    Invoke-Expression "hdiutil create -srcfolder $tempDir -volname $appName -format UDZO -fs HFS+ -o $dmgPath"
+}
+
+# [Cleanup]
+CleanupAndExit
