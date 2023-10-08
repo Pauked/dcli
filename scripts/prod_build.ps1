@@ -99,16 +99,19 @@ if ($env:IsWindows) {
     Compress-Archive -Path "$tempDir/*" -DestinationPath $archivePath
 }
 elseif ($env:IsMacOS) {
-    # Create DMG using hdiutil
-    $dmgPath = "$releaseDir/$compressedFileName.dmg"
-
     # Check if the DMG file exists, and if so, delete it
     if (Test-Path $dmgPath) {
         Remove-Item $dmgPath
     }
 
-    Invoke-Expression "hdiutil create -srcfolder $tempDir -volname $appName -format UDZO -fs HFS+ -o $dmgPath"
+    # Create DMG using hdiutil
+    Invoke-Expression "hdiutil create -srcfolder $tempDir -volname $appName -format UDZO -fs HFS+ -o $archivePath"
 }
+
+# [Copy to Release Folder]
+$releaseDir = $env:ReleaseFolderDcli
+New-Item -ItemType Directory -Force -Path $releaseDir
+Copy-Item -Path $archivePath -Destination $releaseDir
 
 # [Cleanup]
 CleanupAndExit
