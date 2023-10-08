@@ -4,13 +4,13 @@ dcli is a console app for quickly launching Doom games and mods. It has the foll
 
 - It allows combinations of Engines, IWADs and Map files to be saved as **Profiles** and launched with a single command.
 - It can be run interactively via a console UI or with command line arguments.
-- It has a list of **Play Settings** that allow you to easily configure items such as Compability Level, Warp to a map, enable Fast Monster, No Monsters or Respawn, and Skill level across Profiles.
-- Access to Editors (such as Ultimate Doom Builder, and Slade) can be configured to open maps for viewing and editing.
-- The ability to view map readme's in your default text editor based on picking the map.
+- It has a list of **Play Settings** that allows you to easily configure items such as Compatibility Level, Warp to a map, enable Fast Monster, No Monsters or Respawn Monsters, and Skill level across Profiles.
+- Access to Editors, such as Ultimate Doom Builder and Slade, can be configured to open maps for viewing and editing.
+- The ability to view a map readme's in your default text editor based on picking a Profile or map.
 
-dcli is a self contained executable that can be run from anywhere on Windows and macOS. It does not require any installation. On first run it will ask questions to configure itself and will create a local Sqlite database to store any settings. It is entirely written in Rust because it's 2023 and we can't keep things simple and use batch files.
+dcli is a self contained executable that can be run from anywhere on Windows and macOS. It does not require any installation. On first run it will ask questions to configure itself and create a local Sqlite database to store any settings. It is entirely written in Rust because it's 2023 and we can't keep things simple and use batch files.
 
-You can download latest release from the [releases page](https://github.com/Pauked/dcli/releases) and then extract the ZIP or DMG file to a folder of your choice.
+You can download the latest release from the [releases page](https://github.com/Pauked/dcli/releases) and then extract the ZIP or DMG file to a folder of your choice.
 
 ## Quick Start - CLI
 
@@ -23,6 +23,8 @@ Who doesn't like a command line? The following commands will run the initial set
 .\dcli.exe play
 ```
 
+*Assumption corner: You have a legal copy of Doom.wad and have downloaded Sigil to be somewhere in your maps folder so dcli can find it.*
+
 Use ``--help`` to get a list of the available options. For more detailed examples, see the following scripts:
 
 - [Windows PowerShell script](scripts/test_windows.ps1)
@@ -31,7 +33,7 @@ Use ``--help`` to get a list of the available options. For more detailed example
 
 ## Quick Start - Console UI
 
-On first run, dcli will detect there is no database and run the initial setup. It will ask for:
+On first run dcli will detect there is no database and run the initial setup. It will ask for:
 
 - A folder to search for Engines and for you to select the Engines you wish to use.
   - *The folder search is recursive and will find all files in the folder and sub folders.*
@@ -43,7 +45,7 @@ On first run, dcli will detect there is no database and run the initial setup. I
 - Create a Profile and mark it as your Default Profile.
   - *This can also be changed later in the App Settings menu.*
 
-Once the initial setup is complete, you will be presented with the main menu. The main menu is aimed at being able to quickly play Doom. Use the arrow keys to go up and down the menu and press Enter to select an option. You can filter the menu down by typing the option name. Menu options ending with ``>>`` will take you to a sub menu. Pressing Escape will take you back to the previous menu or quit the app if you are at the main menu.
+Once the initial setup is complete, you will be presented with the main menu. The main menu is aimed at being able to **Play Doom Quickly**. Use the arrow keys to go up and down the menu and press Enter to select an option. You can filter the menu down by typing the option name. Menu options ending with ``>>`` will take you to a sub-menu. Pressing Escape will take you back to the previous menu, or quit the app if you are at the main menu.
 
 ### Menu Mode
 
@@ -99,4 +101,4 @@ WAD files will be checked for the PWAD identifier. No checking is currently done
 
 ## Why dcli?
 
- The feature set is based around me wanting to quickly fire up Doom from my StreamDeck so I can continue playing a megawad without having to tinker with config or remember command line arguments. When playing I want to open the WAD file in an editor to look for how a secret works or to view the maps readme to check something. dcli can do that for me. And having written this app, I can't forget the command line arguments.
+ The feature set is based around me wanting to quickly fire up Doom from my StreamDeck so I can continue playing a megawad without having to tinker with config or remember command line arguments. When playing I also want to open the WAD file in an editor to see how a secret works or to view a map's readme to check something. dcli can do that for me. And having written this app, I now can't forget the command line arguments for GZDoom.
