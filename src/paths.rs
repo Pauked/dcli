@@ -66,7 +66,7 @@ pub fn extract_file_name(full_path: &str) -> String {
     path.file_name()
         .and_then(|file_name| file_name.to_str())
         .map(|s| s.to_string())
-        .unwrap_or_else(String::new)
+        .unwrap_or_default()
 }
 
 pub fn get_full_path(base_path: &str, file_name: &str) -> String {
@@ -237,5 +237,5 @@ pub fn lines_from_file(description: &str, filename: &str) -> Result<Vec<String>,
     ))?;
     let buf = BufReader::new(file_result);
     debug!("  File successfully read");
-    Ok(buf.lines().map(|l| l.unwrap_or(String::new())).collect())
+    Ok(buf.lines().map(|l| l.unwrap_or_default()).collect())
 }
