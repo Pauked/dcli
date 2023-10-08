@@ -2,8 +2,8 @@ use std::process;
 
 use clap::Parser;
 use color_eyre::eyre;
-use colored::Colorize;
 use log::{debug, info};
+use owo_colors::{colors::xterm, OwoColorize};
 
 mod cli;
 mod constants;
@@ -42,7 +42,11 @@ fn run() -> eyre::Result<String> {
     let (cli_result, cli_run_mode) = cli::run_cli_action(args)?;
     match cli_run_mode {
         cli::CliRunMode::Tui => {
-            info!("{} {}", "Welcome to".bold(), constants::APP_NAME.truecolor(75, 159, 63).bold());
+            info!(
+                "{} {}",
+                "Welcome to".bold(),
+                constants::APP_NAME.fg::<xterm::DarkSpringGreen>().bold()
+            );
             menu_app_settings::check_app_can_run(false)?;
             tui::menu(tui::MenuLevel::Main)
         }

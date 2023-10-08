@@ -1,7 +1,7 @@
-use colored::Colorize;
 use eyre::Context;
 use inquire::validator::Validation;
 use log::{debug, info};
+use owo_colors::OwoColorize;
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
 use crate::{data, db, finder, menu_app_settings, menu_common, paths, runner, tui};

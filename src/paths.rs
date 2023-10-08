@@ -5,10 +5,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use colored::Colorize;
 use eyre::Context;
 use indicatif::{ProgressBar, ProgressStyle};
 use log::{debug, error};
+use owo_colors::OwoColorize;
 use walkdir::WalkDir;
 
 use crate::constants;

@@ -1,11 +1,11 @@
 use std::str::FromStr;
 
 use clap::ValueEnum;
-use color_eyre::owo_colors::OwoColorize;
-use colored::Colorize;
 use inquire::InquireError;
 use log::debug;
 use log::info;
+use owo_colors::colors::xterm;
+use owo_colors::OwoColorize;
 use strum_macros::Display;
 use strum_macros::EnumString;
 
@@ -208,7 +208,7 @@ pub fn menu_prompt(
             (
                 selections,
                 "Main Menu".to_string(),
-                "Let's play Doom!".truecolor(75, 159, 63).to_string(),
+                "Let's play Doom!".fg::<xterm::DarkSpringGreen>().to_string(),
             )
         }
         MenuLevel::Profiles => {
@@ -506,7 +506,7 @@ pub fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
         info!(
             "{} {}",
             "Welcome to".bold(),
-            constants::APP_NAME.truecolor(75, 159, 63).bold()
+            constants::APP_NAME.fg::<xterm::DarkSpringGreen>().bold()
         );
         //info!("({} menu mode)", app_settings.menu_mode);
         if let (MenuLevel::Main, MenuMode::Full) = (&menu_level, &app_settings.menu_mode) {

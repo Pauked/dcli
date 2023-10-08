@@ -5,8 +5,8 @@ use std::{
     process::{Command, Stdio},
 };
 
-use colored::Colorize;
 use eyre::Context;
+use owo_colors::OwoColorize;
 
 use crate::{constants, data, db, files, paths};
 

@@ -1,10 +1,9 @@
 use chrono::Utc;
 use color_eyre::{
     eyre::{self},
-    owo_colors::OwoColorize,
     Result,
 };
-use colored::Colorize;
+use owo_colors::{colors::xterm, OwoColorize};
 use uuid::Uuid;
 
 use crate::{data, db, paths, runner, tui};
@@ -27,7 +26,7 @@ pub fn get_default_profile_text() -> Result<String, eyre::Report> {
     let profile_display = db::get_profile_display_by_id(app_settings.default_profile_id.unwrap())?;
     Ok(format!(
         "Default - {}",
-        profile_display.simple_display().truecolor(55, 55, 255) // Blue
+        profile_display.simple_display().fg::<xterm::LochmaraBlue>()
     ))
 }
 
@@ -47,7 +46,7 @@ pub fn get_last_profile_text() -> Result<String, eyre::Report> {
     let profile_display = db::get_profile_display_by_id(app_settings.last_profile_id.unwrap())?;
     Ok(format!(
         "Last    - {}",
-        profile_display.simple_display().truecolor(255, 143, 59) // Orange
+        profile_display.simple_display().fg::<xterm::TennOrange>()
     ))
 }
 

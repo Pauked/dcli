@@ -1,8 +1,8 @@
-use color_eyre::{eyre, owo_colors::OwoColorize};
-use colored::Colorize;
+use color_eyre::eyre;
 use eyre::Context;
 use inquire::{validator::Validation, InquireError};
 use log::{debug, info};
+use owo_colors::OwoColorize;
 use tabled::settings::{object::Rows, Modify, Rotate, Style, Width};
 
 use crate::{

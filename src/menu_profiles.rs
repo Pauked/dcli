@@ -1,7 +1,7 @@
 use chrono::Utc;
-use colored::Colorize;
 use eyre::Context;
 use inquire::validator::Validation;
+use owo_colors::OwoColorize;
 use tabled::{
     builder::Builder,
     settings::{object::Rows, Modify, Style, Width},
