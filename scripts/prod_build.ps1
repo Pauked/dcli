@@ -100,8 +100,8 @@ if ($env:IsWindows) {
 }
 elseif ($env:IsMacOS) {
     # Check if the DMG file exists, and if so, delete it
-    if (Test-Path $dmgPath) {
-        Remove-Item $dmgPath
+    if (Test-Path $archivePath) {
+        Remove-Item $archivePath
     }
 
     # Create DMG using hdiutil
