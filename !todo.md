@@ -1,30 +1,6 @@
-# DCLI v0.3.5
-
-[x] Make menus less crashy if user aborts (first pass)
-[x] Write Readme in repo root
-[x] Test script Windows (CLI usage)
-[x] Test script macOS
-[x] Block deleting of Engine/IWAD/Map if linked in Profiles.
-[x] Option to delete Maps via UI
-[x] Option to delete Engines
-[x] Option to delete IWADs
-[x] Args to run init
-[x] Args to add and delete Profiles
-[x] Rename PWADs to Maps
-[x] Set Menu Mode in App Settings
-[x] Make message output consistent (first pass)
-[x] CLI Set Default Engine, IWAD, Profile, Editor
-[x] Improve App Settings Listing so that it's a two column display
-[x] List Play Settings in UI and CLI
-[x] Expand complevels to include all complevels (excluding PrBoom+ 12-16)
-[x] Arg for play-profile [profile name]
-[x] Run count on Profile
-[x] Update of Maps option doesn't give any feedback (excluding IWADs)
-[x] Improve formatting in Select lists. Looks messy/hard to read.
-[x] Bugs in handling existing files (Engines, IWADs, etc) if search is done again on different folders (db lookup to remove is faulty)
-
 ## DCLI v0.4
 
+[x] Improve map title/author lookup (Doomworld API - https://www.doomworld.com/idgames/api/)
 [ ] On add of Editor, prompt to set default
 [ ] Have a profile switch of "include play settings?", default to on.
 [ ] CLI for Profile (edit)
@@ -117,5 +93,4 @@ What do I want from the app?
 <https://www.chocolate-doom.org/wiki/index.php/Command_line_arguments>
 <https://github.com/coelckers/prboom-plus/blob/master/prboom2/doc/README.command-line>
 <https://doomwiki.org/wiki/Doom_Classic_Unity_port>
-
 <https://doomwiki.org/wiki/Comparison_of_source_ports>

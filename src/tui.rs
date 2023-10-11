@@ -15,9 +15,9 @@ use crate::db;
 use crate::menu_app_settings;
 use crate::menu_editor;
 use crate::menu_main;
+use crate::menu_maps;
 use crate::menu_play_settings;
 use crate::menu_profiles;
-use crate::menu_view_readme;
 
 pub const MENU_PAGE_SIZE: usize = 15;
 pub const MENU_CLR: &str = "clr";
@@ -28,7 +28,7 @@ pub enum MenuLevel {
     Profiles,
     GameSettings,
     MapEditor,
-    ViewReadme,
+    Maps,
     AppSettings,
     AppSettingsDefaults,
     AppSettingsList,
@@ -59,8 +59,8 @@ pub enum MenuCommand {
     Profiles,
     #[strum(serialize = "Play Settings >>")]
     PlaySettings,
-    #[strum(serialize = "Map Readme >>")]
-    MapReadme,
+    #[strum(serialize = "Maps >>")]
+    Maps,
     #[strum(serialize = "App Settings >>")]
     AppSettings,
 
@@ -162,15 +162,17 @@ pub enum MenuCommand {
     #[strum(serialize = "Delete Editor")]
     DeleteEditor,
 
-    // View Readme Menu
-    #[strum(serialize = "View from Default Profile")]
-    ViewFromDefaultProfile,
-    #[strum(serialize = "View from Last Profile")]
-    ViewFromLastProfile,
-    #[strum(serialize = "View from Pick Profile")]
-    ViewFromPickProfile,
-    #[strum(serialize = "View from Pick Map")]
-    ViewFromPickMap,
+    // Map Menu
+    #[strum(serialize = "View on Doomworld")]
+    ViewOnDoomworld,
+    #[strum(serialize = "Readme from Default Profile")]
+    ReadmeFromDefaultProfile,
+    #[strum(serialize = "Readme from Last Profile")]
+    ReadmeFromLastProfile,
+    #[strum(serialize = "Readme from Pick Profile")]
+    ReadmeFromPickProfile,
+    #[strum(serialize = "Readme from Pick Map")]
+    ReadmeFromPickMap,
 
     // Back and Quit
     #[strum(serialize = "Back <ESC>")]
@@ -200,15 +202,17 @@ pub fn menu_prompt(
                 ),
                 (MenuCommand::PlaySettings.to_string(), MenuMode::Simple),
                 (MenuCommand::Profiles.to_string(), MenuMode::Simple),
+                (MenuCommand::Maps.to_string(), MenuMode::Simple),
                 (MenuCommand::Editor.to_string(), MenuMode::Full),
-                (MenuCommand::MapReadme.to_string(), MenuMode::Full),
                 (MenuCommand::AppSettings.to_string(), MenuMode::Simple),
                 (MenuCommand::Quit.to_string(), MenuMode::Simple),
             ];
             (
                 selections,
                 "Main Menu".to_string(),
-                "Let's play Doom!".fg::<xterm::DarkSpringGreen>().to_string(),
+                "Let's play Doom!"
+                    .fg::<xterm::DarkSpringGreen>()
+                    .to_string(),
             )
         }
         MenuLevel::Profiles => {
@@ -367,21 +371,30 @@ pub fn menu_prompt(
                 "Quickly view/edit a Map in a Editor".to_string(),
             )
         }
-        MenuLevel::ViewReadme => {
+        MenuLevel::Maps => {
             let selections = vec![
+                (MenuCommand::ViewOnDoomworld.to_string(), MenuMode::Simple),
                 (
-                    MenuCommand::ViewFromDefaultProfile.to_string(),
+                    MenuCommand::ReadmeFromDefaultProfile.to_string(),
+                    MenuMode::Simple,
+                ),
+                (
+                    MenuCommand::ReadmeFromLastProfile.to_string(),
                     MenuMode::Full,
                 ),
-                (MenuCommand::ViewFromLastProfile.to_string(), MenuMode::Full),
-                (MenuCommand::ViewFromPickProfile.to_string(), MenuMode::Full),
-                (MenuCommand::ViewFromPickMap.to_string(), MenuMode::Full),
+                (
+                    MenuCommand::ReadmeFromPickProfile.to_string(),
+                    MenuMode::Simple,
+                ),
+                (MenuCommand::ReadmeFromPickMap.to_string(), MenuMode::Simple),
+                (MenuCommand::ListMaps.to_string(), MenuMode::Simple),
+                (MenuCommand::UpdateMaps.to_string(), MenuMode::Simple),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),
             ];
             (
                 selections,
-                "Readme".to_string(),
-                "Quickly view the Readme for a Map".to_string(),
+                "Maps".to_string(),
+                "Manage Map related data and options".to_string(),
             )
         }
         MenuLevel::AppSettings => {
@@ -566,7 +579,7 @@ pub fn run_menu_command_with_force(
         MenuCommand::Editor => menu(MenuLevel::MapEditor),
         MenuCommand::Profiles => menu(MenuLevel::Profiles),
         MenuCommand::PlaySettings => menu(MenuLevel::GameSettings),
-        MenuCommand::MapReadme => menu(MenuLevel::ViewReadme),
+        MenuCommand::Maps => menu(MenuLevel::Maps),
         MenuCommand::AppSettings => menu(MenuLevel::AppSettings),
 
         // Profile Menu
@@ -655,11 +668,12 @@ pub fn run_menu_command_with_force(
         MenuCommand::AddEditor => menu_editor::add_editor(),
         MenuCommand::DeleteEditor => menu_editor::delete_editor(),
 
-        // View Readme Menu
-        MenuCommand::ViewFromDefaultProfile => menu_view_readme::view_from_default_profile(),
-        MenuCommand::ViewFromLastProfile => menu_view_readme::view_from_last_profile(),
-        MenuCommand::ViewFromPickProfile => menu_view_readme::view_from_pick_profile(),
-        MenuCommand::ViewFromPickMap => menu_view_readme::view_from_pick_map(),
+        // Map Menu
+        MenuCommand::ViewOnDoomworld => menu_maps::view_on_doomworld(),
+        MenuCommand::ReadmeFromDefaultProfile => menu_maps::view_from_default_profile(),
+        MenuCommand::ReadmeFromLastProfile => menu_maps::view_from_last_profile(),
+        MenuCommand::ReadmeFromPickProfile => menu_maps::view_from_pick_profile(),
+        MenuCommand::ReadmeFromPickMap => menu_maps::view_from_pick_map(),
 
         // Back and Quit
         MenuCommand::Ignore => Ok("".to_string()),

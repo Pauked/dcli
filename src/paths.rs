@@ -69,6 +69,14 @@ pub fn extract_file_name(full_path: &str) -> String {
         .unwrap_or_default()
 }
 
+pub fn extract_file_name_no_extension(full_path: &str) -> String {
+    let path = Path::new(full_path);
+    path.file_stem()
+        .and_then(|name| name.to_str())
+        .map(|s| s.to_string())
+        .unwrap_or_default()
+}
+
 pub fn get_full_path(base_path: &str, file_name: &str) -> String {
     let mut file_path = PathBuf::new();
     file_path.push(base_path);

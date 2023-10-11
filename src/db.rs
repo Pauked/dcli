@@ -272,10 +272,12 @@ pub fn add_map(map: &data::Map) -> Result<sqlx::sqlite::SqliteQueryResult, eyre:
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("INSERT INTO maps (title, author, path) VALUES (?,?,?)")
+        sqlx::query("INSERT INTO maps (title, author, path, doomworld_id, doomworld_url) VALUES (?,?,?,?,?)")
             .bind(&map.title)
             .bind(&map.author)
             .bind(&map.path)
+            .bind(map.doomworld_id)
+            .bind(&map.doomworld_url)
             .execute(&db)
             .await
             .wrap_err(format!("Failed to add map '{:?}", map))

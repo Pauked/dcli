@@ -237,6 +237,39 @@ pub fn open_map_readme(map_path: &str) -> Result<String, eyre::Report> {
     }
 }
 
+pub fn open_url(url: &str, description: &str) -> Result<String, eyre::Report> {
+    let program = {
+        if env::consts::OS == constants::OS_MACOS {
+            "open"
+        } else if env::consts::OS == constants::OS_WINDOWS {
+            "cmd"
+        } else {
+            return Err(eyre::eyre!(format!(
+                "open_url is only supported on Windows and macOS, not on '{}'",
+                env::consts::OS
+            )));
+        }
+    };
+
+    let mut cmd = Command::new(program);
+
+    #[cfg(target_os = "macos")]
+    cmd.arg(&readme_file_name);
+    #[cfg(target_os = "windows")]
+    cmd.args(["/C", "start", "", &url]);
+
+    cmd.stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .wrap_err(format!("Failed to open URL '{}' for {}", url, description))?;
+
+    Ok(format!(
+        "Opened URL '{}' for {}",
+        url.magenta(),
+        description.blue()
+    ))
+}
+
 pub fn editor(map_path: &str, editor: data::Editor) -> Result<String, eyre::Report> {
     let mut cmd = Command::new(&editor.path);
     if editor.load_file_argument.is_some() {

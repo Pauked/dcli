@@ -67,8 +67,8 @@ impl fmt::Display for Engine {
         write!(
             f,
             "{:<width$} | [{:<width2$}] {:<}",
-            truncate_string(&self.app_name, width),
-            truncate_string(&self.version, width2),
+            truncate_string_end(&self.app_name, width),
+            truncate_string_end(&self.version, width2),
             &self.path,
             width = width,
             width2 = width2,
@@ -111,7 +111,7 @@ impl fmt::Display for Iwad {
         write!(
             f,
             "{:<width$} | {}",
-            truncate_string(&self.internal_wad_type.to_string(), width),
+            truncate_string_end(&self.internal_wad_type.to_string(), width),
             self.path,
             width = width,
         )
@@ -138,23 +138,30 @@ pub struct Map {
     pub author: String,
     #[tabled(rename = "Path")]
     pub path: String,
+    #[tabled(rename = "Doomworld Id", display_with = "display_option_i32")]
+    pub doomworld_id: Option<i32>,
+    #[tabled(rename = "Doomworld Url", display_with = "display_option_string")]
+    pub doomworld_url: Option<String>,
 }
 
 impl Map {
     pub fn simple_display(&self) -> String {
-        format!("{}, {}", self.title, self.path)
+        format!("{}, {}, {}", self.title, self.author, self.path)
     }
 }
 
 impl fmt::Display for Map {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let width = DISPLAY_WIDTH1;
+        let width2 = DISPLAY_WIDTH2;
         write!(
             f,
-            "{:<width$} | {:<}",
-            truncate_string(&self.title, width),
+            "{:<width$} | {:<width2$} | {:<}",
+            truncate_string_end(&self.title, width),
+            truncate_string_end(get_author_or_empty(&self.author), width2),
             &self.path,
             width = width,
+            width2 = width2,
         )
     }
 }
@@ -166,7 +173,16 @@ impl Default for Map {
             title: constants::DEFAULT_NOT_SET.to_string(),
             author: constants::DEFAULT_NOT_SET.to_string(),
             path: constants::DEFAULT_NOT_SET.to_string(),
+            doomworld_id: None,
+            doomworld_url: None,
         }
+    }
+}
+
+fn get_author_or_empty(author: &str) -> &str {
+    match author {
+        a if a == constants::DEFAULT_UNKNOWN => "",
+        _ => author,
     }
 }
 
@@ -202,8 +218,8 @@ impl fmt::Display for Editor {
         write!(
             f,
             "{:<width$} | [{:<width2$}] {:<} ",
-            truncate_string(&self.app_name, width),
-            truncate_string(&self.version, width2),
+            truncate_string_end(&self.app_name, width),
+            truncate_string_end(&self.version, width2),
             self.path,
             width = width,
             width2 = width2,
@@ -336,17 +352,16 @@ impl fmt::Display for ProfileDisplay {
         write!(
             f,
             "{:<width$} {:<width2$} | {:<width3$} | [{:<width4$}] {:<}",
-            truncate_string(&self.name, width),
-            truncate_string(&maps, width2),
-            truncate_string(&self.iwad_file, width3),
-            truncate_string(&self.engine_version, width4),
+            truncate_string_end(&self.name, width),
+            truncate_string_end(&maps, width2),
+            truncate_string_in_middle(&self.iwad_file, width3),
+            truncate_string_end(&self.engine_version, width4),
             self.engine_file,
             width = width,
             width2 = width2,
             width3 = width3,
             width4 = width4,
         )
-        // }
     }
 }
 
@@ -415,6 +430,13 @@ pub fn display_option_u8(value: &Option<u8>) -> String {
 }
 
 pub fn display_option_u32(value: &Option<u32>) -> String {
+    match value {
+        Some(i) => i.to_string(),
+        None => constants::DEFAULT_NOT_SET.to_string(),
+    }
+}
+
+pub fn display_option_i32(value: &Option<i32>) -> String {
     match value {
         Some(i) => i.to_string(),
         None => constants::DEFAULT_NOT_SET.to_string(),
@@ -564,11 +586,19 @@ pub fn display_combined_map_strings_simple(map_strings: &MapStrings) -> String {
     }
 }
 
-fn truncate_string(input: &str, max_length: usize) -> String {
+fn truncate_string_in_middle(input: &str, max_length: usize) -> String {
     if input.len() > max_length {
         let front_len = (max_length - 3) / 2;
         let back_start = input.len() - (max_length - 3 - front_len);
         return format!("{}...{}", &input[..front_len], &input[back_start..]);
+    };
+
+    input.to_string()
+}
+
+fn truncate_string_end(input: &str, max_length: usize) -> String {
+    if input.len() > max_length {
+        return format!("{}...", &input[..max_length - 3]);
     };
 
     input.to_string()

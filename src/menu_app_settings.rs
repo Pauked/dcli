@@ -6,8 +6,11 @@ use owo_colors::OwoColorize;
 use tabled::settings::{object::Rows, Modify, Rotate, Style, Width};
 
 use crate::{
+    constants,
     data::{self},
-    db, doom_data, files, menu_profiles, paths, tui,
+    db,
+    doom_data::{self},
+    doomworld_api, files, menu_profiles, paths, tui,
 };
 
 pub fn check_app_can_run(force: bool) -> Result<String, eyre::Report> {
@@ -500,13 +503,23 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
                 info!("Map already exists, no need to add: {}", map.yellow());
             }
             None => {
-                info!("Getting title and author for Map: '{}'", map);
-                let (title, author) = files::get_details_from_readme(&map)?;
+                info!("Getting details for Map: '{}'", map);
+                let (title, author, doomworld_id, doomworld_url) =
+                    doomworld_api::get_details_from_doomworld_api(&map)?;
+
+                let (title, author) = if title == constants::DEFAULT_UNKNOWN {
+                    files::get_details_from_readme(&map)?
+                } else {
+                    (title, author)
+                };
+
                 let map = data::Map {
                     id: 0,
                     title,
                     author,
                     path: map.clone(),
+                    doomworld_id,
+                    doomworld_url,
                 };
 
                 db::add_map(&map)?;
