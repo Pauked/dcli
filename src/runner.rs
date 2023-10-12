@@ -254,7 +254,7 @@ pub fn open_url(url: &str, description: &str) -> Result<String, eyre::Report> {
     let mut cmd = Command::new(program);
 
     #[cfg(target_os = "macos")]
-    cmd.arg(&readme_file_name);
+    cmd.arg(url);
     #[cfg(target_os = "windows")]
     cmd.args(["/C", "start", "", &url]);
 
