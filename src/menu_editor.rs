@@ -100,7 +100,10 @@ pub fn set_default_editor() -> Result<String, eyre::Report> {
         Some(editor) => {
             app_settings.default_editor_id = Some(editor.id);
             db::save_app_settings(app_settings).wrap_err("Failed to set Default Editor")?;
-            Ok(format!("Marked Editor '{}' as Default", editor))
+            Ok(format!(
+                "Marked Editor '{}' as Default",
+                editor.simple_display()
+            ))
         }
         None => Ok("No changes made to setting Editor as Default".to_string()),
     }

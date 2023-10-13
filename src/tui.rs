@@ -113,6 +113,8 @@ pub enum MenuCommand {
     DeleteIwads,
     #[strum(serialize = "Delete Maps")]
     DeleteMaps,
+    #[strum(serialize = "View App Version")]
+    AppVersion,
     Init,
     Reset,
 
@@ -410,6 +412,7 @@ pub fn menu_prompt(
                 (MenuCommand::DeleteStoredData.to_string(), MenuMode::Simple),
                 (MenuCommand::Init.to_string(), MenuMode::Simple),
                 (MenuCommand::Reset.to_string(), MenuMode::Simple),
+                (MenuCommand::AppVersion.to_string(), MenuMode::Simple),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),
             ];
             (
@@ -639,6 +642,7 @@ pub fn run_menu_command_with_force(
         MenuCommand::DeleteEngines => menu_app_settings::delete_engines(),
         MenuCommand::DeleteIwads => menu_app_settings::delete_iwads(),
         MenuCommand::DeleteMaps => menu_app_settings::delete_maps(),
+        MenuCommand::AppVersion => menu_app_settings::app_version(),
         MenuCommand::Reset => menu_app_settings::reset(force),
 
         // Play Settings Menu

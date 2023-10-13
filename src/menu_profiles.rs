@@ -438,7 +438,10 @@ pub fn set_default_profile() -> Result<String, eyre::Report> {
         Some(profile) => {
             app_settings.default_profile_id = Some(profile.id);
             db::save_app_settings(app_settings).wrap_err("Failed to set Default Profile")?;
-            Ok(format!("Marked Profile '{}' as Default", profile))
+            Ok(format!(
+                "Marked Profile '{}' as Default",
+                profile.simple_display()
+            ))
         }
         None => Ok("No changes made to setting Profile as Default".to_string()),
     }

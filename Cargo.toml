@@ -1,6 +1,6 @@
 [package]
 name = "dcli"
-version = "0.3.7"
+version = "0.3.8"
 edition = "2021"
 description = "dcli - Play Doom Quick"
 authors = ["Paul Healey"]

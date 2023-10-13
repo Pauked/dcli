@@ -2,7 +2,7 @@ use color_eyre::eyre;
 use eyre::Context;
 use inquire::{validator::Validation, InquireError};
 use log::{debug, info};
-use owo_colors::OwoColorize;
+use owo_colors::{colors::xterm, OwoColorize};
 use tabled::settings::{object::Rows, Modify, Rotate, Style, Width};
 
 use crate::{
@@ -747,7 +747,10 @@ pub fn set_default_engine() -> Result<String, eyre::Report> {
         Some(engine) => {
             app_settings.default_engine_id = Some(engine.id);
             db::save_app_settings(app_settings).wrap_err("Failed to set Default Engine")?;
-            Ok(format!("Marked Engine '{}' as Default", engine))
+            Ok(format!(
+                "Marked Engine '{}' as Default",
+                engine.simple_display()
+            ))
         }
         None => Ok("No changes made to setting Engine as Default".to_string()),
     }
@@ -799,7 +802,10 @@ pub fn set_default_iwad() -> Result<String, eyre::Report> {
         Some(iwad) => {
             app_settings.default_iwad_id = Some(iwad.id);
             db::save_app_settings(app_settings).wrap_err("Failed to set Default IWAD")?;
-            Ok(format!("Marked IWAD '{}' as Default", iwad))
+            Ok(format!(
+                "Marked IWAD '{}' as Default",
+                iwad.simple_display()
+            ))
         }
         None => Ok("No changes made to setting IWAD as Default".to_string()),
     }
@@ -867,4 +873,13 @@ pub fn remove_editor_from_app_settings(editor_id: i32) -> Result<String, eyre::R
     }
 
     Ok("".to_string())
+}
+
+pub fn app_version() -> Result<String, eyre::Report> {
+    Ok(format!(
+        "{} {} by {}",
+        constants::CRATE_NAME.fg::<xterm::DarkSpringGreen>().bold(),
+        constants::CRATE_VERSION.blue(),
+        constants::CRATE_AUTHORS.magenta()
+    ))
 }
