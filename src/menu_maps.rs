@@ -1,4 +1,4 @@
-use crate::{data, db, menu_common, runner, tui};
+use crate::{data, db, doomworld_api, downloader, menu_common, runner, tui};
 use eyre::Context;
 
 pub fn view_on_doomworld() -> Result<String, eyre::Report> {
@@ -68,4 +68,46 @@ pub fn view_from_pick_map() -> Result<String, eyre::Report> {
     )?;
 
     view_map_readme_from_map_id(map_id)
+}
+
+fn search_dooomworld_and_download(
+    nice_name: &str,
+    search_type: &str,
+) -> Result<String, eyre::Report> {
+    let search =
+        inquire::Text::new(&format!("Enter the {} you want to search on:", nice_name)).prompt()?;
+
+    let files = doomworld_api::search_doomworld_api(
+        &search,
+        search_type,
+        doomworld_api::SORT_FILENAME,
+    )?;
+
+    if files.is_empty() {
+        return Err(eyre::eyre!("No maps found for '{}' search with '{}'", nice_name, search));
+    }
+
+    let selection = inquire::MultiSelect::new("Pick the maps you want to download:", files)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| {
+            i.iter()
+                .map(|e| e.value.short_display())
+                .collect::<Vec<String>>()
+                .join(", ")
+        })
+        .prompt()?;
+
+    downloader::download_and_extract_map_files(selection)
+}
+
+pub fn search_doomworld_by_author() -> Result<String, eyre::Report> {
+    search_dooomworld_and_download("author", doomworld_api::SEARCH_AUTHOR)
+}
+
+pub fn search_doomworld_by_filename() -> Result<String, eyre::Report> {
+    search_dooomworld_and_download("filename", doomworld_api::SEARCH_FILENAME)
+}
+
+pub fn search_doomworld_by_map_title() -> Result<String, eyre::Report> {
+    search_dooomworld_and_download("map title", doomworld_api::SEARCH_TITLE)
 }

@@ -2,7 +2,6 @@ use std::process;
 
 use clap::Parser;
 use color_eyre::eyre;
-use log::{debug, info};
 use owo_colors::{colors::xterm, OwoColorize};
 
 mod cli;
@@ -11,6 +10,7 @@ mod data;
 mod db;
 mod doom_data;
 mod doomworld_api;
+mod downloader;
 mod files;
 mod finder;
 mod log_config;
@@ -18,9 +18,9 @@ mod menu_app_settings;
 mod menu_common;
 mod menu_editor;
 mod menu_main;
+mod menu_maps;
 mod menu_play_settings;
 mod menu_profiles;
-mod menu_maps;
 mod paths;
 mod runner;
 mod tui;
@@ -29,8 +29,8 @@ fn run() -> eyre::Result<String> {
     color_eyre::install()?;
     log_config::init_log(constants::APP_NAME);
     // This line is intentionally blank... so I can see new runs in the log file
-    debug!("");
-    debug!(
+    log::debug!("");
+    log::debug!(
         "Starting '{}' from '{}', version {}",
         constants::APP_NAME,
         paths::get_current_exe(),
@@ -43,7 +43,7 @@ fn run() -> eyre::Result<String> {
     let (cli_result, cli_run_mode) = cli::run_cli_action(args)?;
     match cli_run_mode {
         cli::CliRunMode::Tui => {
-            info!(
+            log::info!(
                 "{} {}",
                 "Welcome to".bold(),
                 constants::APP_NAME.fg::<xterm::DarkSpringGreen>().bold()

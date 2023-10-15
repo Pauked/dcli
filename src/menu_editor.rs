@@ -1,6 +1,5 @@
 use eyre::Context;
 use inquire::validator::Validation;
-use log::{debug, info};
 use owo_colors::OwoColorize;
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
@@ -183,7 +182,7 @@ pub fn add_editor() -> Result<String, eyre::Report> {
     // Create a new list with version details
     let mut editors_extended: Vec<data::Editor> = Vec::new();
     for editor_executable in editor_executables {
-        info!(
+        log::info!(
             "Getting version information for Editor: '{}'",
             editor_executable
         );
@@ -199,7 +198,7 @@ pub fn add_editor() -> Result<String, eyre::Report> {
                     load_file_argument: load_file_argument.clone(),
                     additional_arguments: additional_arguments.clone(),
                 });
-                info!(
+                log::info!(
                     "  {}",
                     editors_extended
                         .last()
@@ -210,11 +209,11 @@ pub fn add_editor() -> Result<String, eyre::Report> {
                 );
             }
             Err(e) => {
-                info!(
+                log::info!(
                     "  Skipping Editor, unable to get version information: {}",
                     e.to_string().red()
                 );
-                debug!("Error: {:?}", e);
+                log::debug!("Error: {:?}", e);
             }
         }
     }
@@ -241,12 +240,12 @@ pub fn add_editor() -> Result<String, eyre::Report> {
             .find(|e| e.path.to_lowercase() == selection.path.to_lowercase());
         match editor {
             Some(existing) => {
-                info!(
+                log::info!(
                     "  Editor already exists, no need to add: {}",
                     selection.simple_display().yellow()
                 );
                 if existing.version != selection.version {
-                    debug!(
+                    log::debug!(
                         "  Updating Editor version from '{}' to '{}'",
                         existing.version.blue(),
                         selection.version.green()
@@ -256,8 +255,8 @@ pub fn add_editor() -> Result<String, eyre::Report> {
             }
             None => {
                 db::add_editor(&selection)?;
-                debug!("Added Editor: {:?}", selection);
-                info!("Added Editor: {}", selection.simple_display().blue());
+                log::debug!("Added Editor: {:?}", selection);
+                log::info!("Added Editor: {}", selection.simple_display().blue());
                 count += 1;
             }
         }
@@ -271,7 +270,7 @@ pub fn add_editor() -> Result<String, eyre::Report> {
     // Feedback to user
     if count > 0 {
         let result_message = format!("Successfully added {} Editors", count);
-        info!("{}", result_message.green());
+        log::info!("{}", result_message.green());
     }
     inquire::Text::new("Press any key to continue...").prompt_skippable()?;
 
@@ -311,7 +310,7 @@ pub fn cli_add_editor(
             };
 
             db::add_editor(&editor)?;
-            debug!("Added Editor: {:?}", editor);
+            log::debug!("Added Editor: {:?}", editor);
 
             Ok(format!(
                 "Successfully added Editor - '{}'",

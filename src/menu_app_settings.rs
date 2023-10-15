@@ -1,7 +1,6 @@
 use color_eyre::eyre;
 use eyre::Context;
 use inquire::{validator::Validation, InquireError};
-use log::{debug, info};
 use owo_colors::{colors::xterm, OwoColorize};
 use tabled::settings::{object::Rows, Modify, Rotate, Style, Width};
 
@@ -16,7 +15,7 @@ use crate::{
 pub fn check_app_can_run(force: bool) -> Result<String, eyre::Report> {
     db::create_db()?;
     if !force && db::is_empty_app_settings_table()? {
-        info!("{}", "No app settings found, running 'init'".red());
+        log::info!("{}", "No app settings found, running 'init'".red());
         init()?;
     }
     Ok("App is ready to run".to_string())
@@ -53,7 +52,7 @@ pub fn init() -> Result<String, eyre::Report> {
     db::create_db()?;
     let mut app_settings = db::get_app_settings()?;
 
-    info!("We'll ask you some questions, and then you'll be ready to go");
+    log::info!("We'll ask you some questions, and then you'll be ready to go");
 
     let engine_search_folder = init_engines(
         &app_settings.engine_search_folder.unwrap_or("".to_string()),
@@ -92,7 +91,7 @@ pub fn init() -> Result<String, eyre::Report> {
     }
 
     // Completed init!
-    info!("{}", "Successfully run init and app configured!".green());
+    log::info!("{}", "Successfully run init and app configured!".green());
     inquire::Text::new("Press any key to continue...").prompt_skippable()?;
 
     Ok("Successfully run init and app configured!".to_string())
@@ -194,7 +193,7 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
     // Create a new list with version details
     let mut engines_extended: Vec<data::Engine> = Vec::new();
     for engine_executable in engines_executables {
-        info!(
+        log::info!(
             "Getting version information for Engine: '{}'",
             engine_executable
         );
@@ -215,7 +214,7 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
                     version: file_version.display_version(),
                     game_engine_type: game_engine.game_engine_type,
                 });
-                info!(
+                log::info!(
                     "  {}",
                     engines_extended
                         .last()
@@ -226,11 +225,11 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
                 );
             }
             Err(e) => {
-                info!(
+                log::info!(
                     "  Skipping Engine, unable to get version information: {}",
                     e.to_string().red()
                 );
-                debug!("Error: {:?}", e);
+                log::debug!("Error: {:?}", e);
             }
         }
     }
@@ -266,7 +265,7 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
                 .any(|e| e.path.to_lowercase() == db_engine.path.to_lowercase())
         {
             if db::is_engine_linked_to_profiles(db_engine.id)? {
-                info!(
+                log::info!(
                     "  Cannot delete Engine as it is linked to one or more Profiles: '{}'",
                     db_engine.path
                 );
@@ -274,7 +273,7 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
             }
             remove_engine_from_app_settings(db_engine.id)?;
             db::delete_engine(&db_engine.path)?;
-            debug!("Deleted Engine: {:?}", db_engine);
+            log::debug!("Deleted Engine: {:?}", db_engine);
         }
     }
 
@@ -287,12 +286,12 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
             .find(|e| e.path.to_lowercase() == selection.path.to_lowercase());
         match existing_engine {
             Some(existing) => {
-                info!(
+                log::info!(
                     "  Engine already exists, no need to add: {}",
                     selection.simple_display().yellow()
                 );
                 if existing.version != selection.version {
-                    info!(
+                    log::info!(
                         "  Updating Engine version from '{}' to '{}'",
                         existing.version.blue(),
                         selection.version.green()
@@ -302,8 +301,8 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
             }
             None => {
                 db::add_engine(&selection)?;
-                debug!("Added Engine: {:?}", selection);
-                info!("Added Engine: {}", selection.simple_display().blue());
+                log::debug!("Added Engine: {:?}", selection);
+                log::info!("Added Engine: {}", selection.simple_display().blue());
                 count += 1;
             }
         }
@@ -311,7 +310,7 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
 
     if count > 0 {
         let result_message = format!("Successfully added {} Engines", count);
-        info!("{}", result_message.green());
+        log::info!("{}", result_message.green());
     }
 
     Ok(engine_search_folder)
@@ -356,7 +355,7 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
     let mut confirmed_iwads: Vec<String> = vec![];
     for iwad in iwads {
         if !(files::is_iwad(&iwad)?) {
-            info!("Skipping non-IWAD file: {}", iwad);
+            log::info!("Skipping non-IWAD file: {}", iwad);
             continue;
         }
         confirmed_iwads.push(iwad);
@@ -381,7 +380,6 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
         inquire::MultiSelect::new("Pick the IWADs you want to save:", confirmed_iwads.clone())
             .with_default(&db_defaults)
             .with_page_size(tui::MENU_PAGE_SIZE)
-            // TODO: Add formatter?
             .prompt()?
     };
 
@@ -396,7 +394,7 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
                 .any(|e| e.to_lowercase() == db_iwad.path.to_lowercase())
         {
             if db::is_iwad_linked_to_profiles(db_iwad.id)? {
-                info!(
+                log::info!(
                     "  Cannot delete IWAD as it is linked to one or more Profiles: '{}'",
                     db_iwad.path
                 );
@@ -404,7 +402,7 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
             }
             remove_iwad_from_app_settings(db_iwad.id)?;
             db::delete_iwad(&db_iwad.path)?;
-            debug!("Deleted iwad: {:?}", db_iwad);
+            log::debug!("Deleted iwad: {:?}", db_iwad);
         }
     }
 
@@ -421,7 +419,7 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
 
         match existing_iwad {
             Some(_) => {
-                info!(
+                log::info!(
                     "IWAD already exists, no need to add: {}",
                     selection.yellow()
                 );
@@ -434,8 +432,8 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
                 };
 
                 db::add_iwad(&iwad)?;
-                debug!("  IWAD: {:?}", iwad);
-                info!("Added IWAD: {}", iwad.simple_display().blue());
+                log::debug!("  IWAD: {:?}", iwad);
+                log::info!("Added IWAD: {}", iwad.simple_display().blue());
                 count += 1;
             }
         }
@@ -443,7 +441,7 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
 
     if count > 0 {
         let result_message = format!("Successfully added {} IWADs", count);
-        info!("{}", result_message.green());
+        log::info!("{}", result_message.green());
     }
 
     Ok(iwad_search_folder)
@@ -481,16 +479,16 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
     // Get what we have in the database
     let db_maps = db::get_maps()?;
 
-    let mut count = 0;
+    let mut map_count = 0;
 
     for map in maps {
         if files::is_iwad(&map)? {
-            info!("Skipping IWAD file: {}", &map.yellow());
+            log::info!("Skipping IWAD file: {}", &map.yellow());
             continue;
         }
 
         if !files::map_file_extension(&map)? {
-            info!("Skipping invalid Map file: {}", &map.yellow());
+            log::info!("Skipping invalid Map file: {}", &map.yellow());
             continue;
         }
 
@@ -500,12 +498,12 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
 
         match existing_map {
             Some(_) => {
-                info!("Map already exists, no need to add: {}", map.yellow());
+                log::info!("Map already exists, no need to add: {}", map.yellow());
             }
             None => {
-                info!("Getting details for Map: '{}'", map);
+                log::info!("Getting details for Map: '{}'", map);
                 let (title, author, doomworld_id, doomworld_url) =
-                    doomworld_api::get_details_from_doomworld_api(&map)?;
+                    doomworld_api::lookup_map_from_doomworld_api(&map)?;
 
                 let (title, author) = if title == constants::DEFAULT_UNKNOWN {
                     files::get_details_from_readme(&map)?
@@ -523,17 +521,17 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
                 };
 
                 db::add_map(&map)?;
-                info!("Added Map: {}", map.simple_display().blue());
-                debug!("  Map {:?}", map);
+                log::info!("Added Map: {}", map.simple_display().blue());
+                log::debug!("  Map {:?}", map);
 
-                count += 1;
+                map_count += 1;
             }
         }
     }
 
-    if count > 0 {
-        let result_message = format!("Successfully added {} Maps", count);
-        info!("{}", result_message.green());
+    if map_count > 0 {
+        let result_message = format!("Successfully added {} Maps", map_count);
+        log::info!("{}", result_message.green());
     }
 
     Ok(map_search_folder)

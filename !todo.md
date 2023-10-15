@@ -10,6 +10,8 @@
 [ ] CLI for Play Settings
 [ ] Map Play Queue - user selected
 [ ] List of Profiles highlights Default and Last Played
+[/] Search Doomworld for maps
+[/] Download maps from Doomworld
 
 ## Future Dev / Nice to haves
 

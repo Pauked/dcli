@@ -322,6 +322,19 @@ pub fn get_maps_by_ids(map_ids: data::MapIds) -> Result<Vec<data::Map>, eyre::Re
     Ok(result)
 }
 
+pub fn get_map_by_path(path: &str) -> Result<data::Map, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query_as::<_, data::Map>("SELECT * FROM maps WHERE path = $1 COLLATE NOCASE")
+            .bind(path.to_lowercase())
+            .fetch_one(&db)
+            .await
+            .wrap_err(format!("Failed to get Map with path '{}'", path))
+    })
+}
+
 pub fn is_map_linked_to_profiles(id: i32) -> Result<bool, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {

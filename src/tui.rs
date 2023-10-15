@@ -29,6 +29,7 @@ pub enum MenuLevel {
     GameSettings,
     MapEditor,
     Maps,
+    MapsSearchDoomworld,
     AppSettings,
     AppSettingsDefaults,
     AppSettingsList,
@@ -167,6 +168,14 @@ pub enum MenuCommand {
     // Map Menu
     #[strum(serialize = "View on Doomworld")]
     ViewOnDoomworld,
+    #[strum(serialize = "Search & Download on Doomworld >>")]
+    SearchAndDownloadOnDoomworld,
+    #[strum(serialize = "Search Doomworld by Author")]
+    SearchDoomworldByAuthor,
+    #[strum(serialize = "Search Doomworld by FileName")]
+    SearchDoomworldByFileName,
+    #[strum(serialize = "Search Doomworld by Map Title")]
+    SearchDoomworldByMapTitle,
     #[strum(serialize = "Readme from Default Profile")]
     ReadmeFromDefaultProfile,
     #[strum(serialize = "Readme from Last Profile")]
@@ -377,6 +386,10 @@ pub fn menu_prompt(
             let selections = vec![
                 (MenuCommand::ViewOnDoomworld.to_string(), MenuMode::Simple),
                 (
+                    MenuCommand::SearchAndDownloadOnDoomworld.to_string(),
+                    MenuMode::Simple,
+                ),
+                (
                     MenuCommand::ReadmeFromDefaultProfile.to_string(),
                     MenuMode::Simple,
                 ),
@@ -397,6 +410,28 @@ pub fn menu_prompt(
                 selections,
                 "Maps".to_string(),
                 "Manage Map related data and options".to_string(),
+            )
+        }
+        MenuLevel::MapsSearchDoomworld => {
+            let selections = vec![
+                (
+                    MenuCommand::SearchDoomworldByAuthor.to_string(),
+                    MenuMode::Simple,
+                ),
+                (
+                    MenuCommand::SearchDoomworldByFileName.to_string(),
+                    MenuMode::Simple,
+                ),
+                (
+                    MenuCommand::SearchDoomworldByMapTitle.to_string(),
+                    MenuMode::Simple,
+                ),
+                (MenuCommand::Back.to_string(), MenuMode::Simple),
+            ];
+            (
+                selections,
+                "Maps / Search & Download".to_string(),
+                "Search for Maps, Download 'em!".to_string(),
             )
         }
         MenuLevel::AppSettings => {
@@ -674,10 +709,16 @@ pub fn run_menu_command_with_force(
 
         // Map Menu
         MenuCommand::ViewOnDoomworld => menu_maps::view_on_doomworld(),
+        MenuCommand::SearchAndDownloadOnDoomworld => menu(MenuLevel::MapsSearchDoomworld),
         MenuCommand::ReadmeFromDefaultProfile => menu_maps::view_from_default_profile(),
         MenuCommand::ReadmeFromLastProfile => menu_maps::view_from_last_profile(),
         MenuCommand::ReadmeFromPickProfile => menu_maps::view_from_pick_profile(),
         MenuCommand::ReadmeFromPickMap => menu_maps::view_from_pick_map(),
+
+        // Map Search on Doomworld Menu
+        MenuCommand::SearchDoomworldByAuthor => menu_maps::search_doomworld_by_author(),
+        MenuCommand::SearchDoomworldByFileName => menu_maps::search_doomworld_by_filename(),
+        MenuCommand::SearchDoomworldByMapTitle => menu_maps::search_doomworld_by_map_title(),
 
         // Back and Quit
         MenuCommand::Ignore => Ok("".to_string()),

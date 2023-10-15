@@ -586,7 +586,7 @@ pub fn display_combined_map_strings_simple(map_strings: &MapStrings) -> String {
     }
 }
 
-fn truncate_string_in_middle(input: &str, max_length: usize) -> String {
+pub fn truncate_string_in_middle(input: &str, max_length: usize) -> String {
     if input.len() > max_length {
         let front_len = (max_length - 3) / 2;
         let back_start = input.len() - (max_length - 3 - front_len);
@@ -596,7 +596,7 @@ fn truncate_string_in_middle(input: &str, max_length: usize) -> String {
     input.to_string()
 }
 
-fn truncate_string_end(input: &str, max_length: usize) -> String {
+pub fn truncate_string_end(input: &str, max_length: usize) -> String {
     if input.len() > max_length {
         return format!("{}...", &input[..max_length - 3]);
     };

@@ -7,7 +7,6 @@ use std::{
 
 use eyre::Context;
 use indicatif::{ProgressBar, ProgressStyle};
-use log::{debug, error};
 use owo_colors::OwoColorize;
 use walkdir::WalkDir;
 
@@ -20,7 +19,7 @@ pub fn get_current_exe() -> String {
             return exe.display().to_string();
         }
         Err(e) => {
-            error!("Failed to get current exe: {:?}", e);
+            log::error!("Failed to get current exe: {:?}", e);
         }
     }
     String::new()
@@ -94,9 +93,11 @@ pub fn find_file_in_folders(
     find_files: Vec<&str>,
     search_message: &str,
 ) -> Vec<String> {
-    debug!(
+    log::debug!(
         "find_file_in_folders: '{}', '{:?}', '{}'",
-        root_folder, find_files, search_message
+        root_folder,
+        find_files,
+        search_message
     );
     let mut results: Vec<String> = Vec::new();
 
@@ -128,14 +129,14 @@ pub fn find_file_in_folders(
                 ));
             }
             Err(e) => {
-                debug!("Error reading directory entry: {:?}", e);
+                log::debug!("Error reading directory entry: {:?}", e);
             }
         }
 
         pb.inc(1); // Increase the spinner's step
     }
 
-    debug!("Match files found - {:?}", results);
+    log::debug!("Match files found - {:?}", results);
     results
 }
 
@@ -144,9 +145,11 @@ pub fn find_files_with_extensions_in_folders(
     extensions: Vec<&str>,
     search_message: &str,
 ) -> Vec<String> {
-    debug!(
+    log::debug!(
         "find_files_with_extensions_in_folders: '{}' / '{:?}', '{}'",
-        root_folder, extensions, search_message
+        root_folder,
+        extensions,
+        search_message
     );
     let mut results: Vec<String> = Vec::new();
 
@@ -179,14 +182,14 @@ pub fn find_files_with_extensions_in_folders(
                 ));
             }
             Err(e) => {
-                debug!("Error reading directory entry: {:?}", e);
+                log::debug!("Error reading directory entry: {:?}", e);
             }
         }
 
         pb.inc(1); // Increase the spinner's step
     }
 
-    debug!("Match files found - {:?}", results);
+    log::debug!("Match files found - {:?}", results);
     results
 }
 
@@ -231,7 +234,7 @@ fn truncate_middle(input: &str, size_limit: usize) -> String {
 }
 
 pub fn lines_from_file(description: &str, filename: &str) -> Result<Vec<String>, eyre::Report> {
-    debug!("Attempting {} file read '{}'", description, filename);
+    log::debug!("Attempting {} file read '{}'", description, filename);
 
     // Build up file name
     let mut file_path = PathBuf::new();
@@ -244,6 +247,6 @@ pub fn lines_from_file(description: &str, filename: &str) -> Result<Vec<String>,
         file_path.display()
     ))?;
     let buf = BufReader::new(file_result);
-    debug!("  File successfully read");
+    log::debug!("  File successfully read");
     Ok(buf.lines().map(|l| l.unwrap_or_default()).collect())
 }
