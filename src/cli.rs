@@ -28,23 +28,23 @@ pub struct Args {
 /// Doom Command Line Interface!
 #[derive(Parser, Debug, PartialEq)]
 pub enum Action {
-    /// Play Doom with the Default Profile.
+    /// Play Doom with the Default Profile
     #[clap(short_flag = 'p')]
     Play,
 
-    /// Play Doom with the Last Run Profile.
+    /// Play Doom with the Last Run Profile
     PlayLast,
 
-    /// Play Doom with the specified Profile.
+    /// Play Doom with the specified Profile
     PlayProfile {
         /// Profile name
         profile_name: String,
     },
 
-    /// Open the Editor with the Default Profile. Takes the first Map in Profile.
+    /// Open the Editor with the Default Profile. Takes the first Map in Profile
     Editor,
 
-    /// Open the Editor with the Last Run Profile. Takes the first Map in Profile.
+    /// Open the Editor with the Last Run Profile. Takes the first Map in Profile
     EditorLast,
 
     /// Initializes the app for use. Asks a quick set of questions to get you Dooming!
@@ -56,32 +56,32 @@ pub enum Action {
         iwad_path: String,
         /// Map paths
         map_path: Option<String>,
-        /// Force initialization and skip any entry and selection prompts.
+        /// Force initialization and skip any entry and selection prompts
         #[arg(long, default_value = "false")]
         force: bool,
     },
 
-    /// Resets the database, nuking all settings.
+    /// Resets the database, nuking all settings
     #[clap(short_flag = 'r')]
     Reset {
-        /// Force database reset and skip confirmation prompt.
+        /// Force database reset and skip confirmation prompt
         #[arg(long, default_value = "false")]
         force: bool,
     },
 
-    /// List out selected data from the database.
+    /// List out selected data from the database
     #[clap(short_flag = 'l')]
     List {
-        /// What data to list.
+        /// What data to list
         #[clap(value_enum)]
         list_data: ListData,
 
-        /// Show full details. Does not apply to all data types.
+        /// Show full details. Does not apply to all data types
         #[arg(long, default_value = "false")]
         full: bool,
     },
 
-    /// Add a new Profile to combine Engine, IWAD, and Maps.
+    /// Add a new Profile to combine Engine, IWAD, and Maps
     AddProfile {
         /// Profile name
         name: String,
@@ -101,48 +101,48 @@ pub enum Action {
         args: Option<Vec<String>>,
     },
 
-    /// Delete a Profile. Sad times.
+    /// Delete a Profile. Sad times
     DeleteProfile {
         /// Profile name
         name: String,
 
-        /// Force profile delete and skip confirmation prompt.
+        /// Force profile delete and skip confirmation prompt
         #[arg(long, default_value = "false")]
         force: bool,
     },
 
-    /// Add a new Editor to view and edit maps.
+    /// Add a new Editor to view and edit maps
     AddEditor {
         /// Editor path
         path: String,
 
-        /// Load file argument to pass to the Edior
+        /// Load file argument to pass to the Editor
         #[arg(long)]
         load_file_arg: Option<String>,
 
         /// Additional arguments to pass to the Editor
         #[arg(long)]
-        addtional_args: Option<Vec<String>>,
+        additional_args: Option<Vec<String>>,
     },
 
-    /// Delete an Editor.
+    /// Delete an Editor
     DeleteEditor {
         /// Editor path
         path: String,
 
-        /// Force editor delete and skip confirmation prompt.
+        /// Force editor delete and skip confirmation prompt
         #[arg(long, default_value = "false")]
         force: bool,
     },
 
-    /// Set App Settings.
+    /// Set App Settings
     SetAppSettings {
         /// Menu mode
         #[clap(value_enum, long)]
         menu_mode: tui::MenuMode,
     },
 
-    /// Set Defaults for Engine, IWAD, Profile, and Editor.
+    /// Set Defaults for Engine, IWAD, Profile, and Editor
     SetDefault {
         /// Engine path
         #[arg(long)]
@@ -159,6 +159,69 @@ pub enum Action {
         /// Editor path
         #[arg(long)]
         editor: Option<String>,
+    },
+
+    /// Set Play Settings to control how Doom is played
+    SetPlaySettings {
+        /// Reset All Play Settings to Defaults
+        #[clap(value_enum, long)]
+        reset: Option<bool>,
+
+        /// Compatibility Level
+        #[clap(value_enum, long)]
+        comp_level: Option<data::CompLevel>,
+
+        /// Config File. Enter "clr" to blank the config file
+        #[clap(value_enum, long)]
+        config_file: Option<String>,
+
+        /// Fast Monsters
+        #[clap(value_enum, long)]
+        fast_monsters: Option<bool>,
+
+        /// No Monsters
+        #[clap(value_enum, long)]
+        no_monsters: Option<bool>,
+
+        /// Respawn Monsters
+        #[clap(value_enum, long)]
+        respawn_monsters: Option<bool>,
+
+        /// Warp to Level. Enter "clr" to blank the config file
+        #[clap(value_enum, long)]
+        warp_to_level: Option<String>,
+
+        /// Skill
+        #[clap(value_enum, long)]
+        skill: Option<u8>,
+
+        /// Turbo
+        #[clap(value_enum, long)]
+        turbo: Option<u8>,
+
+        /// Timer
+        #[clap(value_enum, long)]
+        timer: Option<u32>,
+
+        /// Screen Width
+        #[clap(value_enum, long)]
+        screen_width: Option<u32>,
+
+        /// Screen Height
+        #[clap(value_enum, long)]
+        screen_height: Option<u32>,
+
+        /// Full Screen
+        #[clap(value_enum, long)]
+        full_screen: Option<bool>,
+
+        /// Windowed
+        #[clap(value_enum, long)]
+        windowed: Option<bool>,
+
+        /// Additional Arguments
+        #[clap(value_enum, long)]
+        additional_args: Option<Vec<String>>,
     },
 }
 
@@ -287,7 +350,7 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
             Action::AddEditor {
                 path,
                 load_file_arg: load_file_argument,
-                addtional_args: additional_arguments,
+                additional_args: additional_arguments,
             } => Ok((
                 menu_editor::cli_add_editor(
                     &paths::resolve_path(&path),
@@ -328,6 +391,93 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                 } else if let Some(editor) = editor {
                     Ok((
                         menu_editor::cli_set_default_editor(&paths::resolve_path(&editor))?,
+                        CliRunMode::Quit,
+                    ))
+                } else {
+                    Ok(("No arguments specified".to_string(), CliRunMode::Quit))
+                }
+            }
+            Action::SetPlaySettings {
+                reset,
+                comp_level,
+                config_file,
+                fast_monsters,
+                no_monsters,
+                respawn_monsters,
+                warp_to_level,
+                skill,
+                turbo,
+                timer,
+                screen_width,
+                screen_height,
+                full_screen,
+                windowed,
+                additional_args,
+            } => {
+                if let Some(reset) = reset {
+                    Ok((
+                        menu_play_settings::reset_play_settings(reset)?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(comp_level) = comp_level {
+                    Ok((
+                        menu_play_settings::cli_set_comp_level(comp_level)?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(config_file) = config_file {
+                    Ok((
+                        menu_play_settings::cli_set_config_file(&config_file)?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(fast_monsters) = fast_monsters {
+                    Ok((
+                        menu_play_settings::cli_set_fast_monsters(fast_monsters)?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(no_monsters) = no_monsters {
+                    Ok((
+                        menu_play_settings::cli_set_no_monsters(no_monsters)?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(respawn_monsters) = respawn_monsters {
+                    Ok((
+                        menu_play_settings::cli_set_respawn_monsters(respawn_monsters)?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(warp_to_level) = warp_to_level {
+                    Ok((
+                        menu_play_settings::cli_set_warp_to_level(&warp_to_level)?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(skill) = skill {
+                    Ok((menu_play_settings::cli_set_skill(skill)?, CliRunMode::Quit))
+                } else if let Some(turbo) = turbo {
+                    Ok((menu_play_settings::cli_set_turbo(turbo)?, CliRunMode::Quit))
+                } else if let Some(timer) = timer {
+                    Ok((menu_play_settings::cli_set_timer(timer)?, CliRunMode::Quit))
+                } else if let Some(screen_width) = screen_width {
+                    Ok((
+                        menu_play_settings::cli_set_screen_width(screen_width)?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(screen_height) = screen_height {
+                    Ok((
+                        menu_play_settings::cli_set_screen_height(screen_height)?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(full_screen) = full_screen {
+                    Ok((
+                        menu_play_settings::cli_set_full_screen(full_screen)?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(windowed) = windowed {
+                    Ok((
+                        menu_play_settings::cli_set_windowed(windowed)?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(additional_args) = additional_args {
+                    Ok((
+                        menu_play_settings::cli_set_additional_args(additional_args)?,
                         CliRunMode::Quit,
                     ))
                 } else {

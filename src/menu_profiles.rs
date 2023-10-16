@@ -241,7 +241,7 @@ pub fn set_profile_as_default(
         app_settings.default_profile_id = Some(profile_id);
         db::save_app_settings(app_settings).wrap_err("Failed to set Default profile")?;
         return Ok(format!(
-            "Successfully set Profile '{}' as Default",
+            "Successfully set Default Profile as '{}'",
             profile_name
         ));
     }

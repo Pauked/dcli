@@ -1,5 +1,4 @@
 use std::{
-    fs::{self},
     io::Cursor,
     path::PathBuf,
 };
@@ -15,6 +14,7 @@ use crate::{data, db, doomworld_api::DoomworldFile, files, paths};
 // New York     - https://youfailit.net/pub/idgames/
 // Virginia     - https://www.gamers.org/pub/idgames/
 const DOWNLOAD_URL: &str = "https://www.quaddicted.com/files/idgames/";
+const DOWNLOAD_FOLDER: &str = "!dcli-downloads";
 
 pub fn download_and_extract_map_files(doomworld_files: Vec<DoomworldFile>) -> Result<String, eyre::Report> {
     // Thanks and goodbye
@@ -37,16 +37,16 @@ pub fn download_and_extract_map_files(doomworld_files: Vec<DoomworldFile>) -> Re
     // We put it in it's own sub-folder so it can be easily deleted/moved
     let mut download_file_path = PathBuf::new();
     download_file_path.push(maps_folder);
-    download_file_path.push("!dcli-downloads");
+    download_file_path.push(DOWNLOAD_FOLDER);
     if !download_file_path.exists() {
-        fs::create_dir_all(&download_file_path)?;
+        paths::create_folder(&download_file_path.display().to_string())?;
     }
 
     let mut map_count = 0;
 
     // Loop through the files and download/extract them
     for doomworld_file in doomworld_files {
-        log::info!("Downloading map '{}' from Doomworld", doomworld_file.title.blue());
+        log::info!("Downloading map '{}'", doomworld_file.title.blue());
 
         // Work out the local file name to download to
         let mut zip_file_path = download_file_path.clone();
@@ -57,7 +57,7 @@ pub fn download_and_extract_map_files(doomworld_files: Vec<DoomworldFile>) -> Re
                 "File exists, deleting so latest copy can be downloaded: {}",
                 downloaded_file.yellow()
             );
-            fs::remove_file(&downloaded_file)?;
+            paths::delete_file(&downloaded_file)?;
         }
 
         // Work out where we are going to extract the downloaded file to (sub-folder of the download folder based off zip file name)
@@ -66,9 +66,9 @@ pub fn download_and_extract_map_files(doomworld_files: Vec<DoomworldFile>) -> Re
             paths::get_full_path(&download_file_path.display().to_string(), &map_sub_folder);
         // Nuke it if it exists, we want it clean
         if paths::folder_exists(&extract_folder) {
-            fs::remove_dir_all(&extract_folder)?;
+            paths::delete_folder(&extract_folder)?;
         }
-        fs::create_dir_all(&extract_folder)?;
+        paths::create_folder(&extract_folder)?;
 
         // Work out the URL to download the file from
         let url = format!("{}{}{}", DOWNLOAD_URL, doomworld_file.dir, doomworld_file.filename);
@@ -148,26 +148,29 @@ fn download_file(url: &str, file_name: &str) -> Result<bool, eyre::Report> {
     log::info!("  Downloading file from '{}' to '{}'", url, file_name);
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
+        // Is the URL reachable?
         if !check_url(url).await? {
             return Ok(false);
         }
 
+        // Looks to be, so download it
         let response = reqwest::get(url).await?;
-        let mut file = std::fs::File::create(file_name)?;
+        let mut file = paths::create_file(file_name)?;
         let mut content = Cursor::new(response.bytes().await?);
         std::io::copy(&mut content, &mut file)?;
 
-        Ok(true)
+        Ok(paths::file_exists(file_name))
     })
 }
 
 fn extract_zip(zip_path: &str, output_folder: &str) -> Result<Vec<String>, eyre::Report> {
     log::info!("  Extracting file '{}' to '{}'", zip_path, output_folder);
 
+     // We want a list of the extracted files as the return value
     let mut extracted_files = Vec::new();
 
     // Open the ZIP file
-    let reader = fs::File::open(zip_path)?;
+    let reader = paths::open_file(zip_path)?;
     let mut archive = ZipArchive::new(reader)?;
 
     // Extract files
@@ -179,19 +182,19 @@ fn extract_zip(zip_path: &str, output_folder: &str) -> Result<Vec<String>, eyre:
 
         // Create folders
         if (file.name()).ends_with('/') {
-            fs::create_dir_all(&outpath)?;
+            paths::create_folder(&outpath.display().to_string())?;
         } else {
             // Some files need folders create
             if let Some(p) = outpath.parent() {
                 if !p.exists() {
-                    fs::create_dir_all(p)?;
+                    paths::create_folder(&p.display().to_string())?;
                 }
             }
-            let mut outfile = fs::File::create(&outpath)?;
+            let mut outfile = paths::create_file(&outpath.display().to_string())?;
             log::debug!("    Extracting file: {}", outpath.display());
             std::io::copy(&mut file, &mut outfile)?;
 
-            // We want a list of the extracted files
+            // Add the file to the list of extracted files
             extracted_files.push(outpath.display().to_string())
         }
     }

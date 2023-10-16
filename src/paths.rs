@@ -1,7 +1,7 @@
 use std::{
     env,
-    fs::File,
-    io::{BufRead, BufReader},
+    fs::{File, self},
+    io::{BufRead, BufReader, self},
     path::{Path, PathBuf},
 };
 
@@ -48,6 +48,26 @@ pub fn folder_exists(folder_path: &str) -> bool {
 pub fn file_exists(file_path: &str) -> bool {
     let path = Path::new(file_path);
     path.exists() && path.is_file()
+}
+
+pub fn create_folder(folder_path: &str) -> io::Result<()> {
+    fs::create_dir_all(folder_path)
+}
+
+pub fn create_file(file_name: &str) -> io::Result<File> {
+    fs::File::create(file_name)
+}
+
+pub fn open_file(file_name: &str) -> io::Result<File> {
+    fs::File::open(file_name)
+}
+
+pub fn delete_folder(folder_path: &str)-> io::Result<()> {
+    fs::remove_dir_all(folder_path)
+}
+
+pub fn delete_file(file_path: &str)-> io::Result<()> {
+    fs::remove_file(file_path)
 }
 
 pub fn extract_path(full_path: &str) -> String {

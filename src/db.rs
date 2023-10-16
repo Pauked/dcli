@@ -1,5 +1,3 @@
-use std::{fs, io};
-
 use chrono::Utc;
 use color_eyre::eyre::{self, Context};
 use log::debug;
@@ -49,8 +47,8 @@ pub fn create_db() -> Result<bool, eyre::Report> {
     })
 }
 
-pub fn reset_db() -> Result<(), io::Error> {
-    fs::remove_file(DB_FILE)
+pub fn reset_db() -> Result<(), std::io::Error> {
+    paths::delete_file(DB_FILE)
 }
 
 pub fn is_empty_app_settings_table() -> Result<bool, eyre::Report> {
@@ -805,11 +803,12 @@ fn add_play_settings(
         let db = get_db().await;
 
         sqlx::query(
-            "INSERT INTO play_settings (comp_level, fast_monsters, no_monsters,
+            "INSERT INTO play_settings (comp_level, config_file, fast_monsters, no_monsters,
             respawn_monsters, warp, skill, turbo, timer, width, height, full_screen,
-            windowed, additional_arguments) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            windowed, additional_arguments) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(&play_settings.comp_level)
+        .bind(&play_settings.config_file)
         .bind(play_settings.fast_monsters)
         .bind(play_settings.no_monsters)
         .bind(play_settings.respawn_monsters)
@@ -836,13 +835,16 @@ fn update_play_settings(
         let db = get_db().await;
 
         sqlx::query(
-            "UPDATE play_settings SET comp_level = $1,
-                fast_monsters = $2, no_monsters = $3, respawn_monsters = $4,
-                warp = $5, skill = $6, turbo = $7, timer = $8, width = $9, height = $10,
-                full_screen = $11, windowed = $12, additional_arguments = $13
-                WHERE id=$14",
+            "UPDATE play_settings SET comp_level = $2, config_file = $3,
+                fast_monsters = $4, no_monsters = $5, respawn_monsters = $6,
+                warp = $7, skill = $8, turbo = $9, timer = $10, width = $11,
+                height = $12, full_screen = $13, windowed = $14,
+                additional_arguments = $15
+                WHERE id=$1",
         )
+        .bind(play_settings.id)
         .bind(&play_settings.comp_level)
+        .bind(&play_settings.config_file)
         .bind(play_settings.fast_monsters)
         .bind(play_settings.no_monsters)
         .bind(play_settings.respawn_monsters)
@@ -855,7 +857,6 @@ fn update_play_settings(
         .bind(play_settings.full_screen)
         .bind(play_settings.windowed)
         .bind(&play_settings.additional_arguments)
-        .bind(play_settings.id)
         .execute(&db)
         .await
         .wrap_err(format!(

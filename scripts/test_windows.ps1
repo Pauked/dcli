@@ -51,9 +51,28 @@ $hexdd_wad = "C:\Doom\Maps\HexDD.wad"
 & $dcli_path set-default --profile "Sigil"
 & $dcli_path set-default --editor "C:\Doom\Editors\UltimateDoomBuilder\builder.exe"
 
+# Set play settings
+& $dcli_path set-play-settings --comp-level pr-boom-plus
+& $dcli_path set-play-settings --config-file "C:\Doom\Apps\config.cfg"
+& $dcli_path set-play-settings --fast-monsters true
+& $dcli_path set-play-settings --no-monsters true
+& $dcli_path set-play-settings --respawn-monsters true
+& $dcli_path set-play-settings --warp-to-level "5 1"
+& $dcli_path set-play-settings --skill 5
+& $dcli_path set-play-settings --turbo 55
+& $dcli_path set-play-settings --timer 20
+& $dcli_path set-play-settings --screen-width 320
+& $dcli_path set-play-settings --screen-height 240
+& $dcli_path set-play-settings --full-screen true
+& $dcli_path set-play-settings --windowed true
+& $dcli_path set-play-settings --additional-args " -nomusic -nosound"
+& $dcli_path list play-settings
+& $dcli_path set-play-settings --reset true
+
 # Show what we added
 & $dcli_path list profiles
 & $dcli_path list app-settings
+& $dcli_path list play-settings
 
 # Uncomment to run the following commands.
 # Commented out to prevent many copies of Doom running at once.

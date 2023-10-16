@@ -83,7 +83,7 @@ pub fn set_default_editor() -> Result<String, eyre::Report> {
         );
     }
 
-    let mut app_settings = db::get_app_settings()?;
+    let app_settings = db::get_app_settings()?;
     let starting_cursor = match app_settings.default_editor_id {
         Some(ref i) => editor_list.iter().position(|x| x.id == *i).unwrap(),
         None => 0,
@@ -96,14 +96,10 @@ pub fn set_default_editor() -> Result<String, eyre::Report> {
         .prompt_skippable()?;
 
     match editor {
-        Some(editor) => {
-            app_settings.default_editor_id = Some(editor.id);
-            db::save_app_settings(app_settings).wrap_err("Failed to set Default Editor")?;
-            Ok(format!(
-                "Marked Editor '{}' as Default",
-                editor.simple_display()
-            ))
-        }
+        Some(editor) => Ok(set_default_editor_core(
+            editor.id,
+            &editor.simple_display(),
+        )?),
         None => Ok("No changes made to setting Editor as Default".to_string()),
     }
 }
@@ -267,6 +263,9 @@ pub fn add_editor() -> Result<String, eyre::Report> {
     app_settings.editor_search_folder = Some(editor_search_folder);
     db::save_app_settings(app_settings)?;
 
+    // Prompt to set a default
+    set_default_editor()?;
+
     // Feedback to user
     if count > 0 {
         let result_message = format!("Successfully added {} Editors", count);
@@ -375,14 +374,24 @@ pub fn cli_delete_editor(editor_path: &str, force: bool) -> Result<String, eyre:
     }
 }
 
-pub fn cli_set_default_editor(path: &str) -> Result<String, eyre::Report> {
-    let editor = db::get_editor_by_path(path)?;
-
+pub fn set_default_editor_core(
+    editor_id: i32,
+    editor_nice_name: &str,
+) -> Result<String, eyre::Report> {
     let mut app_settings = db::get_app_settings()?;
-    app_settings.default_editor_id = Some(editor.id);
+    app_settings.default_editor_id = Some(editor_id);
     db::save_app_settings(app_settings)?;
     Ok(format!(
-        "Successfully set Editor '{}' as Default",
-        editor.simple_display()
+        "Successfully set Default Editor as '{}'",
+        editor_nice_name
     ))
+}
+
+pub fn cli_set_default_editor(path: &str) -> Result<String, eyre::Report> {
+    let editor_result = db::get_editor_by_path(path);
+    if let Ok(editor) = editor_result {
+        set_default_editor_core(editor.id, &editor.simple_display())
+    } else {
+        Ok(format!("Editor not found - '{}'", path))
+    }
 }

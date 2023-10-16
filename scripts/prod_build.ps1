@@ -76,7 +76,8 @@ else {
 
 # [Packaging Process]
 # Prepare archive name
-$compressedFileName = "$appName-v$version-$osInfo"
+$baseVersionName = "$appName-v$version"
+$compressedFileName = "$baseVersionName-$osInfo"
 $releaseDir = "target/release"
 $archivePath = "$releaseDir/$compressedFileName.$compressionFormat"
 
@@ -109,7 +110,7 @@ elseif ($env:IsMacOS) {
 }
 
 # [Copy to Release Folder]
-$releaseDir = $env:ReleaseFolderDcli
+$releaseDir = "$env:ReleaseFolderDcli/$baseVersionName"
 New-Item -ItemType Directory -Force -Path $releaseDir
 Copy-Item -Path $archivePath -Destination $releaseDir
 

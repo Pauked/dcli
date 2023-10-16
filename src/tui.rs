@@ -30,6 +30,7 @@ pub enum MenuLevel {
     MapEditor,
     Maps,
     MapsSearchDoomworld,
+    MapsReadme,
     AppSettings,
     AppSettingsDefaults,
     AppSettingsList,
@@ -176,6 +177,8 @@ pub enum MenuCommand {
     SearchDoomworldByFileName,
     #[strum(serialize = "Search Doomworld by Map Title")]
     SearchDoomworldByMapTitle,
+    #[strum(serialize = "View Readme")]
+    ViewReadme,
     #[strum(serialize = "Readme from Default Profile")]
     ReadmeFromDefaultProfile,
     #[strum(serialize = "Readme from Last Profile")]
@@ -389,19 +392,7 @@ pub fn menu_prompt(
                     MenuCommand::SearchAndDownloadOnDoomworld.to_string(),
                     MenuMode::Simple,
                 ),
-                (
-                    MenuCommand::ReadmeFromDefaultProfile.to_string(),
-                    MenuMode::Simple,
-                ),
-                (
-                    MenuCommand::ReadmeFromLastProfile.to_string(),
-                    MenuMode::Full,
-                ),
-                (
-                    MenuCommand::ReadmeFromPickProfile.to_string(),
-                    MenuMode::Simple,
-                ),
-                (MenuCommand::ReadmeFromPickMap.to_string(), MenuMode::Simple),
+                (MenuCommand::ViewReadme.to_string(), MenuMode::Simple),
                 (MenuCommand::ListMaps.to_string(), MenuMode::Simple),
                 (MenuCommand::UpdateMaps.to_string(), MenuMode::Simple),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),
@@ -432,6 +423,29 @@ pub fn menu_prompt(
                 selections,
                 "Maps / Search & Download".to_string(),
                 "Search for Maps, Download 'em!".to_string(),
+            )
+        }
+        MenuLevel::MapsReadme => {
+            let selections = vec![
+                (
+                    MenuCommand::ReadmeFromDefaultProfile.to_string(),
+                    MenuMode::Simple,
+                ),
+                (
+                    MenuCommand::ReadmeFromLastProfile.to_string(),
+                    MenuMode::Full,
+                ),
+                (
+                    MenuCommand::ReadmeFromPickProfile.to_string(),
+                    MenuMode::Simple,
+                ),
+                (MenuCommand::ReadmeFromPickMap.to_string(), MenuMode::Simple),
+                (MenuCommand::Back.to_string(), MenuMode::Simple),
+            ];
+            (
+                selections,
+                "Maps / View Readme".to_string(),
+                "View local Map Readmes".to_string(),
             )
         }
         MenuLevel::AppSettings => {
@@ -690,12 +704,12 @@ pub fn run_menu_command_with_force(
         MenuCommand::Skill => menu_play_settings::update_skill(),
         MenuCommand::Turbo => menu_play_settings::update_turbo(),
         MenuCommand::Timer => menu_play_settings::update_timer(),
-        MenuCommand::Width => menu_play_settings::update_width(),
-        MenuCommand::Height => menu_play_settings::update_height(),
+        MenuCommand::Width => menu_play_settings::update_screen_width(),
+        MenuCommand::Height => menu_play_settings::update_screen_height(),
         MenuCommand::FullScreen => menu_play_settings::update_full_screen(),
         MenuCommand::Windowed => menu_play_settings::update_windowed(),
         MenuCommand::AdditionalArguments => menu_play_settings::update_additional_arguments(),
-        MenuCommand::ResetPlaySettings => menu_play_settings::reset_play_settings(),
+        MenuCommand::ResetPlaySettings => menu_play_settings::reset_play_settings(force),
 
         // Editor Menu
         MenuCommand::OpenFromDefaultProfile => menu_editor::open_from_default_profile(),
@@ -710,15 +724,18 @@ pub fn run_menu_command_with_force(
         // Map Menu
         MenuCommand::ViewOnDoomworld => menu_maps::view_on_doomworld(),
         MenuCommand::SearchAndDownloadOnDoomworld => menu(MenuLevel::MapsSearchDoomworld),
-        MenuCommand::ReadmeFromDefaultProfile => menu_maps::view_from_default_profile(),
-        MenuCommand::ReadmeFromLastProfile => menu_maps::view_from_last_profile(),
-        MenuCommand::ReadmeFromPickProfile => menu_maps::view_from_pick_profile(),
-        MenuCommand::ReadmeFromPickMap => menu_maps::view_from_pick_map(),
+        MenuCommand::ViewReadme => menu(MenuLevel::MapsReadme),
 
         // Map Search on Doomworld Menu
         MenuCommand::SearchDoomworldByAuthor => menu_maps::search_doomworld_by_author(),
         MenuCommand::SearchDoomworldByFileName => menu_maps::search_doomworld_by_filename(),
         MenuCommand::SearchDoomworldByMapTitle => menu_maps::search_doomworld_by_map_title(),
+
+        // Map View Readme Menu
+        MenuCommand::ReadmeFromDefaultProfile => menu_maps::view_from_default_profile(),
+        MenuCommand::ReadmeFromLastProfile => menu_maps::view_from_last_profile(),
+        MenuCommand::ReadmeFromPickProfile => menu_maps::view_from_pick_profile(),
+        MenuCommand::ReadmeFromPickMap => menu_maps::view_from_pick_map(),
 
         // Back and Quit
         MenuCommand::Ignore => Ok("".to_string()),

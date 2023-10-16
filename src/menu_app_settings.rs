@@ -761,7 +761,7 @@ pub fn cli_set_default_engine(path: &str) -> Result<String, eyre::Report> {
     app_settings.default_engine_id = Some(engine.id);
     db::save_app_settings(app_settings).wrap_err("Failed to set Default Engine")?;
     Ok(format!(
-        "Successfully set Engine '{}' as Default",
+        "Successfully set Default Engine as '{}'",
         engine.simple_display()
     ))
 }
@@ -773,7 +773,7 @@ pub fn cli_set_default_iwad(path: &str) -> Result<String, eyre::Report> {
     app_settings.default_iwad_id = Some(iwad.id);
     db::save_app_settings(app_settings).wrap_err("Failed to set Default IWAD")?;
     Ok(format!(
-        "Successfully set IWAD '{}' as Default",
+        "Successfully set Default IWAD as '{}'",
         iwad.simple_display()
     ))
 }

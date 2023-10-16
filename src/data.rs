@@ -1,6 +1,7 @@
 use core::fmt;
 
 use chrono::{DateTime, Datelike, Local, Timelike, Utc};
+use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use strum_macros::{Display, EnumString};
@@ -457,8 +458,12 @@ pub fn display_option_comp_level(value: &Option<CompLevel>) -> String {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type)]
+#[derive(
+    Clone, Debug, Serialize, Deserialize, Display, EnumString, PartialEq, sqlx::Type, ValueEnum,
+)]
 pub enum CompLevel {
+    #[strum(serialize = "Not Set")]
+    NotSet = -1,
     #[strum(serialize = "Doom v1.2 (0)")]
     DoomV12 = 0,
     #[strum(serialize = "Doom v1.666 (1)")]
