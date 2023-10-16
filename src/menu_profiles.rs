@@ -361,6 +361,81 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
     Ok(format!("Successfully updated Profile - '{}'", profile_name))
 }
 
+pub fn change_engine_on_profile() -> Result<String, eyre::Report> {
+    let engine_list = db::get_engines()?;
+    if engine_list.is_empty() {
+        return Ok(
+            "Cannot change Engine on Profiles because there are no Engines to select".to_string(),
+        );
+    }
+
+    let display_profile_list = db::get_profile_display_list()?;
+    if display_profile_list.is_empty() {
+        return Ok("There are no Profiles to change the Engine on".to_string());
+    }
+
+    let before_engine =
+        inquire::Select::new("Pick the Engine to change from:", engine_list.clone())
+            .with_page_size(tui::MENU_PAGE_SIZE)
+            .with_formatter(&|i| i.value.simple_display())
+            .prompt()?;
+
+    // Get a list of profiles that are using the before_engine
+    let filtered_display_profiles = display_profile_list
+        .iter()
+        .filter(|&profile| profile.engine_id == before_engine.id)
+        .collect::<Vec<&data::ProfileDisplay>>();
+
+    if filtered_display_profiles.is_empty() {
+        return Ok(format!(
+            "No changes made to changing Engine on Profiles. No Profiles are using the Engine - '{}'",
+            before_engine.short_display()
+        ));
+    }
+
+    let after_engine = inquire::Select::new("Pick the Engine to change to:", engine_list)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| i.value.simple_display())
+        .prompt()?;
+
+    // Which profiles do we want to change?
+    let selected_display_profiles = inquire::MultiSelect::new(
+        "Pick the Profiles you want to change:",
+        filtered_display_profiles,
+    )
+    .with_page_size(tui::MENU_PAGE_SIZE)
+    .with_formatter(&|i| {
+        i.iter()
+            .map(|e| e.value.short_display())
+            .collect::<Vec<String>>()
+            .join(", ")
+    })
+    .with_help_message(&format!(
+        "These Profiles are using the Engine - '{}'",
+        before_engine.short_display()
+    ))
+    .prompt()?;
+
+    // Abort if nothing picked
+    if selected_display_profiles.is_empty() {
+        return Ok("No changes made to changing Engine on Profiles. No Profiles selected".to_string());
+    }
+
+    // Update the Profiles with the new Engine
+    for display_profile in &selected_display_profiles {
+        let mut profile = db::get_profile_by_id(display_profile.id)?;
+        profile.engine_id = Some(after_engine.id);
+        db::update_profile(profile)?;
+    }
+
+    Ok(format!(
+        "Successfully changed Engine from '{}' to '{}' on {} Profiles",
+        before_engine.short_display(),
+        after_engine.short_display(),
+        selected_display_profiles.len()
+    ))
+}
+
 fn delete_profile_core(
     profile_id: i32,
     profile_name: &str,

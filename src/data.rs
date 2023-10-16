@@ -334,6 +334,17 @@ impl ProfileDisplay {
             self.name, maps, self.iwad_file, self.engine_version, self.engine_file,
         )
     }
+    pub fn short_display(&self) -> String {
+        let maps = {
+            let temp = display_combined_map_strings_simple(&self.map_files);
+            if temp.is_empty() {
+                "".to_string()
+            } else {
+                format!(" ({})", temp)
+            }
+        };
+        format!("{} ({})", self.name, maps)
+    }
 }
 
 impl fmt::Display for ProfileDisplay {

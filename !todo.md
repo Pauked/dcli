@@ -6,6 +6,7 @@
 [x] On add of Editor, prompt to set default
 [x] CLI for Play Settings
 [x] Improve success message for setting Default options
+[x] Option to build change Engines on Profile. Pick From and To and Profiles to change
 
 ## Future Dev / Nice to haves
 

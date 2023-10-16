@@ -71,6 +71,8 @@ pub enum MenuCommand {
     NewProfile,
     #[strum(serialize = "Edit Profile")]
     EditProfile,
+    #[strum(serialize = "Change Engine on Profile")]
+    ChangeEngineOnProfile,
     #[strum(serialize = "Delete Profile")]
     DeleteProfile,
     #[strum(serialize = "Set Default Profile")]
@@ -233,6 +235,7 @@ pub fn menu_prompt(
             let selections = vec![
                 (MenuCommand::NewProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::EditProfile.to_string(), MenuMode::Simple),
+                (MenuCommand::ChangeEngineOnProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::SetDefaultProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::ListProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::DeleteProfile.to_string(), MenuMode::Simple),
@@ -637,6 +640,7 @@ pub fn run_menu_command_with_force(
         // Profile Menu
         MenuCommand::NewProfile => menu_profiles::add_profile(),
         MenuCommand::EditProfile => menu_profiles::edit_profile(),
+        MenuCommand::ChangeEngineOnProfile => menu_profiles::change_engine_on_profile(),
         MenuCommand::DeleteProfile => menu_profiles::delete_profile(),
         MenuCommand::SetDefaultProfile => menu_profiles::set_default_profile(),
         MenuCommand::ListProfile => menu_profiles::list_profiles(data::ListType::Summary),
