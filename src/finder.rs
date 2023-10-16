@@ -119,19 +119,51 @@ fn get_macos_file_version_information(full_path: &str) -> Result<(String, String
     Ok((version_str.to_string(), app_name_str.to_string()))
 }
 
-fn parse_file_version_to_i32(version: &str) -> Option<(u32, u32, u32, u32)> {
-    let parts: Vec<_> = version
+fn parse_file_version_to_u32(version: &str) -> Option<(String, u32, u32, u32, Option<u32>, String)> {
+    // Split the version string into parts separated by '.'
+    let mut parts: Vec<_> = version
         .split('.')
-        .map(|part| part.parse::<u32>())
-        .collect::<Result<Vec<_>, _>>()
-        .ok()?; // FIXME: Improve error handling?
+        .map(|part| part.to_string())
+        .collect();
 
-    match parts.len() {
-        3 => Some((parts[0], parts[1], parts[2], 0)),
-        4 => Some((parts[0], parts[1], parts[2], parts[3])),
-        _ => None,
+    // Extract the prefix and suffix from the first and last parts
+    let mut prefix = String::new();
+    let mut suffix = String::new();
+
+    // Does the major number contain a prefix?
+    if let Some(index) = parts[0].chars().position(|c| c.is_ascii_digit()) {
+        let (pre, post) = parts[0].split_at(index);
+        prefix = pre.to_string();
+        parts[0] = post.to_string(); // update the parts array with just the number
     }
+
+    // Does the build/revision contain a suffix?
+    if let Some(index) = parts.last().unwrap().chars().position(|c| c.is_alphabetic()) {
+        let (pre, post) = parts.last_mut().unwrap().split_at(index);
+        suffix = post.to_string();
+        *parts.last_mut().unwrap() = pre.to_string(); // update the parts array with just the number
+    }
+
+    // Ensure we have at least three parts (major, minor, and build)
+    if parts.len() < 3 {
+        return None;
+    }
+
+    // Extract numeric values from parts
+    let major = parts[0].parse::<u32>().unwrap_or(0);
+    let minor = parts[1].parse::<u32>().unwrap_or(0);
+    let build = parts[2].parse::<u32>().unwrap_or(0);
+
+    // Extract the revision number if it exists
+    let revision = if parts.len() == 4 {
+        Some(parts[3].parse::<u32>().unwrap_or(0))
+    } else {
+        None
+    };
+
+    Some((prefix, major, minor, build, revision, suffix))
 }
+
 
 pub fn get_file_version(full_path: &str) -> Result<data::FileVersion, eyre::Report> {
     if env::consts::OS == constants::OS_WINDOWS {
@@ -141,25 +173,29 @@ pub fn get_file_version(full_path: &str) -> Result<data::FileVersion, eyre::Repo
         return Ok(data::FileVersion {
             app_name: app_name.to_string(),
             path: full_path.to_string(),
+            prefix: "".to_string(),
             major: major.parse::<u32>().unwrap_or(0),
             minor: minor.parse::<u32>().unwrap_or(0),
             build: build.parse::<u32>().unwrap_or(0),
-            revision: revision.parse::<u32>().unwrap_or(0),
+            revision: Some(revision.parse::<u32>().unwrap_or(0)),
+            suffix: "".to_string(),
         });
     }
 
     if env::consts::OS == constants::OS_MACOS {
         let (version, app_name) = get_macos_file_version_information(full_path)?;
 
-        match parse_file_version_to_i32(&version) {
-            Some((major, minor, build, revision)) => {
+        match parse_file_version_to_u32(&version) {
+            Some((prefix, major, minor, build, revision, suffix)) => {
                 return Ok(data::FileVersion {
                     app_name,
                     path: full_path.to_string(),
+                    prefix,
                     major,
                     minor,
                     build,
                     revision,
+                    suffix,
                 });
             }
             None => {
@@ -205,10 +241,12 @@ pub fn get_prboom_file_version(full_path: &str) -> Result<data::FileVersion, eyr
                 Ok(data::FileVersion {
                     app_name: app_name.to_string(),
                     path: full_path.to_string(),
+                    prefix: "".to_string(),
                     major,
                     minor,
                     build,
-                    revision: 0,
+                    revision: None,
+                    suffix: "".to_string(),
                 })
             } else {
                 Err(eyre::eyre!(format!(
@@ -218,5 +256,70 @@ pub fn get_prboom_file_version(full_path: &str) -> Result<data::FileVersion, eyr
             }
         }
         Err(e) => Err(e),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::finder::parse_file_version_to_u32;
+
+    #[test]
+    fn test_parse_file_version_to_u32_happy_path_simple_number() {
+        // Arrange
+        let version = "5.0.4.1";
+        let expected = ("".to_string(), 5, 0, 4, Some(1), "".to_string());
+
+        // Act
+        let actual = parse_file_version_to_u32(version);
+
+        // Assert
+        assert!(actual.is_some());
+        let actual_unwrapped = actual.unwrap();
+        assert_eq!(actual_unwrapped, expected);
+    }
+
+    #[test]
+    fn test_parse_file_version_to_u32_happy_path_gzdoom_number() {
+        // Arrange
+        let version = "g4.11.1a";
+        let expected = ("g".to_string(), 4, 11, 1, None, "a".to_string());
+
+        // Act
+        let actual = parse_file_version_to_u32(version);
+
+        // Assert
+        assert!(actual.is_some());
+        let actual_unwrapped = actual.unwrap();
+        assert_eq!(actual_unwrapped, expected);
+    }
+
+    #[test]
+    fn test_parse_file_version_to_u32_happy_path_prboom_number() {
+        // Arrange
+        let version = "0.26.2";
+        let expected = ("".to_string(), 0, 26, 2, None, "".to_string());
+
+        // Act
+        let actual = parse_file_version_to_u32(version);
+
+        // Assert
+        assert!(actual.is_some());
+        let actual_unwrapped = actual.unwrap();
+        assert_eq!(actual_unwrapped, expected);
+    }
+
+    #[test]
+    fn test_parse_file_version_to_u32_happy_path_full_number() {
+        // Arrange
+        let version = "a5.4.3.2z";
+        let expected = ("a".to_string(), 5, 4, 3, Some(2), "z".to_string());
+
+        // Act
+        let actual = parse_file_version_to_u32(version);
+
+        // Assert
+        assert!(actual.is_some());
+        let actual_unwrapped = actual.unwrap();
+        assert_eq!(actual_unwrapped, expected);
     }
 }

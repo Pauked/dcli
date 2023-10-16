@@ -21,17 +21,25 @@ const DISPLAY_WIDTH_IWAD: usize = 12;
 pub struct FileVersion {
     pub app_name: String,
     pub path: String,
+    pub prefix: String,
     pub major: u32,
     pub minor: u32,
     pub build: u32,
-    pub revision: u32,
+    pub revision: Option<u32>,
+    pub suffix: String,
 }
 
 impl FileVersion {
     pub fn display_version(&self) -> String {
+        let revision = if let Some(r) = self.revision {
+            format!(".{}", r)
+        } else {
+            "".to_string()
+        };
+
         format!(
-            "{}.{}.{}.{}",
-            self.major, self.minor, self.build, self.revision
+            "{}{}.{}.{}{}{}",
+            self.prefix, self.major, self.minor, self.build, revision, self.suffix
         )
     }
 }
