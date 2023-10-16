@@ -177,7 +177,7 @@ pub enum MenuCommand {
     SearchDoomworldByFileName,
     #[strum(serialize = "Search Doomworld by Map Title")]
     SearchDoomworldByMapTitle,
-    #[strum(serialize = "View Readme")]
+    #[strum(serialize = "View Readme >>")]
     ViewReadme,
     #[strum(serialize = "Readme from Default Profile")]
     ReadmeFromDefaultProfile,
