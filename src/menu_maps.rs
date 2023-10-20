@@ -1,5 +1,6 @@
 use crate::{data, db, doomworld_api, downloader, menu_common, runner, tui};
 use eyre::Context;
+use owo_colors::OwoColorize;
 
 pub fn view_on_doomworld() -> Result<String, eyre::Report> {
     let map_list = db::get_maps()?;
@@ -74,28 +75,40 @@ fn search_dooomworld_and_download(
     nice_name: &str,
     search_type: &str,
 ) -> Result<String, eyre::Report> {
-    let search =
-        inquire::Text::new(&format!("Enter the {} you want to search on:", nice_name)).prompt()?;
+    let search = inquire::Text::new(&format!("Enter the {} you want to search on:", nice_name))
+        //.with_help_message("Please note the search is limited to first 100 results.\nFor more complete results, use https://www.doomworld.com/idgames/index.php?search=")
+        .prompt()?;
 
-    let files = doomworld_api::search_doomworld_api(
-        &search,
-        search_type,
-        doomworld_api::SORT_FILENAME,
-    )?;
+    let api_result =
+        doomworld_api::search_doomworld_api(&search, search_type, doomworld_api::SORT_FILENAME)?;
 
-    if files.is_empty() {
-        return Err(eyre::eyre!("No maps found for '{}' search with '{}'", nice_name, search));
+    if api_result.files.is_empty() {
+        return Err(eyre::eyre!(
+            "No maps found for '{}' search with '{}'. Message from API '{}'",
+            nice_name,
+            search,
+            api_result.message
+        ));
     }
 
-    let selection = inquire::MultiSelect::new("Pick the maps you want to download:", files)
-        .with_page_size(tui::MENU_PAGE_SIZE)
-        .with_formatter(&|i| {
-            i.iter()
-                .map(|e| e.value.short_display())
-                .collect::<Vec<String>>()
-                .join(", ")
-        })
-        .prompt()?;
+    if !api_result.message.is_empty() {
+        log::info!(
+            "{} '{}'",
+            "Partial search results because".yellow(),
+            api_result.message.yellow()
+        );
+    }
+
+    let selection =
+        inquire::MultiSelect::new("Pick the maps you want to download:", api_result.files)
+            .with_page_size(tui::MENU_PAGE_SIZE)
+            .with_formatter(&|i| {
+                i.iter()
+                    .map(|e| e.value.short_display())
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            })
+            .prompt()?;
 
     downloader::download_and_extract_map_files(selection)
 }

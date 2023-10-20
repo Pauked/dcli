@@ -1,6 +1,6 @@
 use std::fmt;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use tokio::runtime;
 
@@ -16,17 +16,28 @@ pub const SORT_FILENAME: &str = "filename";
 const DISPLAY_WIDTH1: usize = 45;
 const DISPLAY_WIDTH2: usize = 35;
 
+const EXPECTED_API_VERSION: i32 = 3;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DoomworldFile {
     pub id: i32,
+    #[serde(deserialize_with = "deserialize_string_or_default")]
     pub title: String,
     pub author: String,
-    pub description: Option<String>,
     pub filename: String,
-    pub size: i32,
     pub url: String,
     pub dir: String,
-    // ...other fields
+}
+
+fn deserialize_string_or_default<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let opt = Option::deserialize(deserializer);
+    match opt {
+        Ok(Some(value)) => Ok(value),
+        Ok(None) | Err(_) => Ok(constants::DEFAULT_UNKNOWN.to_string()),
+    }
 }
 
 impl DoomworldFile {
@@ -52,35 +63,40 @@ impl fmt::Display for DoomworldFile {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Warning {
+pub struct Warning {
     #[serde(rename = "type")]
-    warning_type: String,
-    message: String,
+    pub warning_type: String,
+    pub message: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Content {
-    file: Option<Value>,
+pub struct Content {
+    pub file: Option<Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Meta {
-    version: i32,
+pub struct Meta {
+    pub version: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct ApiResponse {
-    warning: Option<Warning>,
-    content: Option<Content>,
-    meta: Meta,
+pub struct ApiResponse {
+    pub warning: Option<Warning>,
+    pub content: Option<Content>,
+    pub meta: Meta,
+}
+
+pub struct ApiResult {
+    pub message: String,
+    pub files: Vec<DoomworldFile>,
 }
 
 pub fn lookup_map_from_doomworld_api(
     map_path: &str,
 ) -> Result<(String, String, Option<i32>, Option<String>), eyre::Report> {
     let filename = format!("{}.zip", paths::extract_file_name_no_extension(map_path));
-    let files = search_doomworld_api(&filename, SEARCH_FILENAME, SORT_DATE)?;
-    if files.is_empty() {
+    let api_result = search_doomworld_api(&filename, SEARCH_FILENAME, SORT_DATE)?;
+    if api_result.files.is_empty() {
         return Ok((
             constants::DEFAULT_UNKNOWN.to_string(),
             constants::DEFAULT_UNKNOWN.to_string(),
@@ -90,7 +106,7 @@ pub fn lookup_map_from_doomworld_api(
     }
 
     // FIXME: Assumption corner on multiple files... (and first one could be wrong!)
-    let file = files[0].clone();
+    let file = api_result.files[0].clone();
     Ok((file.title, file.author, Some(file.id), Some(file.url)))
 }
 
@@ -98,7 +114,7 @@ pub fn search_doomworld_api(
     search_query: &str,
     search_type: &str,
     sort_type: &str,
-) -> Result<Vec<DoomworldFile>, eyre::Report> {
+) -> Result<ApiResult, eyre::Report> {
     // Help guide: https://www.doomworld.com/idgames/api/
     let base_url = "https://www.doomworld.com/idgames/api/api.php";
 
@@ -109,8 +125,13 @@ pub fn search_doomworld_api(
         ("sort", sort_type),
         ("out", "json"),
     ];
+    let querystring: String = params
+        .iter()
+        .map(|(key, value)| format!("{}={}", key, urlencoding::encode(value)))
+        .collect::<Vec<_>>()
+        .join("&");
 
-    log::debug!("  Sending request to: {}", base_url);
+    log::debug!("  Sending request to: {}?{}", base_url, querystring);
     let runtime: runtime::Runtime = tokio::runtime::Runtime::new().unwrap();
     let response: ApiResponse = runtime.block_on(async {
         reqwest::Client::new()
@@ -123,21 +144,218 @@ pub fn search_doomworld_api(
     })?;
     log::debug!("  Response: {:?}", response);
 
+    parse_doomworld_api_response(response)
+}
+
+fn parse_doomworld_api_response(response: ApiResponse) -> Result<ApiResult, eyre::Report> {
+    if response.meta.version != EXPECTED_API_VERSION {
+        return Err(eyre::eyre!(
+            "Error, unexpected Doomworld API version: {} (expected {})",
+            response.meta.version,
+            EXPECTED_API_VERSION
+        ));
+    }
+
+    let mut api_result: ApiResult = ApiResult {
+        message: "".to_string(),
+        files: vec![],
+    };
+
     if let Some(warning) = response.warning {
         log::debug!("  Warning: {:?}", warning);
-        return Ok(vec![]);
+        api_result.message = warning.message;
     }
 
     log::debug!("  Getting file info");
-    let files: Vec<DoomworldFile> =
+    api_result.files =
         response
             .content
             .and_then(|c| c.file)
             .map_or_else(std::vec::Vec::new, |file| match file {
                 Value::Object(_) => vec![serde_json::from_value(file).unwrap()],
-                Value::Array(_) => serde_json::from_value(file).unwrap_or_default(),
+                Value::Array(_) => serde_json::from_value(file).unwrap(),
                 _ => vec![],
             });
+    log::debug!("  Got {} files", api_result.files.len());
+    log::debug!("  File details {:?}", api_result.files);
 
-    Ok(files)
+    Ok(api_result)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{fs, path::Path};
+
+    use crate::{constants, doomworld_api};
+
+    #[test]
+    fn happy_path_e1m4b() {
+        // Arrange
+        let path = Path::new("./test-data/e1m4b.json");
+        let content = fs::read_to_string(path).unwrap();
+        let response: doomworld_api::ApiResponse =
+            serde_json::from_str(&content).expect("Failed to deserialize the JSON");
+
+        // Act
+        let api_result = doomworld_api::parse_doomworld_api_response(response).unwrap();
+
+        // Assert
+        assert_eq!(api_result.files.len(), 1);
+        assert_eq!(api_result.files[0].id, 18412);
+        assert_eq!(api_result.files[0].title, "Phobos Mission Control");
+        assert_eq!(api_result.files[0].author, "John Romero");
+        assert_eq!(api_result.files[0].filename, "e1m4b.zip");
+        assert_eq!(
+            api_result.files[0].url,
+            "https://www.doomworld.com/idgames/levels/doom/Ports/d-f/e1m4b"
+        );
+        assert!(api_result.message.is_empty());
+    }
+
+    #[test]
+    fn happy_path_valiant() {
+        // Arrange
+        let path = Path::new("./test-data/valiant.json");
+        let content = fs::read_to_string(path).unwrap();
+        let response: doomworld_api::ApiResponse =
+            serde_json::from_str(&content).expect("Failed to deserialize the JSON");
+
+        // Act
+        let api_result = doomworld_api::parse_doomworld_api_response(response).unwrap();
+
+        // Assert
+        assert_eq!(api_result.files.len(), 1);
+        assert_eq!(api_result.files[0].id, 18049);
+        assert_eq!(api_result.files[0].title, "Valiant");
+        assert_eq!(api_result.files[0].author, "Paul \"skillsaw\" DeBruyne");
+        assert_eq!(api_result.files[0].filename, "valiant.zip");
+        assert_eq!(
+            api_result.files[0].url,
+            "https://www.doomworld.com/idgames/levels/doom2/Ports/megawads/valiant"
+        );
+        assert!(api_result.message.is_empty());
+    }
+
+    #[test]
+    fn handle_no_results() {
+        // Arrange
+        let path = Path::new("./test-data/no_results.json");
+        let content = fs::read_to_string(path).unwrap();
+        let response: doomworld_api::ApiResponse =
+            serde_json::from_str(&content).expect("Failed to deserialize the JSON");
+
+        // Act
+        let api_result = doomworld_api::parse_doomworld_api_response(response).unwrap();
+
+        // Assert
+        assert_eq!(api_result.files.len(), 0);
+        assert_eq!(
+            api_result.message,
+            "No files returned for query \"lemonbiscuitbase\"."
+        );
+    }
+
+    #[test]
+    fn handle_nulls() {
+        // Arrange
+        let path = Path::new("./test-data/nulls.json");
+        let content = fs::read_to_string(path).unwrap();
+        let response: doomworld_api::ApiResponse =
+            serde_json::from_str(&content).expect("Failed to deserialize the JSON");
+
+        // Act
+        let api_result = doomworld_api::parse_doomworld_api_response(response).unwrap();
+
+        // Assert
+        assert_eq!(api_result.files.len(), 1);
+        assert_eq!(api_result.files[0].id, 11528);
+        assert_eq!(
+            api_result.files[0].title,
+            constants::DEFAULT_UNKNOWN.to_string()
+        );
+        assert_eq!(api_result.files[0].author, "Paul Corfiatis");
+        assert_eq!(api_result.files[0].filename, "0scraps.zip");
+        assert_eq!(
+            api_result.files[0].url,
+            "https://www.doomworld.com/idgames/levels/doom2/0-9/0scraps"
+        );
+        assert!(api_result.message.is_empty());
+    }
+
+    #[test]
+    fn happy_path_22_files() {
+        // Arrange
+        let path = Path::new("./test-data/22_files-final_search.json");
+        let content = fs::read_to_string(path).unwrap();
+        let response: doomworld_api::ApiResponse =
+            serde_json::from_str(&content).expect("Failed to deserialize the JSON");
+
+        // Act
+        let api_result = doomworld_api::parse_doomworld_api_response(response).unwrap();
+
+        // Assert
+        assert_eq!(api_result.files.len(), 22);
+
+        assert_eq!(api_result.files[0].id, 1227);
+        assert_eq!(api_result.files[0].title, "Final_2.wad");
+        assert_eq!(api_result.files[0].author, "Chris Kleymeer");
+        assert_eq!(api_result.files[0].filename, "final_2.zip");
+        assert_eq!(
+            api_result.files[0].url,
+            "https://www.doomworld.com/idgames/levels/doom2/d-f/final_2"
+        );
+
+        assert_eq!(api_result.files[21].id, 20612);
+        assert_eq!(api_result.files[21].title, "Machete");
+        assert_eq!(api_result.files[21].author, "A2Rob");
+        assert_eq!(api_result.files[21].filename, "machetefinal.zip");
+        assert_eq!(
+            api_result.files[21].url,
+            "https://www.doomworld.com/idgames/levels/doom2/Ports/megawads/machetefinal"
+        );
+        assert!(api_result.message.is_empty());
+    }
+
+    #[test]
+    fn happy_path_100_files_with_warning() {
+        // Arrange
+        let path = Path::new("./test-data/100_files-paul_search.json");
+        let content = fs::read_to_string(path).unwrap();
+        let response: doomworld_api::ApiResponse =
+            serde_json::from_str(&content).expect("Failed to deserialize the JSON");
+
+        // Act
+        let api_result = doomworld_api::parse_doomworld_api_response(response).unwrap();
+
+        // Assert
+        assert_eq!(api_result.files.len(), 100);
+
+        assert_eq!(api_result.files[0].id, 13327);
+        assert_eq!(api_result.files[0].title, "000 EMERGANCY");
+        assert_eq!(api_result.files[0].author, "Paul Corfiatis");
+        assert_eq!(api_result.files[0].filename, "000emg.zip");
+        assert_eq!(
+            api_result.files[0].url,
+            "https://www.doomworld.com/idgames/levels/doom2/0-9/000emg"
+        );
+
+        assert_eq!(api_result.files[99].id, 11499);
+        assert_eq!(
+            api_result.files[99].title,
+            "Fras v9.3 Map 1: Turks Map 2: New Map 3: Brick Map 4: Biff! Kazam! Map 5: Brick II Map 6: Sky Map 7:"
+        );
+        assert_eq!(
+            api_result.files[99].author,
+            "Maps 1,3,5,7,(10,12,14): Paul O'Neill Maps 2,4,6,9,11,(13,15): Jerry P."
+        );
+        assert_eq!(api_result.files[99].filename, "fras.zip");
+        assert_eq!(
+            api_result.files[99].url,
+            "https://www.doomworld.com/idgames/levels/doom2/deathmatch/d-f/fras"
+        );
+        assert_eq!(
+            api_result.message,
+            "Result limit reached. Returning 100 files."
+        );
+    }
 }

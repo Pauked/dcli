@@ -1,0 +1,23 @@
+{
+  "content": {
+    "file": {
+      "id": 18049,
+      "title": "Valiant",
+      "dir": "levels/doom2/Ports/megawads/",
+      "filename": "valiant.zip",
+      "size": 25605504,
+      "age": 1432962000,
+      "date": "2015-05-30",
+      "author": "Paul \"skillsaw\" DeBruyne",
+      "email": "pgdebruyne@gmail.com",
+      "description": "Valiant is a MBF megawad for Doom II featuring 32 new maps spanning 5 themed episodes. Each map is designed to be played from a pistol start, but some effort has been made to support continuous play as well.<br><br> Additionally, Valiant includes a number of new monsters and weapons implemented through an extensive MBF format DeHackEd patch. As a result, Valiant is not compatible with gameplay mods, and can only be played in ports with full MBF DeHackEd support. At present, these include ZDoom, GZDoom, PrBoom-plus (complevel 11), and Eternity. Zandronum is also supported through DECORATE.",
+      "rating": 4.2727,
+      "votes": 143,
+      "url": "https://www.doomworld.com/idgames/levels/doom2/Ports/megawads/valiant",
+      "idgamesurl": "idgames://levels/doom2/Ports/megawads/valiant.zip"
+    }
+  },
+  "meta": {
+    "version": 3
+  }
+}

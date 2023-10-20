@@ -1,0 +1,23 @@
+{
+  "content": {
+    "file": {
+      "id": 18412,
+      "title": "Phobos Mission Control",
+      "dir": "levels/doom/Ports/d-f/",
+      "filename": "e1m4b.zip",
+      "size": 93472,
+      "age": 1461733200,
+      "date": "2016-04-27",
+      "author": "John Romero",
+      "email": "john@romero.com",
+      "description": null,
+      "rating": 4.0909,
+      "votes": 33,
+      "url": "https://www.doomworld.com/idgames/levels/doom/Ports/d-f/e1m4b",
+      "idgamesurl": "idgames://levels/doom/Ports/d-f/e1m4b.zip"
+    }
+  },
+  "meta": {
+    "version": 3
+  }
+}

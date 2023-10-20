@@ -628,7 +628,7 @@ pub fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
                     }
                 }
                 _ => {
-                    info!("Error: {:?}", e.red());
+                    info!("Error: {}", e.red());
                     debug!("Error: {:?}", e);
                 }
             },

@@ -1,0 +1,23 @@
+{
+  "content": {
+    "file": {
+      "id": 11528,
+      "title": null,
+      "dir": "levels/doom2/0-9/",
+      "filename": "0scraps.zip",
+      "size": 241885,
+      "age": 1018335600,
+      "date": "2002-04-09",
+      "author": "Paul Corfiatis",
+      "email": null,
+      "description": null,
+      "rating": 2.3333,
+      "votes": 6,
+      "url": "https://www.doomworld.com/idgames/levels/doom2/0-9/0scraps",
+      "idgamesurl": "idgames://levels/doom2/0-9/0scraps.zip"
+    }
+  },
+  "meta": {
+    "version": 3
+  }
+}
