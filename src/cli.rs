@@ -443,7 +443,7 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                     ))
                 } else if let Some(config_file) = config_file {
                     Ok((
-                        menu_play_settings::cli_set_config_file(&config_file)?,
+                        menu_play_settings::cli_set_config_file(&paths::resolve_path(&config_file))?,
                         CliRunMode::Quit,
                     ))
                 } else if let Some(fast_monsters) = fast_monsters {
