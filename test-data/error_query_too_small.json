@@ -1,0 +1,9 @@
+{
+  "error": {
+    "type": "Query Too Small",
+    "message": "Query string is too small. Must be at least 3 characters."
+  },
+  "meta": {
+    "version": 3
+  }
+}

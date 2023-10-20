@@ -23,6 +23,7 @@ pub struct DoomworldFile {
     pub id: i32,
     #[serde(deserialize_with = "deserialize_string_or_default")]
     pub title: String,
+    #[serde(deserialize_with = "deserialize_string_or_default")]
     pub author: String,
     pub filename: String,
     pub url: String,
@@ -63,6 +64,13 @@ impl fmt::Display for DoomworldFile {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct Error {
+    #[serde(rename = "type")]
+    pub error_type: String,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Warning {
     #[serde(rename = "type")]
     pub warning_type: String,
@@ -81,6 +89,7 @@ pub struct Meta {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiResponse {
+    pub error: Option<Error>,
     pub warning: Option<Warning>,
     pub content: Option<Content>,
     pub meta: Meta,
@@ -161,9 +170,14 @@ fn parse_doomworld_api_response(response: ApiResponse) -> Result<ApiResult, eyre
         files: vec![],
     };
 
+    if let Some(error) = response.error {
+        log::debug!("  Error: {:?}", error);
+        api_result.message = format!("Error - {}", error.message);
+    }
+
     if let Some(warning) = response.warning {
         log::debug!("  Warning: {:?}", warning);
-        api_result.message = warning.message;
+        api_result.message = format!("Warning - {}", warning.message);
     }
 
     log::debug!("  Getting file info");
@@ -251,7 +265,7 @@ mod tests {
         assert_eq!(api_result.files.len(), 0);
         assert_eq!(
             api_result.message,
-            "No files returned for query \"lemonbiscuitbase\"."
+            "Warning - No files returned for query \"lemonbiscuitbase\"."
         );
     }
 
@@ -273,7 +287,10 @@ mod tests {
             api_result.files[0].title,
             constants::DEFAULT_UNKNOWN.to_string()
         );
-        assert_eq!(api_result.files[0].author, "Paul Corfiatis");
+        assert_eq!(
+            api_result.files[0].author,
+            constants::DEFAULT_UNKNOWN.to_string()
+        );
         assert_eq!(api_result.files[0].filename, "0scraps.zip");
         assert_eq!(
             api_result.files[0].url,
@@ -355,7 +372,26 @@ mod tests {
         );
         assert_eq!(
             api_result.message,
-            "Result limit reached. Returning 100 files."
+            "Warning - Result limit reached. Returning 100 files."
+        );
+    }
+
+    #[test]
+    fn handle_error() {
+        // Arrange
+        let path = Path::new("./test-data/error_query_too_small.json");
+        let content = fs::read_to_string(path).unwrap();
+        let response: doomworld_api::ApiResponse =
+            serde_json::from_str(&content).expect("Failed to deserialize the JSON");
+
+        // Act
+        let api_result = doomworld_api::parse_doomworld_api_response(response).unwrap();
+
+        // Assert
+        assert_eq!(api_result.files.len(), 0);
+        assert_eq!(
+            api_result.message,
+            "Error - Query string is too small. Must be at least 3 characters."
         );
     }
 }

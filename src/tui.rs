@@ -111,8 +111,8 @@ pub enum MenuCommand {
     UpdateIwads,
     #[strum(serialize = "Update Maps")]
     UpdateMaps,
-    #[strum(serialize = "Update Map Info from Doomworld")]
-    UpdateMapsFromDoomworld,
+    #[strum(serialize = "Update Map Info")]
+    UpdateMapInfo,
     #[strum(serialize = "Delete Stored Data >>")]
     DeleteStoredData,
     #[strum(serialize = "Delete Engines")]
@@ -403,6 +403,7 @@ pub fn menu_prompt(
                     MenuMode::Simple,
                 ),
                 (MenuCommand::ViewReadme.to_string(), MenuMode::Simple),
+                (MenuCommand::UpdateMapInfo.to_string(), MenuMode::Simple),
                 (MenuCommand::ListMaps.to_string(), MenuMode::Simple),
                 (MenuCommand::UpdateMaps.to_string(), MenuMode::Simple),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),
@@ -524,10 +525,7 @@ pub fn menu_prompt(
                 (MenuCommand::UpdateEngines.to_string(), MenuMode::Simple),
                 (MenuCommand::UpdateIwads.to_string(), MenuMode::Simple),
                 (MenuCommand::UpdateMaps.to_string(), MenuMode::Simple),
-                (
-                    MenuCommand::UpdateMapsFromDoomworld.to_string(),
-                    MenuMode::Simple,
-                ),
+                (MenuCommand::UpdateMapInfo.to_string(), MenuMode::Simple),
                 (MenuCommand::AddEditor.to_string(), MenuMode::Full),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),
             ];
@@ -681,7 +679,7 @@ pub fn run_menu_command_with_force(
         MenuCommand::UpdateEngines => menu_app_settings::update_engines(),
         MenuCommand::UpdateIwads => menu_app_settings::update_iwads(),
         MenuCommand::UpdateMaps => menu_app_settings::update_maps(),
-        MenuCommand::UpdateMapsFromDoomworld => menu_app_settings::update_maps_from_doomworld_api(),
+        MenuCommand::UpdateMapInfo => menu_app_settings::update_map_info(),
         MenuCommand::DeleteStoredData => menu(MenuLevel::AppSettingsDelete),
         MenuCommand::DeleteEngines => menu_app_settings::delete_engines(),
         MenuCommand::DeleteIwads => menu_app_settings::delete_iwads(),

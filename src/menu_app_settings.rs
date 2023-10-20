@@ -2,6 +2,7 @@ use color_eyre::eyre;
 use eyre::Context;
 use inquire::{validator::Validation, InquireError};
 use owo_colors::{colors::xterm, OwoColorize};
+use strum_macros::Display;
 use tabled::settings::{object::Rows, Modify, Rotate, Style, Width};
 
 use crate::{
@@ -11,6 +12,14 @@ use crate::{
     doom_data::{self},
     doomworld_api, files, menu_profiles, paths, tui,
 };
+
+#[derive(Clone, Debug, PartialEq, Display)]
+enum UpdateMapInfo {
+    #[strum(serialize = "Doomworld API")]
+    DoomworldApi,
+    #[strum(serialize = "Map Readme")]
+    Readme,
+}
 
 pub fn check_app_can_run(force: bool) -> Result<String, eyre::Report> {
     db::create_db()?;
@@ -617,17 +626,47 @@ pub fn update_maps() -> Result<String, eyre::Report> {
     Ok("Successfully updated Maps".to_string())
 }
 
-pub fn update_maps_from_doomworld_api() -> Result<String, eyre::Report> {
+pub fn update_map_info() -> Result<String, eyre::Report> {
     let maps_list = db::get_maps()?;
     if maps_list.is_empty() {
         return Ok("There are no Maps to update".to_string());
     }
 
+    // Pick what update method
+    let update_method = inquire::Select::new(
+        "Pick the Map update method:",
+        vec![UpdateMapInfo::DoomworldApi, UpdateMapInfo::Readme],
+    )
+    .prompt()?;
+
+    // Select the maps you want to update
+    let maps_selection = inquire::MultiSelect::new("Pick the Maps to update:", maps_list.clone())
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .with_formatter(&|i| {
+            i.iter()
+                .map(|e| e.value.simple_display())
+                .collect::<Vec<String>>()
+                .join(", ")
+        })
+        .prompt()?;
+
+    if maps_selection.is_empty() {
+        return Ok("No Maps were selected to update".to_string());
+    }
+
+    // Do the info update
     let mut map_count = 0;
-    for map in maps_list.clone() {
+    for map in maps_selection.clone() {
         log::info!("Getting details for Map: {}", map.simple_display());
-        let (title, author, doomworld_id, doomworld_url) =
-            doomworld_api::lookup_map_from_doomworld_api(&map.path)?;
+
+        // We'll use the update method the user selected
+        let (title, author, doomworld_id, doomworld_url) = match update_method {
+            UpdateMapInfo::DoomworldApi => doomworld_api::lookup_map_from_doomworld_api(&map.path)?,
+            UpdateMapInfo::Readme => {
+                let (title, author) = files::get_details_from_readme(&map.path)?;
+                (title, author, map.doomworld_id, map.doomworld_url)
+            }
+        };
 
         if title != constants::DEFAULT_UNKNOWN {
             let update_map = data::Map {
@@ -648,8 +687,9 @@ pub fn update_maps_from_doomworld_api() -> Result<String, eyre::Report> {
 
     let result_message = if map_count > 0 {
         format!(
-            "Successfully updated {} of {} Maps",
+            "Successfully updated {} of {} Selected Maps, {} Total Maps",
             map_count,
+            maps_selection.len(),
             maps_list.len()
         )
     } else {
