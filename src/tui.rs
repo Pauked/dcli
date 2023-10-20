@@ -83,6 +83,8 @@ pub enum MenuCommand {
     // App Settings Menu
     #[strum(serialize = "Menu Mode")]
     MenuMode,
+    #[strum(serialize = "Use Doomworld API")]
+    UseDoomworldApi,
     #[strum(serialize = "Set Defaults >>")]
     SetDefaults,
     #[strum(serialize = "Set Default Engine")]
@@ -109,6 +111,8 @@ pub enum MenuCommand {
     UpdateIwads,
     #[strum(serialize = "Update Maps")]
     UpdateMaps,
+    #[strum(serialize = "Update Map Info from Doomworld")]
+    UpdateMapsFromDoomworld,
     #[strum(serialize = "Delete Stored Data >>")]
     DeleteStoredData,
     #[strum(serialize = "Delete Engines")]
@@ -235,7 +239,10 @@ pub fn menu_prompt(
             let selections = vec![
                 (MenuCommand::NewProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::EditProfile.to_string(), MenuMode::Simple),
-                (MenuCommand::ChangeEngineOnProfile.to_string(), MenuMode::Simple),
+                (
+                    MenuCommand::ChangeEngineOnProfile.to_string(),
+                    MenuMode::Simple,
+                ),
                 (MenuCommand::SetDefaultProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::ListProfile.to_string(), MenuMode::Simple),
                 (MenuCommand::DeleteProfile.to_string(), MenuMode::Simple),
@@ -458,6 +465,14 @@ pub fn menu_prompt(
                     format!("{} ({})", MenuCommand::MenuMode, app_settings.menu_mode,),
                     MenuMode::Simple,
                 ),
+                (
+                    format!(
+                        "{} ({})",
+                        MenuCommand::UseDoomworldApi,
+                        app_settings.use_doomworld_api,
+                    ),
+                    MenuMode::Simple,
+                ),
                 (MenuCommand::SetDefaults.to_string(), MenuMode::Simple),
                 (MenuCommand::UpdateStoredData.to_string(), MenuMode::Simple),
                 (MenuCommand::ListStoredData.to_string(), MenuMode::Simple),
@@ -509,6 +524,10 @@ pub fn menu_prompt(
                 (MenuCommand::UpdateEngines.to_string(), MenuMode::Simple),
                 (MenuCommand::UpdateIwads.to_string(), MenuMode::Simple),
                 (MenuCommand::UpdateMaps.to_string(), MenuMode::Simple),
+                (
+                    MenuCommand::UpdateMapsFromDoomworld.to_string(),
+                    MenuMode::Simple,
+                ),
                 (MenuCommand::AddEditor.to_string(), MenuMode::Full),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),
             ];
@@ -609,7 +628,7 @@ pub fn menu(menu_level: MenuLevel) -> Result<String, eyre::Report> {
                     }
                 }
                 _ => {
-                    info!("Error: {}", e.red());
+                    info!("Error: {:?}", e.red());
                     debug!("Error: {:?}", e);
                 }
             },
@@ -647,6 +666,7 @@ pub fn run_menu_command_with_force(
 
         // App Settings Menu
         MenuCommand::MenuMode => menu_app_settings::update_menu_mode(),
+        MenuCommand::UseDoomworldApi => menu_app_settings::update_use_doomworld_api(),
         MenuCommand::SetDefaults => menu(MenuLevel::AppSettingsDefaults),
         MenuCommand::SetDefaultEngine => menu_app_settings::set_default_engine(),
         MenuCommand::SetDefaultIwad => menu_app_settings::set_default_iwad(),
@@ -658,39 +678,10 @@ pub fn run_menu_command_with_force(
         MenuCommand::ListPlaySettings => menu_play_settings::list_play_settings(),
         MenuCommand::Init => menu_app_settings::init(),
         MenuCommand::UpdateStoredData => menu(MenuLevel::AppSettingsUpdate),
-        MenuCommand::UpdateEngines => {
-            let mut app_settings = db::get_app_settings()?;
-            let folder = menu_app_settings::init_engines(
-                &app_settings.engine_search_folder.unwrap_or("".to_string()),
-                false,
-            )?;
-            app_settings.engine_search_folder = Some(folder);
-            db::save_app_settings(app_settings)?;
-            inquire::Text::new("Press any key to continue...").prompt_skippable()?;
-            Ok("Successfully updated Engines".to_string())
-        }
-        MenuCommand::UpdateIwads => {
-            let mut app_settings = db::get_app_settings()?;
-            let folder = menu_app_settings::init_iwads(
-                &app_settings.iwad_search_folder.unwrap_or("".to_string()),
-                false,
-            )?;
-            app_settings.iwad_search_folder = Some(folder);
-            db::save_app_settings(app_settings)?;
-            inquire::Text::new("Press any key to continue...").prompt_skippable()?;
-            Ok("Successfully updated IWADs".to_string())
-        }
-        MenuCommand::UpdateMaps => {
-            let mut app_settings = db::get_app_settings()?;
-            let folder = menu_app_settings::init_maps(
-                &app_settings.map_search_folder.unwrap_or("".to_string()),
-                false,
-            )?;
-            app_settings.map_search_folder = Some(folder);
-            db::save_app_settings(app_settings)?;
-            inquire::Text::new("Press any key to continue...").prompt_skippable()?;
-            Ok("Successfully updated Maps".to_string())
-        }
+        MenuCommand::UpdateEngines => menu_app_settings::update_engines(),
+        MenuCommand::UpdateIwads => menu_app_settings::update_iwads(),
+        MenuCommand::UpdateMaps => menu_app_settings::update_maps(),
+        MenuCommand::UpdateMapsFromDoomworld => menu_app_settings::update_maps_from_doomworld_api(),
         MenuCommand::DeleteStoredData => menu(MenuLevel::AppSettingsDelete),
         MenuCommand::DeleteEngines => menu_app_settings::delete_engines(),
         MenuCommand::DeleteIwads => menu_app_settings::delete_iwads(),

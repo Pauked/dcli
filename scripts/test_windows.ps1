@@ -25,6 +25,7 @@ $hexdd_wad = "C:\Doom\Maps\HexDD.wad"
 
 # Change menu mode
 & $dcli_path set-app-settings --menu-mode simple
+& $dcli_path set-app-settings --use-doomworld-api true
 
 # Add individual profiles
 & $dcli_path add-profile "Classic Doom" $dsda_doom_path $doom_wad

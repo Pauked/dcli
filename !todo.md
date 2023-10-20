@@ -7,6 +7,10 @@
 [x] CLI for Play Settings
 [x] Improve success message for setting Default options
 [x] Option to build change Engines on Profile. Pick From and To and Profiles to change
+[x] Bug fix to file version handling on macOS. See GZDoom g4.11.1.
+[x] App Setting for Doomworld API lookup
+[/] Maps menu option to update map info from Doomworld or Readme's.
+[ ] Doomworld API, not getting same search results
 
 ## Future Dev / Nice to haves
 

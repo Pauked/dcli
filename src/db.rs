@@ -282,6 +282,28 @@ pub fn add_map(map: &data::Map) -> Result<sqlx::sqlite::SqliteQueryResult, eyre:
     })
 }
 
+pub fn update_map(map: data::Map) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query(
+            "UPDATE maps SET title = $2, author = $3, path = $4,
+            doomworld_id = $5, doomworld_url = $6
+            WHERE id = $1",
+        )
+        .bind(map.id)
+        .bind(&map.title)
+        .bind(&map.author)
+        .bind(&map.path)
+        .bind(map.doomworld_id)
+        .bind(&map.doomworld_url)
+        .execute(&db)
+        .await
+        .wrap_err(format!("Failed to update map '{:?}", map))
+    })
+}
+
 pub fn delete_map(path: &str) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
@@ -368,7 +390,8 @@ fn add_app_settings(
         sqlx::query(
             "INSERT INTO app_settings (default_profile_id, last_profile_id, default_engine_id,
                 default_iwad_id, default_editor_id, engine_search_folder, iwad_search_folder,
-                map_search_folder, editor_search_folder, menu_mode) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                map_search_folder, editor_search_folder, menu_mode, use_doomworld_api)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(app_settings.default_profile_id)
         .bind(app_settings.last_profile_id)
@@ -380,6 +403,7 @@ fn add_app_settings(
         .bind(&app_settings.map_search_folder)
         .bind(&app_settings.editor_search_folder)
         .bind(&app_settings.menu_mode)
+        .bind(app_settings.use_doomworld_api)
         .execute(&db)
         .await
         .wrap_err(format!("Failed to add app settings '{:?}", app_settings))
@@ -394,11 +418,13 @@ fn update_app_settings(
         let db = get_db().await;
 
         sqlx::query(
-            "UPDATE app_settings SET default_profile_id = $1, last_profile_id = $2,
-        default_engine_id = $3, default_iwad_id = $4, default_editor_id = $5,
-        engine_search_folder = $6, iwad_search_folder = $7, map_search_folder = $8,
-        editor_search_folder = $9, menu_mode = $10 WHERE id = $11",
+            "UPDATE app_settings SET default_profile_id = $2, last_profile_id = $3,
+        default_engine_id = $4, default_iwad_id = $5, default_editor_id = $6,
+        engine_search_folder = $7, iwad_search_folder = $8, map_search_folder = $9,
+        editor_search_folder = $10, menu_mode = $11, use_doomworld_api = $12
+        WHERE id = $1",
         )
+        .bind(app_settings.id)
         .bind(app_settings.default_profile_id)
         .bind(app_settings.last_profile_id)
         .bind(app_settings.default_engine_id)
@@ -409,7 +435,7 @@ fn update_app_settings(
         .bind(&app_settings.map_search_folder)
         .bind(&app_settings.editor_search_folder)
         .bind(&app_settings.menu_mode)
-        .bind(app_settings.id)
+        .bind(app_settings.use_doomworld_api)
         .execute(&db)
         .await
         .wrap_err(format!("Failed to update app settings '{:?}", app_settings))
@@ -498,6 +524,7 @@ pub fn get_app_settings_display() -> Result<data::AppSettingsDisplay, eyre::Repo
         map_search_folder,
         editor_search_folder,
         menu_mode: app_settings.menu_mode.to_string(),
+        use_doomworld_api: app_settings.use_doomworld_api,
     })
 }
 

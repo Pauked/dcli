@@ -26,6 +26,7 @@ REM Init the app
 
 REM Change menu mode
 %dcli_path% set-app-settings --menu-mode simple
+%dcli_path% set-app-settings --use-doomworld-api true
 
 REM Add individual profiles
 %dcli_path% add-profile "Classic Doom" "%dsda_doom_path%" "%doom_wad%"

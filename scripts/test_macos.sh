@@ -29,6 +29,7 @@ $dcli_path init "~/Dropbox/Games/Doom/Apps/" "~/Dropbox/Games/Doom/Maps/" "~/Dro
 
 # Change menu mode
 $dcli_path set-app-settings --menu-mode simple
+$dcli_path set-app-settings --use-doomworld-api true
 
 # Add individual profiles
 $dcli_path add-profile "Classic Doom" $gzdoom_path $doom_wad

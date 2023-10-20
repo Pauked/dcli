@@ -418,7 +418,9 @@ pub fn change_engine_on_profile() -> Result<String, eyre::Report> {
 
     // Abort if nothing picked
     if selected_display_profiles.is_empty() {
-        return Ok("No changes made to changing Engine on Profiles. No Profiles selected".to_string());
+        return Ok(
+            "No changes made to changing Engine on Profiles. No Profiles selected".to_string(),
+        );
     }
 
     // Update the Profiles with the new Engine

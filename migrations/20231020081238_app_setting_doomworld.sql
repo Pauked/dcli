@@ -1,0 +1,1 @@
+ALTER TABLE app_settings ADD COLUMN use_doomworld_api BOOLEAN DEFAULT false NOT NULL;

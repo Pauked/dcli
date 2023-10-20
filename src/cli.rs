@@ -139,7 +139,10 @@ pub enum Action {
     SetAppSettings {
         /// Menu mode
         #[clap(value_enum, long)]
-        menu_mode: tui::MenuMode,
+        menu_mode: Option<tui::MenuMode>,
+        // Use Doomworld API
+        #[clap(value_enum, long)]
+        use_doomworld_api: Option<bool>,
     },
 
     /// Set Defaults for Engine, IWAD, Profile, and Editor
@@ -363,10 +366,24 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                 menu_editor::cli_delete_editor(&paths::resolve_path(&path), force)?,
                 CliRunMode::Quit,
             )),
-            Action::SetAppSettings { menu_mode } => Ok((
-                menu_app_settings::cli_update_menu_mode(menu_mode)?,
-                CliRunMode::Quit,
-            )),
+            Action::SetAppSettings {
+                menu_mode,
+                use_doomworld_api,
+            } => {
+                if let Some(menu_mode) = menu_mode {
+                    Ok((
+                        menu_app_settings::cli_update_menu_mode(menu_mode)?,
+                        CliRunMode::Quit,
+                    ))
+                } else if let Some(use_doomworld_api) = use_doomworld_api {
+                    Ok((
+                        menu_app_settings::cli_update_use_doomworld_api(use_doomworld_api)?,
+                        CliRunMode::Quit,
+                    ))
+                } else {
+                    Ok(("No arguments specified".to_string(), CliRunMode::Quit))
+                }
+            }
             Action::SetDefault {
                 engine,
                 iwad,

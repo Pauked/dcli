@@ -398,6 +398,7 @@ pub struct AppSettings {
     pub map_search_folder: Option<String>,
     pub editor_search_folder: Option<String>,
     pub menu_mode: tui::MenuMode,
+    pub use_doomworld_api: bool,
 }
 
 impl Default for AppSettings {
@@ -414,6 +415,7 @@ impl Default for AppSettings {
             map_search_folder: None,
             editor_search_folder: None,
             menu_mode: MenuMode::Full,
+            use_doomworld_api: false,
         }
     }
 }
@@ -440,6 +442,8 @@ pub struct AppSettingsDisplay {
     pub map_search_folder: String,
     #[tabled(rename = "Editor Search Folder")]
     pub editor_search_folder: String,
+    #[tabled(rename = "Use Doomworld API")]
+    pub use_doomworld_api: bool,
 }
 
 pub fn display_option_u8(value: &Option<u8>) -> String {

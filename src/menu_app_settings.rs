@@ -48,6 +48,35 @@ pub fn cli_update_menu_mode(menu_mode: tui::MenuMode) -> Result<String, eyre::Re
     Ok(format!("Menu mode set to: {}", app_settings.menu_mode))
 }
 
+pub fn update_use_doomworld_api() -> Result<String, eyre::Report> {
+    let mut app_settings = db::get_app_settings()?;
+    app_settings.use_doomworld_api = !app_settings.use_doomworld_api;
+
+    db::save_app_settings(app_settings.clone())?;
+    Ok(format!(
+        "Use Doomworld API set to: {}",
+        app_settings.use_doomworld_api
+    ))
+}
+
+pub fn cli_update_use_doomworld_api(use_doomworld_api: bool) -> Result<String, eyre::Report> {
+    let mut app_settings = db::get_app_settings()?;
+
+    if app_settings.use_doomworld_api == use_doomworld_api {
+        return Ok(format!(
+            "Use Doomworld API is already set to: {}",
+            app_settings.use_doomworld_api
+        ));
+    }
+
+    app_settings.use_doomworld_api = use_doomworld_api;
+    db::save_app_settings(app_settings.clone())?;
+    Ok(format!(
+        "Use Doomworld API set to: {}",
+        app_settings.use_doomworld_api
+    ))
+}
+
 pub fn init() -> Result<String, eyre::Report> {
     db::create_db()?;
     let mut app_settings = db::get_app_settings()?;
@@ -69,7 +98,7 @@ pub fn init() -> Result<String, eyre::Report> {
         Some(map_search_folder) => map_search_folder,
         None => iwad_search_folder.clone(),
     };
-    let map_search_folder = init_maps(&map_search_folder, false)?;
+    let map_search_folder = init_maps(&map_search_folder, app_settings.use_doomworld_api, false)?;
 
     // Update app_settings
     app_settings.engine_search_folder = Some(engine_search_folder);
@@ -129,14 +158,16 @@ pub fn cli_init(
         None => iwad_path.to_string(),
     };
 
+    // Get app settings, config needed for init
+    let mut app_settings = db::get_app_settings()?;
+
     // Run individual init functions, need to amend to have a force/override option
     //  Force will skip any dialogs and will select all found files
     let engine_search_folder = init_engines(engine_path, force)?;
     let iwad_search_folder = init_iwads(iwad_path, force)?;
-    let map_search_folder = init_maps(&updated_map_path, force)?;
+    let map_search_folder = init_maps(&updated_map_path, app_settings.use_doomworld_api, force)?;
 
     // Update app_settings
-    let mut app_settings = db::get_app_settings()?;
     app_settings.engine_search_folder = Some(engine_search_folder);
     app_settings.iwad_search_folder = Some(iwad_search_folder);
     app_settings.map_search_folder = Some(map_search_folder);
@@ -447,7 +478,11 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
     Ok(iwad_search_folder)
 }
 
-pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Report> {
+pub fn init_maps(
+    default_folder: &str,
+    use_doomworld_api: bool,
+    force: bool,
+) -> Result<String, eyre::Report> {
     let map_search_folder: String = if force {
         default_folder.to_string()
     } else {
@@ -464,12 +499,12 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
         paths::resolve_path(&paths)
     };
 
-    let maps = paths::find_files_with_extensions_in_folders(
+    let map_paths = paths::find_files_with_extensions_in_folders(
         &map_search_folder,
         doom_data::GAME_FILES.to_vec(),
         "Maps",
     );
-    if maps.is_empty() {
+    if map_paths.is_empty() {
         return Err(eyre::eyre!(format!(
             "No Map matches found using recursive search in folder -'{}'",
             &map_search_folder
@@ -481,32 +516,40 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
 
     let mut map_count = 0;
 
-    for map in maps {
-        if files::is_iwad(&map)? {
-            log::info!("Skipping IWAD file: {}", &map.yellow());
+    for map_path in map_paths {
+        if files::is_iwad(&map_path)? {
+            log::info!("Skipping IWAD file: {}", &map_path.yellow());
             continue;
         }
 
-        if !files::map_file_extension(&map)? {
-            log::info!("Skipping invalid Map file: {}", &map.yellow());
+        if !files::map_file_extension(&map_path)? {
+            log::info!("Skipping invalid Map file: {}", &map_path.yellow());
             continue;
         }
 
         let existing_map = db_maps
             .iter()
-            .find(|e| e.path.to_lowercase() == map.to_lowercase());
+            .find(|e| e.path.to_lowercase() == map_path.to_lowercase());
 
         match existing_map {
             Some(_) => {
-                log::info!("Map already exists, no need to add: {}", map.yellow());
+                log::info!("Map already exists, no need to add: {}", map_path.yellow());
             }
             None => {
-                log::info!("Getting details for Map: '{}'", map);
-                let (title, author, doomworld_id, doomworld_url) =
-                    doomworld_api::lookup_map_from_doomworld_api(&map)?;
+                log::info!("Getting details for Map: '{}'", map_path);
+                let (title, author, doomworld_id, doomworld_url) = if use_doomworld_api {
+                    doomworld_api::lookup_map_from_doomworld_api(&map_path)?
+                } else {
+                    (
+                        constants::DEFAULT_UNKNOWN.to_string(),
+                        constants::DEFAULT_UNKNOWN.to_string(),
+                        None,
+                        None,
+                    )
+                };
 
                 let (title, author) = if title == constants::DEFAULT_UNKNOWN {
-                    files::get_details_from_readme(&map)?
+                    files::get_details_from_readme(&map_path)?
                 } else {
                     (title, author)
                 };
@@ -515,7 +558,7 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
                     id: 0,
                     title,
                     author,
-                    path: map.clone(),
+                    path: map_path.clone(),
                     doomworld_id,
                     doomworld_url,
                 };
@@ -535,6 +578,84 @@ pub fn init_maps(default_folder: &str, force: bool) -> Result<String, eyre::Repo
     }
 
     Ok(map_search_folder)
+}
+
+pub fn update_engines() -> Result<String, eyre::Report> {
+    let mut app_settings = db::get_app_settings()?;
+    let folder = init_engines(
+        &app_settings.engine_search_folder.unwrap_or("".to_string()),
+        false,
+    )?;
+    app_settings.engine_search_folder = Some(folder);
+    db::save_app_settings(app_settings)?;
+    inquire::Text::new("Press any key to continue...").prompt_skippable()?;
+    Ok("Successfully updated Engines".to_string())
+}
+
+pub fn update_iwads() -> Result<String, eyre::Report> {
+    let mut app_settings = db::get_app_settings()?;
+    let folder = init_iwads(
+        &app_settings.iwad_search_folder.unwrap_or("".to_string()),
+        false,
+    )?;
+    app_settings.iwad_search_folder = Some(folder);
+    db::save_app_settings(app_settings)?;
+    inquire::Text::new("Press any key to continue...").prompt_skippable()?;
+    Ok("Successfully updated IWADs".to_string())
+}
+
+pub fn update_maps() -> Result<String, eyre::Report> {
+    let mut app_settings = db::get_app_settings()?;
+    let folder = init_maps(
+        &app_settings.map_search_folder.unwrap_or("".to_string()),
+        app_settings.use_doomworld_api,
+        false,
+    )?;
+    app_settings.map_search_folder = Some(folder);
+    db::save_app_settings(app_settings)?;
+    inquire::Text::new("Press any key to continue...").prompt_skippable()?;
+    Ok("Successfully updated Maps".to_string())
+}
+
+pub fn update_maps_from_doomworld_api() -> Result<String, eyre::Report> {
+    let maps_list = db::get_maps()?;
+    if maps_list.is_empty() {
+        return Ok("There are no Maps to update".to_string());
+    }
+
+    let mut map_count = 0;
+    for map in maps_list.clone() {
+        log::info!("Getting details for Map: {}", map.simple_display());
+        let (title, author, doomworld_id, doomworld_url) =
+            doomworld_api::lookup_map_from_doomworld_api(&map.path)?;
+
+        if title != constants::DEFAULT_UNKNOWN {
+            let update_map = data::Map {
+                id: map.id,
+                title,
+                author,
+                path: map.path.clone(),
+                doomworld_id,
+                doomworld_url,
+            };
+            db::update_map(update_map.clone())?;
+            log::info!("  Updated Map: {}", update_map.simple_display().blue());
+            map_count += 1;
+        } else {
+            log::info!("  Unable to get details for Map: {}", map.path);
+        }
+    }
+
+    let result_message = if map_count > 0 {
+        format!(
+            "Successfully updated {} of {} Maps",
+            map_count,
+            maps_list.len()
+        )
+    } else {
+        "No Maps were updated".to_string()
+    };
+    Ok(result_message)
 }
 
 pub fn delete_engines() -> Result<String, eyre::Report> {
@@ -673,7 +794,7 @@ pub fn list_iwads() -> Result<String, eyre::Report> {
 }
 
 pub fn list_maps() -> Result<String, eyre::Report> {
-    let maps = db::get_maps().wrap_err("Unable to iwad listing".to_string())?;
+    let maps = db::get_maps().wrap_err("Unable to maps listing".to_string())?;
 
     if maps.is_empty() {
         return Ok("No Maps found".to_string());
