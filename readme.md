@@ -6,6 +6,8 @@ dcli is a console app for quickly launching Doom games and mods. It has the foll
 - It can be run interactively via a console UI or with command line arguments.
 - It has a list of **Play Settings** that allows you to easily configure items such as Compatibility Level, Warp to a map, enable Fast Monster, No Monsters or Respawn Monsters, and Skill level across Profiles.
 - Access to Editors, such as Ultimate Doom Builder and Slade, can be configured to open maps for viewing and editing.
+- It can search for and download maps from [Doomworld /idgames](https://www.doomworld.com/idgames/) and add them to your database.
+- The option to view map details directly on Doomworld.
 - The ability to view a map readme's in your default text editor based on picking a Profile or map.
 
 dcli is a self contained executable that can be run from anywhere on Windows and macOS. It does not require any installation. On first run it will ask questions to configure itself and create a local Sqlite database to store any settings. It is entirely written in Rust because it's 2023 and we can't keep things simple and use batch files.
