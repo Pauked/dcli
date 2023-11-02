@@ -166,8 +166,7 @@ pub fn get_map_selection(
                 )
                 .with_page_size(tui::MENU_PAGE_SIZE)
                 .with_formatter(&|i| i.value.simple_display())
-                .prompt()
-                .unwrap();
+                .prompt()?;
 
                 ordered_items.push(selected.clone());
                 temp_items.remove(temp_items.iter().position(|x| x.id == selected.id).unwrap());

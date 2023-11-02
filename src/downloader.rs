@@ -1,13 +1,10 @@
-use std::{
-    io::Cursor,
-    path::PathBuf,
-};
+use std::{io::Cursor, path::PathBuf};
 
 use owo_colors::OwoColorize;
 use reqwest::StatusCode;
 use zip::ZipArchive;
 
-use crate::{data, db, doomworld_api::DoomworldFile, files, paths};
+use crate::{data, db, doomworld_api::DoomworldFile, files, menu_profiles, paths};
 
 // Germany      - https://www.quaddicted.com/files/idgames/
 // Sweden       - https://ftpmirror1.infania.net/pub/idgames/
@@ -16,7 +13,9 @@ use crate::{data, db, doomworld_api::DoomworldFile, files, paths};
 const DOWNLOAD_URL: &str = "https://www.quaddicted.com/files/idgames/";
 const DOWNLOAD_FOLDER: &str = "!dcli-downloads";
 
-pub fn download_and_extract_map_files(doomworld_files: Vec<DoomworldFile>) -> Result<String, eyre::Report> {
+pub fn download_and_extract_map_files(
+    doomworld_files: Vec<DoomworldFile>,
+) -> Result<String, eyre::Report> {
     // Thanks and goodbye
     if doomworld_files.is_empty() {
         return Err(eyre::eyre!("No files selected to download"));
@@ -71,7 +70,10 @@ pub fn download_and_extract_map_files(doomworld_files: Vec<DoomworldFile>) -> Re
         paths::create_folder(&extract_folder)?;
 
         // Work out the URL to download the file from
-        let url = format!("{}{}{}", DOWNLOAD_URL, doomworld_file.dir, doomworld_file.filename);
+        let url = format!(
+            "{}{}{}",
+            DOWNLOAD_URL, doomworld_file.dir, doomworld_file.filename
+        );
 
         // Download it locally
         if download_file(&url, &downloaded_file)? {
@@ -88,6 +90,7 @@ pub fn download_and_extract_map_files(doomworld_files: Vec<DoomworldFile>) -> Re
                     // ...handle accordingly
                     match existing_map {
                         Ok(existing_map) => {
+                            // Already exists, so just log it
                             log::info!(
                                 "Map already exists, no need to add: {}",
                                 existing_map.simple_display().yellow()
@@ -95,21 +98,12 @@ pub fn download_and_extract_map_files(doomworld_files: Vec<DoomworldFile>) -> Re
                             log::debug!("  Map {:?}", existing_map);
                         }
                         Err(_) => {
-                            // We have all the info we need direct from the Doomworld API
-                            let map = data::Map {
-                                id: 0,
-                                title: doomworld_file.title.clone(),
-                                author: doomworld_file.author.clone(),
-                                path: extracted_file,
-                                doomworld_id: Some(doomworld_file.id),
-                                doomworld_url: Some(doomworld_file.url.clone()),
-                            };
-
-                            db::add_map(&map)?;
-                            log::info!("Added Map: {}", map.simple_display().blue());
-                            log::debug!("  Map {:?}", map);
-
-                            map_count += 1;
+                            // Doesn't exist, so add it and prompt for profile
+                            add_map_and_create_optional_profile(
+                                &doomworld_file,
+                                extracted_file,
+                                &mut map_count,
+                            )?;
                         }
                     };
                 }
@@ -126,6 +120,53 @@ pub fn download_and_extract_map_files(doomworld_files: Vec<DoomworldFile>) -> Re
     inquire::Text::new("Press any key to continue...").prompt_skippable()?;
 
     Ok(result_message)
+}
+
+fn add_map_and_create_optional_profile(
+    doomworld_file: &DoomworldFile,
+    extracted_file: String,
+    map_count: &mut i32,
+) -> Result<(), eyre::Error> {
+    let map = data::Map {
+        id: 0,
+        title: doomworld_file.title.clone(),
+        author: doomworld_file.author.clone(),
+        path: extracted_file,
+        doomworld_id: Some(doomworld_file.id),
+        doomworld_url: Some(doomworld_file.url.clone()),
+    };
+
+    let add_result = db::add_map(&map)?;
+    let add_map_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
+    log::info!("Added Map: {}", map.simple_display().blue());
+    log::debug!("  Map {:?}", map);
+
+    *map_count += 1;
+
+    let prompt_result = inquire::Confirm::new(&format!(
+        "Would you like to create a Profile for '{}'?",
+        doomworld_file.title
+    ))
+    .with_default(false)
+    .prompt_skippable()?;
+
+    if let Some(true) = prompt_result {
+        let add_profile_result = menu_profiles::add_profile(Some(add_map_id));
+        match add_profile_result {
+            Ok(_) => {
+                log::info!("  Added Profile for Map: {}", map.simple_display().blue());
+            }
+            Err(e) => {
+                log::error!(
+                    "  Unable to add Profile for Map: {}",
+                    map.simple_display().blue()
+                );
+                log::error!("  Error: {}", e);
+            }
+        }
+    }
+
+    Ok(())
 }
 
 async fn check_url(url: &str) -> Result<bool, eyre::Report> {
@@ -166,7 +207,7 @@ fn download_file(url: &str, file_name: &str) -> Result<bool, eyre::Report> {
 fn extract_zip(zip_path: &str, output_folder: &str) -> Result<Vec<String>, eyre::Report> {
     log::info!("  Extracting file '{}' to '{}'", zip_path, output_folder);
 
-     // We want a list of the extracted files as the return value
+    // We want a list of the extracted files as the return value
     let mut extracted_files = Vec::new();
 
     // Open the ZIP file

@@ -9,7 +9,7 @@ use tabled::{
 
 use crate::{data, db, menu_app_settings, menu_common, paths, tui};
 
-pub fn add_profile() -> Result<String, eyre::Report> {
+pub fn add_profile(map_id: Option<i32>) -> Result<String, eyre::Report> {
     let engines = db::get_engines()?;
     if engines.is_empty() {
         return Ok("There are no Engines to select. Please run 'init'".to_string());
@@ -62,12 +62,19 @@ pub fn add_profile() -> Result<String, eyre::Report> {
         .with_formatter(&|i| i.value.simple_display())
         .prompt()?;
 
-    let map_selection = menu_common::get_map_selection(maps, vec![])?;
-    let map_id = Some(map_selection[0].id).filter(|&id| id > 0);
-    let map_id2 = Some(map_selection[1].id).filter(|&id| id > 0);
-    let map_id3 = Some(map_selection[2].id).filter(|&id| id > 0);
-    let map_id4 = Some(map_selection[3].id).filter(|&id| id > 0);
-    let map_id5 = Some(map_selection[4].id).filter(|&id| id > 0);
+    let (map_id, map_id2, map_id3, map_id4, map_id5) = match map_id {
+        Some(map_id) => (Some(map_id), None, None, None, None),
+        None => {
+            let map_selection = menu_common::get_map_selection(maps, vec![])?;
+            (
+                Some(map_selection[0].id).filter(|&id| id > 0),
+                Some(map_selection[1].id).filter(|&id| id > 0),
+                Some(map_selection[2].id).filter(|&id| id > 0),
+                Some(map_selection[3].id).filter(|&id| id > 0),
+                Some(map_selection[4].id).filter(|&id| id > 0),
+            )
+        }
+    };
 
     let additional_arguments =
         inquire::Text::new("Enter any additional arguments (optional):").prompt_skippable()?;

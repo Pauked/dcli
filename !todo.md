@@ -1,21 +1,12 @@
-## DCLI v0.3.10
+## DCLI v0.3.15
 
-[x] Improve map title/author lookup (default to Doomworld API - https://www.doomworld.com/idgames/api/)
-[x] Search Doomworld for maps
-[x] Download maps from Doomworld and add to database
-[x] On add of Editor, prompt to set default
-[x] CLI for Play Settings
-[x] Improve success message for setting Default options
-[x] Option to build change Engines on Profile. Pick From and To and Profiles to change
-[x] Bug fix to file version handling on macOS. See GZDoom g4.11.1.
-[x] App Setting for Doomworld API lookup
-[x] Maps menu option to update map info from Doomworld or Readme's.
-[x] Doomworld API, not getting same search results
+[ ] Map Play Queue - user selected
+[x] Create Profile (optional) on Download from Doomworld /idgames
 
 ## Future Dev / Nice to haves
 
+[ ] Open map on Doom Wiki!
 [ ] Have a profile switch of "include play settings?", default to True
-[ ] Map Play Queue - user selected
 [ ] Map Play Queue - Cacowards
 [ ] Map Play Queue - random
 [ ] Cache Doomworld API calls locally
@@ -28,7 +19,7 @@
 [ ] Extend hardcoded list of engines
 [ ] History of Profiles/WADs played with time played
 [ ] Track time played at a WAD and Engine level
-[ ] Option to auto create Profiles by multi-selecting Maps (can do single select correctly) and combining with Default Engine/Default IWAD
+[ ] Option to auto create multiple Profiles by multi-selecting Maps (can do single select correctly) and combining with Default Engine/Default IWAD
 [ ] Remember last position in a given menu!
 [ ] Colour code menu options (to make quick selection easier)
 [ ] Define a quick access menu (use defined selection of options to be displayed in a menu)

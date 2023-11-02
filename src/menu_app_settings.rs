@@ -125,7 +125,7 @@ pub fn init() -> Result<String, eyre::Report> {
         .with_help_message("Profiles combine Engines, IWADs and Maps for quick play")
         .prompt()?
     {
-        menu_profiles::add_profile()?;
+        menu_profiles::add_profile(None)?;
     }
 
     // Completed init!
@@ -726,9 +726,14 @@ pub fn delete_engines() -> Result<String, eyre::Report> {
         {
             remove_engine_from_app_settings(engine.id)?;
 
-            db::delete_engine(&engine.path)
-                .wrap_err(format!("Failed to delete Engine - '{}", engine))?;
-            return Ok(format!("Successfully deleted Engine '{}'", engine));
+            db::delete_engine(&engine.path).wrap_err(format!(
+                "Failed to delete Engine - '{}",
+                engine.simple_display()
+            ))?;
+            return Ok(format!(
+                "Successfully deleted Engine '{}'",
+                engine.simple_display()
+            ));
         }
     }
 
@@ -763,8 +768,14 @@ pub fn delete_iwads() -> Result<String, eyre::Report> {
         {
             remove_iwad_from_app_settings(iwad.id)?;
 
-            db::delete_iwad(&iwad.path).wrap_err(format!("Failed to delete IWAD - '{}", iwad))?;
-            return Ok(format!("Successfully deleted IWAD '{}'", iwad));
+            db::delete_iwad(&iwad.path).wrap_err(format!(
+                "Failed to delete IWAD - '{}",
+                iwad.simple_display()
+            ))?;
+            return Ok(format!(
+                "Successfully deleted IWAD '{}'",
+                iwad.simple_display()
+            ));
         }
     }
 
@@ -797,8 +808,12 @@ pub fn delete_maps() -> Result<String, eyre::Report> {
         .with_default(false)
         .prompt()?
         {
-            db::delete_map(&map.path).wrap_err(format!("Failed to delete Map - '{}", map))?;
-            return Ok(format!("Successfully deleted Map '{}'", map));
+            db::delete_map(&map.path)
+                .wrap_err(format!("Failed to delete Map - '{}", map.simple_display()))?;
+            return Ok(format!(
+                "Successfully deleted Map '{}'",
+                map.simple_display()
+            ));
         }
     }
 
