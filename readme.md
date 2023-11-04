@@ -30,7 +30,6 @@ Who doesn't like a command line? The following commands will run the initial set
 Use ``--help`` to get a list of the available options. For more detailed examples, see the following scripts:
 
 - [Windows PowerShell script](scripts/test_windows.ps1)
-- [Windows batch file](scripts/test_windows.bat)
 - [macOS bash script](scripts/test_macos.sh)
 
 ## Quick Start - Console UI

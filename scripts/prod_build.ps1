@@ -36,7 +36,6 @@ $filesToInclude = @(
     "docs/dcli-simple-main-menu.png",
     "scripts/test_macos.sh",
     "scripts/test_windows.ps1",
-    "scripts/test_windows.bat",
     "readme.html"
 )
 
