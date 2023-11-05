@@ -151,7 +151,8 @@ fn add_map_and_create_optional_profile(
     .prompt_skippable()?;
 
     if let Some(true) = prompt_result {
-        let add_profile_result = menu_profiles::add_profile(Some(add_map_id));
+        let add_profile_result =
+            menu_profiles::add_profile(Some(add_map_id), Some(map.title.clone()));
         match add_profile_result {
             Ok(_) => {
                 log::info!("  Added Profile for Map: {}", map.simple_display().blue());

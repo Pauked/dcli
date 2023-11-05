@@ -9,7 +9,10 @@ use tabled::{
 
 use crate::{data, db, menu_app_settings, menu_common, paths, tui};
 
-pub fn add_profile(map_id: Option<i32>) -> Result<String, eyre::Report> {
+pub fn add_profile(
+    map_id: Option<i32>,
+    profile_name: Option<String>,
+) -> Result<String, eyre::Report> {
     let engines = db::get_engines()?;
     if engines.is_empty() {
         return Ok("There are no Engines to select. Please run 'init'".to_string());
@@ -48,6 +51,7 @@ pub fn add_profile(map_id: Option<i32>) -> Result<String, eyre::Report> {
                 Ok(Validation::Valid)
             }
         })
+        .with_default(&profile_name.unwrap_or_default())
         .prompt()?;
 
     let engine_selection = inquire::Select::new("Pick the Engine you want to use:", engines)

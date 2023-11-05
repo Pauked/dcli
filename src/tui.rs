@@ -655,7 +655,7 @@ pub fn run_menu_command_with_force(
         MenuCommand::AppSettings => menu(MenuLevel::AppSettings),
 
         // Profile Menu
-        MenuCommand::NewProfile => menu_profiles::add_profile(None),
+        MenuCommand::NewProfile => menu_profiles::add_profile(None, None),
         MenuCommand::EditProfile => menu_profiles::edit_profile(),
         MenuCommand::ChangeEngineOnProfile => menu_profiles::change_engine_on_profile(),
         MenuCommand::DeleteProfile => menu_profiles::delete_profile(),

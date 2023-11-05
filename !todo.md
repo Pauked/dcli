@@ -2,6 +2,7 @@
 
 [ ] Map Play Queue - user selected
 [x] Create Profile (optional) on Download from Doomworld /idgames
+[x] When downloading from /idgames, use map title as suggested profile name
 
 ## Future Dev / Nice to haves
 

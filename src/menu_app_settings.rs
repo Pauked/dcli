@@ -125,7 +125,7 @@ pub fn init() -> Result<String, eyre::Report> {
         .with_help_message("Profiles combine Engines, IWADs and Maps for quick play")
         .prompt()?
     {
-        menu_profiles::add_profile(None)?;
+        menu_profiles::add_profile(None, None)?;
     }
 
     // Completed init!
