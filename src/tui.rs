@@ -51,10 +51,12 @@ pub enum MenuCommand {
     PlayDefaultProfile,
     #[strum(serialize = "Play Last Profile")]
     PlayLastProfile,
-    #[strum(serialize = "Pick & Play Profile")]
-    PickAndPlayProfile,
     #[strum(serialize = "Pick & Play Map")]
     PickAndPlayMap,
+    #[strum(serialize = "Pick & Play Profile")]
+    PickAndPlayProfileOnName,
+    #[strum(serialize = "Pick & Play Profile on Date Last Run")]
+    PickAndPlayProfileOnDateLastRun,
     #[strum(serialize = "Editor >>")]
     Editor,
     #[strum(serialize = "Profiles >>")]
@@ -217,8 +219,12 @@ pub fn menu_prompt(
                 (MenuCommand::PlayLastProfile.to_string(), MenuMode::Full),
                 (MenuCommand::PickAndPlayMap.to_string(), MenuMode::Simple),
                 (
-                    MenuCommand::PickAndPlayProfile.to_string(),
+                    MenuCommand::PickAndPlayProfileOnName.to_string(),
                     MenuMode::Simple,
+                ),
+                (
+                    MenuCommand::PickAndPlayProfileOnDateLastRun.to_string(),
+                    MenuMode::Full,
                 ),
                 (MenuCommand::PlaySettings.to_string(), MenuMode::Simple),
                 (MenuCommand::Profiles.to_string(), MenuMode::Simple),
@@ -646,7 +652,10 @@ pub fn run_menu_command_with_force(
         // Main Menu
         MenuCommand::PlayDefaultProfile => menu_main::play_default_profile(),
         MenuCommand::PlayLastProfile => menu_main::play_last_profile(),
-        MenuCommand::PickAndPlayProfile => menu_main::pick_and_play_profile(),
+        MenuCommand::PickAndPlayProfileOnName => menu_main::pick_and_play_profile_on_name(),
+        MenuCommand::PickAndPlayProfileOnDateLastRun => {
+            menu_main::pick_and_play_profile_on_date_last_run()
+        }
         MenuCommand::PickAndPlayMap => menu_main::pick_and_play_map(),
         MenuCommand::Editor => menu(MenuLevel::MapEditor),
         MenuCommand::Profiles => menu(MenuLevel::Profiles),

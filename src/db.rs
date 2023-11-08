@@ -617,7 +617,7 @@ pub fn update_profile_date_last_run_and_run_count(
     runtime.block_on(async {
         let db = get_db().await;
 
-        sqlx::query("UPDATE profiles SET date_last_run = $2, run_count =$3 WHERE id=$1")
+        sqlx::query("UPDATE profiles SET date_last_run = $2, run_count = $3 WHERE id = $1")
             .bind(id)
             .bind(Utc::now())
             .bind(run_count)
@@ -636,6 +636,18 @@ pub fn get_profiles() -> Result<Vec<data::Profile>, eyre::Report> {
         let db = get_db().await;
 
         sqlx::query_as::<_, data::Profile>("SELECT * FROM profiles ORDER BY name")
+            .fetch_all(&db)
+            .await
+            .wrap_err("Failed to get list of all profiles")
+    })
+}
+
+pub fn get_profiles_ordered_by_date_last_run() -> Result<Vec<data::Profile>, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query_as::<_, data::Profile>("SELECT * FROM profiles ORDER BY date_last_run DESC")
             .fetch_all(&db)
             .await
             .wrap_err("Failed to get list of all profiles")
@@ -714,8 +726,13 @@ fn get_profile_display(
     }
 }
 
-pub fn get_profile_display_list() -> Result<Vec<data::ProfileDisplay>, eyre::Report> {
-    let profiles = get_profiles()?;
+pub fn get_profile_display_list(
+    profile_order: data::ProfileOrder,
+) -> Result<Vec<data::ProfileDisplay>, eyre::Report> {
+    let profiles = match profile_order {
+        data::ProfileOrder::Name => get_profiles()?,
+        data::ProfileOrder::DateLastRun => get_profiles_ordered_by_date_last_run()?,
+    };
     let engines = get_engines()?;
     let iwads = get_iwads()?;
     let maps = get_maps()?;

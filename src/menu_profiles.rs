@@ -270,7 +270,7 @@ pub fn cli_set_default_profile(name: &str) -> Result<String, eyre::Report> {
 }
 
 pub fn edit_profile() -> Result<String, eyre::Report> {
-    let profile_list = db::get_profile_display_list()?;
+    let profile_list = db::get_profile_display_list(data::ProfileOrder::Name)?;
     if profile_list.is_empty() {
         return Ok("There are no profiles to edit".red().to_string());
     }
@@ -380,7 +380,7 @@ pub fn change_engine_on_profile() -> Result<String, eyre::Report> {
         );
     }
 
-    let display_profile_list = db::get_profile_display_list()?;
+    let display_profile_list = db::get_profile_display_list(data::ProfileOrder::Name)?;
     if display_profile_list.is_empty() {
         return Ok("There are no Profiles to change the Engine on".to_string());
     }
@@ -475,7 +475,7 @@ fn delete_profile_core(
 }
 
 pub fn delete_profile() -> Result<String, eyre::Report> {
-    let profile_list = db::get_profile_display_list()?;
+    let profile_list = db::get_profile_display_list(data::ProfileOrder::Name)?;
     if profile_list.is_empty() {
         return Ok("There are no Profiles to delete".to_string());
     }
@@ -502,7 +502,7 @@ pub fn cli_delete_profile(profile_name: &str, force: bool) -> Result<String, eyr
 }
 
 pub fn set_default_profile() -> Result<String, eyre::Report> {
-    let profile_list = db::get_profile_display_list()?;
+    let profile_list = db::get_profile_display_list(data::ProfileOrder::Name)?;
     if profile_list.is_empty() {
         return Ok(
             "Cannot set Default Profile. There are no Profiles found. Please create one"
@@ -536,8 +536,8 @@ pub fn set_default_profile() -> Result<String, eyre::Report> {
 }
 
 pub fn list_profiles(list_type: data::ListType) -> Result<String, eyre::Report> {
-    let profiles =
-        db::get_profile_display_list().wrap_err("Unable to profile listing".to_string())?;
+    let profiles = db::get_profile_display_list(data::ProfileOrder::Name)
+        .wrap_err("Unable to profile listing".to_string())?;
 
     if profiles.is_empty() {
         return Ok("There are no Profiles to list".to_string());

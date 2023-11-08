@@ -274,6 +274,11 @@ pub fn map_ids_from_options(
 
 pub type MapStrings = (String, String, String, String, String);
 
+pub enum ProfileOrder {
+    Name,
+    DateLastRun,
+}
+
 #[derive(Clone, Debug, Tabled)]
 pub struct ProfileDisplay {
     #[tabled(skip)]

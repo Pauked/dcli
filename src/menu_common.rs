@@ -76,7 +76,7 @@ pub fn get_map_id_from_pick_profile(
     option_str: &str,
     error_str: &str,
 ) -> Result<i32, eyre::Report> {
-    let profile_list = db::get_profile_display_list()?;
+    let profile_list = db::get_profile_display_list(data::ProfileOrder::Name)?;
     if profile_list.is_empty() {
         return Err(eyre::eyre!("There are no profiles to select from"));
     }

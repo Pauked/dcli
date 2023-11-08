@@ -6,7 +6,10 @@ use color_eyre::{
 use owo_colors::{colors::xterm, OwoColorize};
 use uuid::Uuid;
 
-use crate::{data, db, paths, runner, tui};
+use crate::{
+    data::{self, ProfileDisplay},
+    db, paths, runner, tui,
+};
 
 pub fn get_default_profile_text() -> Result<String, eyre::Report> {
     if !db::database_exists() {
@@ -70,8 +73,17 @@ pub fn play_last_profile() -> Result<String, eyre::Report> {
     runner::play_from_profile(app_settings.last_profile_id.unwrap(), true)
 }
 
-pub fn pick_and_play_profile() -> Result<String, eyre::Report> {
-    let profile_list = db::get_profile_display_list()?;
+pub fn pick_and_play_profile_on_name() -> Result<String, eyre::Report> {
+    pick_and_play_profile(db::get_profile_display_list(data::ProfileOrder::Name)?)
+}
+
+pub fn pick_and_play_profile_on_date_last_run() -> Result<String, eyre::Report> {
+    pick_and_play_profile(db::get_profile_display_list(
+        data::ProfileOrder::DateLastRun,
+    )?)
+}
+
+fn pick_and_play_profile(profile_list: Vec<ProfileDisplay>) -> Result<String, eyre::Report> {
     if profile_list.is_empty() {
         return Ok(
             "Cannot Play Profile, there are no profiles found. Please create one".to_string(),
