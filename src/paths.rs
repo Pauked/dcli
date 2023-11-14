@@ -1,7 +1,7 @@
 use std::{
     env,
-    fs::{File, self},
-    io::{BufRead, BufReader, self},
+    fs::{self, File},
+    io::{self, BufRead, BufReader},
     path::{Path, PathBuf},
 };
 
@@ -62,11 +62,11 @@ pub fn open_file(file_name: &str) -> io::Result<File> {
     fs::File::open(file_name)
 }
 
-pub fn delete_folder(folder_path: &str)-> io::Result<()> {
+pub fn delete_folder(folder_path: &str) -> io::Result<()> {
     fs::remove_dir_all(folder_path)
 }
 
-pub fn delete_file(file_path: &str)-> io::Result<()> {
+pub fn delete_file(file_path: &str) -> io::Result<()> {
     fs::remove_file(file_path)
 }
 
@@ -106,6 +106,14 @@ pub fn get_full_path(base_path: &str, file_name: &str) -> String {
 pub fn get_temp_dir() -> String {
     let temp_dir = env::temp_dir();
     temp_dir.display().to_string()
+}
+
+pub fn get_base_name(file_path: &str) -> String {
+    Path::new(file_path)
+        .file_stem()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .into_owned()
 }
 
 pub fn find_file_in_folders(

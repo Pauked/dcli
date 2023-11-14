@@ -1,6 +1,12 @@
-use std::{fs::File, io::Read, path::Path};
+use std::{
+    fs::{self, File},
+    io::Read,
+    path::Path,
+};
 
 use log::debug;
+use regex::Regex;
+use strsim::levenshtein;
 
 use crate::{constants, data, doom_data, finder, paths};
 
@@ -25,9 +31,76 @@ pub fn get_map_readme_file_name(map_path: &str) -> Result<Option<String>, eyre::
         if paths::file_exists(&readme) {
             return Ok(Some(readme));
         }
+
+        // Still not found, so lets try something more complicated...
+        let find_result = get_map_readme_using_levenshtein(map_path)?;
+        if let Some(readme) = find_result {
+            return Ok(Some(readme));
+        }
     }
 
     Ok(None)
+}
+
+fn get_map_readme_using_levenshtein(map_path: &str) -> Result<Option<String>, eyre::Report> {
+    let input_file = Path::new(map_path);
+    if let Some(directory) = input_file.parent() {
+        // Get the file name without the extension or folder
+        // also strip any file versioning out
+        let base_name = strip_versioning(&paths::get_base_name(input_file.to_str().unwrap()));
+
+        // Get a list of txt files in the same folder as the map
+        // score them using levenshtein and return the closest match (could be interesting if way off!)
+        let closest_match = find_txt_files(directory).ok().and_then(|txt_files| {
+            txt_files
+                .into_iter()
+                .map(|file| {
+                    (
+                        file.clone(),
+                        levenshtein(&base_name, &paths::get_base_name(&file)),
+                    )
+                })
+                .filter(|&(_, score)| score <= similarity_threshold(&base_name))
+                .min_by_key(|&(_, score)| score)
+                .map(|(filename, _)| filename)
+        });
+
+        if let Some(filename) = &closest_match {
+            log::debug!("Closest readme file: {}", filename);
+        } else {
+            log::debug!("No readme file found for {}", input_file.display());
+        }
+
+        Ok(closest_match)
+    } else {
+        Ok(None)
+    }
+}
+
+fn similarity_threshold(base_name: &str) -> usize {
+    // Set the threshold as a function of the length of the base name.
+    (base_name.len() as f64 * 0.5).round() as usize // 50% of the length
+}
+
+fn strip_versioning(name: &str) -> String {
+    // Trying to strip out examples like "-2.29-RC1" or "-RC1"
+    let re = Regex::new(r"[-_][a-zA-Z0-9]+(\.\d+)*([-_][a-zA-Z]+)?").unwrap();
+    re.replace_all(name, "").to_string()
+}
+
+fn find_txt_files(directory: &Path) -> Result<Vec<String>, eyre::Report> {
+    let mut txt_files = Vec::new();
+
+    for entry in fs::read_dir(directory)? {
+        let entry = entry?;
+        let path = entry.path();
+
+        if path.is_file() && path.extension().map_or(false, |e| e == doom_data::EXT_TXT) {
+            txt_files.push(path.to_string_lossy().into_owned());
+        }
+    }
+
+    Ok(txt_files)
 }
 
 fn check_readme_line(line: &str, key: &str) -> Option<String> {

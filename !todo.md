@@ -3,7 +3,7 @@
 [ ] Map Play Queue - user selected
 [x] Create Profile (optional) on Download from Doomworld /idgames
 [x] When downloading from /idgames, use map title as suggested profile name
-[ ] Improve readme file name detection (Attack on IO!)
+[x] Improve readme file name detection (Attack on IO, Ozonia)
 [x] Pick Profile to run off last run date
 
 ## Future Dev / Nice to haves

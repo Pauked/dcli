@@ -1,6 +1,6 @@
 [package]
 name = "dcli"
-version = "0.3.12"
+version = "0.3.13"
 edition = "2021"
 description = "dcli - Play Doom Quick"
 authors = ["Paul Healey"]
@@ -44,6 +44,7 @@ dirs = "5"
 reqwest = { version = "0.11", features = ["json", "stream"] }
 zip = "0.6"
 urlencoding = "2.1"
+strsim = "0.10"
 
 [dependencies.uuid]
 version = "1.4"
