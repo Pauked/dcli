@@ -829,6 +829,202 @@ pub fn get_profile_display_by_id(id: i32) -> Result<data::ProfileDisplay, eyre::
     ))
 }
 
+pub fn add_queue(queue: data::Queue) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query("INSERT INTO profile_queues (name, date_created, date_edited) VALUES (?,?,?)")
+            .bind(&queue.name)
+            .bind(queue.date_created)
+            .bind(queue.date_edited)
+            .execute(&db)
+            .await
+            .wrap_err(format!("Failed to add queue '{:?}", queue))
+    })
+}
+
+pub fn update_queue(queue: data::Queue) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query("UPDATE profile_queues SET name = $2, date_edited = $3 WHERE id=$1")
+            .bind(queue.id)
+            .bind(&queue.name)
+            .bind(queue.date_edited)
+            .execute(&db)
+            .await
+            .wrap_err(format!(
+                "Failed to update queue '{}', id '{}'",
+                queue.name, queue.id
+            ))
+    })
+}
+
+pub fn delete_queue(queue_id: i32) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query("DELETE FROM profile_queues WHERE id=$1")
+            .bind(queue_id)
+            .execute(&db)
+            .await
+            .wrap_err(format!("Failed to delete queue with id '{}'", queue_id))
+    })
+}
+
+pub fn get_queues() -> Result<Vec<data::Queue>, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+        sqlx::query_as::<_, data::Queue>("SELECT * FROM profile_queues ORDER BY name")
+            .fetch_all(&db)
+            .await
+            .wrap_err("Failed to get list of all queues")
+    })
+}
+
+pub fn get_queue_by_name(name: &str) -> Result<data::Queue, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+        sqlx::query_as::<_, data::Queue>(
+            "SELECT * FROM profile_queues WHERE name = $1 COLLATE NOCASE",
+        )
+        .bind(name.to_lowercase())
+        .fetch_one(&db)
+        .await
+        .wrap_err(format!("Failed to get queue with name '{}'", name))
+    })
+}
+
+pub fn add_queue_item(
+    queue_item: data::QueueItem,
+) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query("INSERT INTO profile_queue_items (profile_queue_id, profile_id, order_index) VALUES (?,?,?)")
+            .bind(queue_item.profile_queue_id)
+            .bind(queue_item.profile_id)
+            .bind(queue_item.order_index)
+            .execute(&db)
+            .await
+            .wrap_err(format!("Failed to add queue item '{:?}", queue_item))
+    })
+}
+
+pub fn update_queue_item_order_index(
+    id: i32,
+    order_index: i32,
+) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+        sqlx::query("UPDATE profile_queue_items SET order_index = $2 WHERE id=$1")
+            .bind(id)
+            .bind(order_index)
+            .execute(&db)
+            .await
+            .wrap_err(format!(
+                "Failed to update queue item order index '{}', id '{}'",
+                order_index, id
+            ))
+    })
+}
+
+pub fn delete_queue_item(
+    queue_item: &data::QueueItem,
+) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    // We want to delete this item but make sure the ordering is fixed for all the other items after it
+    let queue_items = get_queue_items(queue_item.profile_queue_id)?;
+
+    // Fix the ordering on the remaining items. Only do if more than one item in the queue
+    if queue_items.len() > 1 {
+        let mut order_index = queue_item.order_index;
+        for item in queue_items {
+            if item.order_index > order_index {
+                update_queue_item_order_index(item.id, order_index)?;
+                order_index += 1;
+            }
+        }
+    }
+
+    // Now delete the queue item
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+        sqlx::query("DELETE FROM profile_queue_items WHERE id=$1")
+            .bind(queue_item.id)
+            .execute(&db)
+            .await
+            .wrap_err(format!(
+                "Failed to delete queue item with id '{}'",
+                queue_item.id
+            ))
+    })
+}
+
+pub fn delete_all_queue_items(
+    queue_id: i32,
+) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query("DELETE FROM profile_queue_items WHERE profile_queue_id=$1")
+            .bind(queue_id)
+            .execute(&db)
+            .await
+            .wrap_err(format!(
+                "Failed to delete queue items for queue with id '{}'",
+                queue_id
+            ))
+    })
+}
+
+pub fn get_queue_items(queue_id: i32) -> Result<Vec<data::QueueItem>, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+        sqlx::query_as::<_, data::QueueItem>(
+            "SELECT * FROM profile_queue_items WHERE profile_queue_id = ? ORDER BY order_index",
+        )
+        .bind(queue_id)
+        .fetch_all(&db)
+        .await
+        .wrap_err(format!(
+            "Failed to get list of all queue items for queue_id '{}'",
+            queue_id
+        ))
+    })
+}
+
+pub fn get_queue_display_list() -> Result<Vec<data::QueueDisplay>, eyre::Report> {
+    let queues = get_queues()?;
+    let mut queue_list: Vec<data::QueueDisplay> = Vec::new();
+
+    for queue in queues {
+        let queue_items = get_queue_items(queue.id)?;
+        let mut profile_list: Vec<data::ProfileDisplay> = Vec::new();
+        for queue_item in queue_items {
+            let profile = get_profile_display_by_id(queue_item.profile_id)?;
+            profile_list.push(profile);
+        }
+
+        queue_list.push(data::QueueDisplay {
+            id: queue.id,
+            name: queue.name,
+            profiles: profile_list,
+        });
+    }
+
+    Ok(queue_list)
+}
+
 pub fn save_play_settings(
     play_settings: data::PlaySettings,
 ) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {

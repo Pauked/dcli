@@ -21,6 +21,7 @@ mod menu_main;
 mod menu_maps;
 mod menu_play_settings;
 mod menu_profiles;
+mod menu_queues;
 mod paths;
 mod runner;
 mod tui;

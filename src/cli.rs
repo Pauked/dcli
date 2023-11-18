@@ -3,7 +3,7 @@ use log::debug;
 
 use crate::{
     constants, data, menu_app_settings, menu_editor, menu_main, menu_play_settings, menu_profiles,
-    paths,
+    menu_queues, paths,
     tui::{self, MenuCommand},
 };
 
@@ -234,6 +234,7 @@ pub enum ListData {
     Iwads,
     Maps,
     Profiles,
+    Queues,
     Editors,
     AppSettings,
     PlaySettings,
@@ -318,6 +319,7 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                     ListData::Iwads => menu_app_settings::list_iwads(),
                     ListData::Maps => menu_app_settings::list_maps(),
                     ListData::Profiles => menu_profiles::list_profiles(list_type),
+                    ListData::Queues => menu_queues::list_queues(),
                     ListData::Editors => menu_editor::list_editors(),
                     ListData::AppSettings => menu_app_settings::list_app_settings(),
                     ListData::PlaySettings => menu_play_settings::list_play_settings(),
@@ -443,7 +445,9 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                     ))
                 } else if let Some(config_file) = config_file {
                     Ok((
-                        menu_play_settings::cli_set_config_file(&paths::resolve_path(&config_file))?,
+                        menu_play_settings::cli_set_config_file(&paths::resolve_path(
+                            &config_file,
+                        ))?,
                         CliRunMode::Quit,
                     ))
                 } else if let Some(fast_monsters) = fast_monsters {

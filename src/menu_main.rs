@@ -222,3 +222,51 @@ pub fn pick_and_play_map() -> Result<String, eyre::Report> {
         )
     }
 }
+
+pub fn play_queue_top() -> Result<String, eyre::Report> {
+    let queues = db::get_queues()?;
+    if queues.is_empty() {
+        return Ok("There are no Queues to select".to_string());
+    }
+
+    let queue_selection = inquire::Select::new("Pick the Queue you want to use:", queues)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt()?;
+
+    let queue_items = db::get_queue_items(queue_selection.id)?;
+    if queue_items.is_empty() {
+        return Ok("There are no Queue Items to pick from".to_string());
+    }
+
+    let queue_top = queue_items.first().unwrap();
+    runner::play_from_profile(queue_top.profile_id, true)
+}
+
+pub fn pick_and_play_queue() -> Result<String, eyre::Report> {
+    let queues = db::get_queues()?;
+    if queues.is_empty() {
+        return Ok("There are no Queues to select".to_string());
+    }
+
+    let queue_selection = inquire::Select::new("Pick the Queue you want to use:", queues)
+        .with_page_size(tui::MENU_PAGE_SIZE)
+        .prompt()?;
+
+    let queue_items = db::get_queue_items(queue_selection.id)?;
+    if queue_items.is_empty() {
+        return Ok("There are no Queue Items to pick from".to_string());
+    }
+
+    let mut selected_profiles: Vec<ProfileDisplay> = Vec::new();
+    for queue_item in queue_items {
+        let profile = db::get_profile_display_by_id(queue_item.profile_id)?;
+        selected_profiles.push(profile);
+    }
+
+    let queue_selection =
+        inquire::Select::new("Pick the Profile you want to Play:", selected_profiles)
+            .with_page_size(tui::MENU_PAGE_SIZE)
+            .prompt()?;
+
+    runner::play_from_profile(queue_selection.id, true)
+}

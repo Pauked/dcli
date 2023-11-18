@@ -18,6 +18,7 @@ use crate::menu_main;
 use crate::menu_maps;
 use crate::menu_play_settings;
 use crate::menu_profiles;
+use crate::menu_queues;
 
 pub const MENU_PAGE_SIZE: usize = 15;
 pub const MENU_CLR: &str = "clr";
@@ -25,7 +26,9 @@ pub const MENU_CLR_MESSAGE: &str = "clr to clear";
 
 pub enum MenuLevel {
     Main,
+    PickAndPlay,
     Profiles,
+    Queues,
     GameSettings,
     MapEditor,
     Maps,
@@ -51,22 +54,32 @@ pub enum MenuCommand {
     PlayDefaultProfile,
     #[strum(serialize = "Play Last Profile")]
     PlayLastProfile,
-    #[strum(serialize = "Pick & Play Map")]
-    PickAndPlayMap,
-    #[strum(serialize = "Pick & Play Profile")]
-    PickAndPlayProfileOnName,
-    #[strum(serialize = "Pick & Play Profile on Date Last Run")]
-    PickAndPlayProfileOnDateLastRun,
+    #[strum(serialize = "Play Queue Top")]
+    PlayQueueTop,
+    #[strum(serialize = "Pick & Play >>")]
+    PickAndPlay,
     #[strum(serialize = "Editor >>")]
     Editor,
     #[strum(serialize = "Profiles >>")]
     Profiles,
+    #[strum(serialize = "Queues >>")]
+    Queues,
     #[strum(serialize = "Play Settings >>")]
     PlaySettings,
     #[strum(serialize = "Maps >>")]
     Maps,
     #[strum(serialize = "App Settings >>")]
     AppSettings,
+
+    // Pick & Play Menu
+    #[strum(serialize = "Pick & Play Queue")]
+    PickAndPlayQueue,
+    #[strum(serialize = "Pick & Play Map")]
+    PickAndPlayMap,
+    #[strum(serialize = "Pick & Play Profile")]
+    PickAndPlayProfileOnName,
+    #[strum(serialize = "Pick & Play Profile on Date Last Run")]
+    PickAndPlayProfileOnDateLastRun,
 
     // Profile Menu
     #[strum(serialize = "New Profile")]
@@ -81,6 +94,20 @@ pub enum MenuCommand {
     SetDefaultProfile,
     #[strum(serialize = "List Profiles")]
     ListProfile,
+
+    // Queue Menu
+    #[strum(serialize = "New Queue")]
+    NewQueue,
+    #[strum(serialize = "Edit Queue")]
+    EditQueue,
+    #[strum(serialize = "Delete Queue")]
+    DeleteQueue,
+    #[strum(serialize = "Add Profile to Queue")]
+    AddProfileToQueue,
+    #[strum(serialize = "Delete Profile from Queue")]
+    DeleteProfileFromQueue,
+    #[strum(serialize = "List Queues")]
+    ListQueue,
 
     // App Settings Menu
     #[strum(serialize = "Menu Mode")]
@@ -123,8 +150,6 @@ pub enum MenuCommand {
     DeleteIwads,
     #[strum(serialize = "Delete Maps")]
     DeleteMaps,
-    #[strum(serialize = "View App Version")]
-    AppVersion,
     Init,
     Reset,
 
@@ -217,17 +242,11 @@ pub fn menu_prompt(
                     MenuMode::Simple,
                 ),
                 (MenuCommand::PlayLastProfile.to_string(), MenuMode::Full),
-                (MenuCommand::PickAndPlayMap.to_string(), MenuMode::Simple),
-                (
-                    MenuCommand::PickAndPlayProfileOnName.to_string(),
-                    MenuMode::Simple,
-                ),
-                (
-                    MenuCommand::PickAndPlayProfileOnDateLastRun.to_string(),
-                    MenuMode::Full,
-                ),
+                (MenuCommand::PlayQueueTop.to_string(), MenuMode::Full),
+                (MenuCommand::PickAndPlay.to_string(), MenuMode::Full),
                 (MenuCommand::PlaySettings.to_string(), MenuMode::Simple),
                 (MenuCommand::Profiles.to_string(), MenuMode::Simple),
+                (MenuCommand::Queues.to_string(), MenuMode::Full),
                 (MenuCommand::Maps.to_string(), MenuMode::Simple),
                 (MenuCommand::Editor.to_string(), MenuMode::Full),
                 (MenuCommand::AppSettings.to_string(), MenuMode::Simple),
@@ -237,6 +256,28 @@ pub fn menu_prompt(
                 selections,
                 "Main Menu".to_string(),
                 "Let's play Doom!"
+                    .fg::<xterm::DarkSpringGreen>()
+                    .to_string(),
+            )
+        }
+        MenuLevel::PickAndPlay => {
+            let selections = vec![
+                (MenuCommand::PickAndPlayQueue.to_string(), MenuMode::Simple),
+                (MenuCommand::PickAndPlayMap.to_string(), MenuMode::Simple),
+                (
+                    MenuCommand::PickAndPlayProfileOnName.to_string(),
+                    MenuMode::Simple,
+                ),
+                (
+                    MenuCommand::PickAndPlayProfileOnDateLastRun.to_string(),
+                    MenuMode::Simple,
+                ),
+                (MenuCommand::Back.to_string(), MenuMode::Simple),
+            ];
+            (
+                selections,
+                "Pick & Play".to_string(),
+                "So many ways to play Doom!"
                     .fg::<xterm::DarkSpringGreen>()
                     .to_string(),
             )
@@ -258,6 +299,25 @@ pub fn menu_prompt(
                 selections,
                 "Profile".to_string(),
                 "Profiles group together Engines, IWADs and Maps for quick play".to_string(),
+            )
+        }
+        MenuLevel::Queues => {
+            let selections = vec![
+                (MenuCommand::NewQueue.to_string(), MenuMode::Full),
+                (MenuCommand::EditQueue.to_string(), MenuMode::Full),
+                (MenuCommand::DeleteQueue.to_string(), MenuMode::Full),
+                (MenuCommand::AddProfileToQueue.to_string(), MenuMode::Full),
+                (
+                    MenuCommand::DeleteProfileFromQueue.to_string(),
+                    MenuMode::Full,
+                ),
+                (MenuCommand::ListQueue.to_string(), MenuMode::Full),
+                (MenuCommand::Back.to_string(), MenuMode::Simple),
+            ];
+            (
+                selections,
+                "Queue".to_string(),
+                "Order Profiles into Queues to organise quick play".to_string(),
             )
         }
         MenuLevel::GameSettings => {
@@ -486,7 +546,7 @@ pub fn menu_prompt(
                 (MenuCommand::DeleteStoredData.to_string(), MenuMode::Simple),
                 (MenuCommand::Init.to_string(), MenuMode::Simple),
                 (MenuCommand::Reset.to_string(), MenuMode::Simple),
-                (MenuCommand::AppVersion.to_string(), MenuMode::Simple),
+                (menu_app_settings::display_app_version(), MenuMode::Simple),
                 (MenuCommand::Back.to_string(), MenuMode::Simple),
             ];
             (
@@ -515,6 +575,7 @@ pub fn menu_prompt(
                 (MenuCommand::ListIwads.to_string(), MenuMode::Simple),
                 (MenuCommand::ListMaps.to_string(), MenuMode::Simple),
                 (MenuCommand::ListProfile.to_string(), MenuMode::Simple),
+                (MenuCommand::ListQueue.to_string(), MenuMode::Full),
                 (MenuCommand::ListEditors.to_string(), MenuMode::Full),
                 (MenuCommand::ListAppSettings.to_string(), MenuMode::Simple),
                 (MenuCommand::ListPlaySettings.to_string(), MenuMode::Simple),
@@ -584,7 +645,10 @@ pub fn menu_prompt(
     match choice {
         Some(choice) => {
             let first_part = choice.split('(').next().unwrap_or("").trim();
-            Ok(MenuCommand::from_str(first_part).unwrap())
+            match MenuCommand::from_str(first_part) {
+                Ok(option) => Ok(option),
+                _ => Ok(MenuCommand::Ignore),
+            }
         }
         None => Ok(MenuCommand::Back),
     }
@@ -652,16 +716,22 @@ pub fn run_menu_command_with_force(
         // Main Menu
         MenuCommand::PlayDefaultProfile => menu_main::play_default_profile(),
         MenuCommand::PlayLastProfile => menu_main::play_last_profile(),
+        MenuCommand::PlayQueueTop => menu_main::play_queue_top(),
+        MenuCommand::PickAndPlay => menu(MenuLevel::PickAndPlay),
+        MenuCommand::Editor => menu(MenuLevel::MapEditor),
+        MenuCommand::Profiles => menu(MenuLevel::Profiles),
+        MenuCommand::Queues => menu(MenuLevel::Queues),
+        MenuCommand::PlaySettings => menu(MenuLevel::GameSettings),
+        MenuCommand::Maps => menu(MenuLevel::Maps),
+        MenuCommand::AppSettings => menu(MenuLevel::AppSettings),
+
+        // Pick & Play Menu
+        MenuCommand::PickAndPlayQueue => menu_main::pick_and_play_queue(),
         MenuCommand::PickAndPlayProfileOnName => menu_main::pick_and_play_profile_on_name(),
         MenuCommand::PickAndPlayProfileOnDateLastRun => {
             menu_main::pick_and_play_profile_on_date_last_run()
         }
         MenuCommand::PickAndPlayMap => menu_main::pick_and_play_map(),
-        MenuCommand::Editor => menu(MenuLevel::MapEditor),
-        MenuCommand::Profiles => menu(MenuLevel::Profiles),
-        MenuCommand::PlaySettings => menu(MenuLevel::GameSettings),
-        MenuCommand::Maps => menu(MenuLevel::Maps),
-        MenuCommand::AppSettings => menu(MenuLevel::AppSettings),
 
         // Profile Menu
         MenuCommand::NewProfile => menu_profiles::add_profile(None, None),
@@ -670,6 +740,14 @@ pub fn run_menu_command_with_force(
         MenuCommand::DeleteProfile => menu_profiles::delete_profile(),
         MenuCommand::SetDefaultProfile => menu_profiles::set_default_profile(),
         MenuCommand::ListProfile => menu_profiles::list_profiles(data::ListType::Summary),
+
+        // Queue Menu
+        MenuCommand::NewQueue => menu_queues::add_queue(),
+        MenuCommand::EditQueue => menu_queues::edit_queue(),
+        MenuCommand::DeleteQueue => menu_queues::delete_queue(),
+        MenuCommand::AddProfileToQueue => menu_queues::add_profile_to_queue(),
+        MenuCommand::DeleteProfileFromQueue => menu_queues::delete_profile_from_queue(),
+        MenuCommand::ListQueue => menu_queues::list_queues(),
 
         // App Settings Menu
         MenuCommand::MenuMode => menu_app_settings::update_menu_mode(),
@@ -693,7 +771,6 @@ pub fn run_menu_command_with_force(
         MenuCommand::DeleteEngines => menu_app_settings::delete_engines(),
         MenuCommand::DeleteIwads => menu_app_settings::delete_iwads(),
         MenuCommand::DeleteMaps => menu_app_settings::delete_maps(),
-        MenuCommand::AppVersion => menu_app_settings::app_version(),
         MenuCommand::Reset => menu_app_settings::reset(force),
 
         // Play Settings Menu
@@ -758,6 +835,6 @@ pub fn colour_result(result: &str) -> String {
     } else if result.starts_with("There are no") {
         result.red().to_string()
     } else {
-        result.to_string()
+        result.cyan().to_string()
     }
 }

@@ -1,6 +1,6 @@
 ## DCLI v0.3.15
 
-[ ] Map Play Queue - user selected
+[x] Map Play Queue - user selected
 [x] Create Profile (optional) on Download from Doomworld /idgames
 [x] When downloading from /idgames, use map title as suggested profile name
 [x] Improve readme file name detection (Attack on IO, Ozonia)
@@ -19,6 +19,7 @@
 [ ] CLI for Profile (edit)
 [ ] CLI for Engines/IWADs (delete)
 [ ] CLI for all App Settings (search folders)
+[ ] CLI for Queues
 [ ] Extend hardcoded list of engines
 [ ] History of Profiles/WADs played with time played
 [ ] Track time played at a WAD and Engine level

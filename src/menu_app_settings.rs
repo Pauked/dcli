@@ -1049,11 +1049,11 @@ pub fn remove_editor_from_app_settings(editor_id: i32) -> Result<String, eyre::R
     Ok("".to_string())
 }
 
-pub fn app_version() -> Result<String, eyre::Report> {
-    Ok(format!(
+pub fn display_app_version() -> String {
+    format!(
         "{} {} by {}",
         constants::CRATE_NAME.fg::<xterm::DarkSpringGreen>().bold(),
         constants::CRATE_VERSION.blue(),
         constants::CRATE_AUTHORS.magenta()
-    ))
+    )
 }

@@ -356,7 +356,7 @@ impl ProfileDisplay {
                 format!(" ({})", temp)
             }
         };
-        format!("{} ({})", self.name, maps)
+        format!("{}{}", self.name, maps)
     }
 }
 
@@ -388,6 +388,52 @@ impl fmt::Display for ProfileDisplay {
             width4 = width4,
         )
     }
+}
+
+#[derive(Clone, Debug, FromRow)]
+pub struct Queue {
+    pub id: i32,
+    pub name: String,
+    pub date_created: DateTime<Utc>,
+    pub date_edited: DateTime<Utc>,
+}
+
+impl fmt::Display for Queue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.name,)
+    }
+}
+
+#[derive(Clone, Debug, FromRow)]
+pub struct QueueItem {
+    pub id: i32,
+    pub profile_queue_id: i32,
+    pub profile_id: i32,
+    pub order_index: i32,
+}
+
+#[derive(Tabled)]
+pub struct QueueDisplay {
+    #[tabled(skip)]
+    pub id: i32,
+    #[tabled(rename = "Queue Name")]
+    pub name: String,
+    #[tabled(rename = "Selected Profiles", display_with = "display_queue_profiles")]
+    pub profiles: Vec<ProfileDisplay>,
+}
+
+pub fn display_queue_profiles(profiles: &[ProfileDisplay]) -> String {
+    let mut result = String::new();
+    for (index, profile) in profiles.iter().enumerate() {
+        let line_end = if index < profiles.len() - 1 { "\n" } else { "" };
+        result.push_str(&format!(
+            "{}. {}{}",
+            index + 1,
+            profile.short_display(),
+            line_end
+        ));
+    }
+    result
 }
 
 #[derive(Clone, Debug, FromRow)]
