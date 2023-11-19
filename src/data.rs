@@ -696,11 +696,15 @@ pub fn truncate_string_in_middle(input: &str, max_length: usize) -> String {
 }
 
 pub fn truncate_string_end(input: &str, max_length: usize) -> String {
-    if input.len() > max_length {
-        return format!("{}...", &input[..max_length - 3]);
-    };
+    // Stripping out non-ascii characters because they can cause issues with
+    // truncating strings
+    let clean_input: String = input.chars().filter(|&c| c.is_ascii()).collect();
 
-    input.to_string()
+    if clean_input.len() > max_length {
+        format!("{}...", &clean_input[..max_length - 3])
+    } else {
+        clean_input
+    }
 }
 
 pub fn display_utc_datetime_to_local(value: &DateTime<Utc>) -> String {
@@ -732,4 +736,53 @@ fn format_local_datetime(local_datetime: &DateTime<Local>) -> String {
 pub enum ListType {
     Full,
     Summary,
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::data::truncate_string_end;
+
+    #[test]
+    fn test_truncate_string_end_weird_author_name() {
+        // Arrange
+        let input = "DoomsDay     ( úùøùúùþ[DíímsD’]þùúùøùú )";
+        let expected = "DoomsDay     ( [DmsD] )";
+        let truncate_width = 35;
+
+        // Act
+        let actual = truncate_string_end(input, truncate_width);
+
+        // Assert
+        assert_eq!(actual.len(), expected.len());
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_truncate_string_end_long_map_name() {
+        // Arrange
+        let input = "ULTIMATE DEATHTAG - More Revolutionary Team Play for Doom ][";
+        let expected = "ULTIMATE DEATHTAG - More Revolutionary Tea...";
+        let truncate_width = 45;
+
+        // Act
+        let actual = truncate_string_end(input, truncate_width);
+
+        // Assert
+        assert_eq!(actual.len(), truncate_width);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_truncate_string_end_crumpets() {
+        // Arrange
+        let input = "Crumpets"; // quality WAD by Ribbiks
+        let truncate_width = 45;
+
+        // Act
+        let actual = truncate_string_end(input, truncate_width);
+
+        // Assert
+        assert_eq!(actual.len(), input.len());
+        assert_eq!(actual, input);
+    }
 }
