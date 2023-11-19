@@ -875,7 +875,7 @@ pub fn delete_queue(queue_id: i32) -> Result<sqlx::sqlite::SqliteQueryResult, ey
     })
 }
 
-pub fn get_queues() -> Result<Vec<data::Queue>, eyre::Report> {
+fn get_queues() -> Result<Vec<data::Queue>, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let db = get_db().await;
@@ -1019,6 +1019,8 @@ pub fn get_queue_display_list() -> Result<Vec<data::QueueDisplay>, eyre::Report>
             id: queue.id,
             name: queue.name,
             profiles: profile_list,
+            date_created: queue.date_created,
+            date_edited: queue.date_edited,
         });
     }
 

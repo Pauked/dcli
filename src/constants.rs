@@ -11,3 +11,4 @@ pub const OS_LINUX: &str = "linux";
 pub const DEFAULT_UNKNOWN: &str = "Unknown";
 pub const DEFAULT_NOT_SET: &str = "Not Set";
 pub const MENU_NOT_SET: &str = "<Not Set>";
+pub const EMPTY_QUEUE: &str = "<Empty Queue>";

@@ -224,18 +224,20 @@ pub fn pick_and_play_map() -> Result<String, eyre::Report> {
 }
 
 pub fn play_queue_top() -> Result<String, eyre::Report> {
-    let queues = db::get_queues()?;
-    if queues.is_empty() {
+    let queue_display_list = db::get_queue_display_list()?;
+    if queue_display_list.is_empty() {
         return Ok("There are no Queues to select".to_string());
     }
 
-    let queue_selection = inquire::Select::new("Pick the Queue you want to use:", queues)
-        .with_page_size(tui::MENU_PAGE_SIZE)
-        .prompt()?;
+    let queue_selection =
+        inquire::Select::new("Pick the Queue you want to Play from:", queue_display_list)
+            .with_formatter(&|i| i.value.simple_display())
+            .with_page_size(tui::MENU_PAGE_SIZE)
+            .prompt()?;
 
     let queue_items = db::get_queue_items(queue_selection.id)?;
     if queue_items.is_empty() {
-        return Ok("There are no Queue Items to pick from".to_string());
+        return Ok("There are no Profiles to pick from".to_string());
     }
 
     let queue_top = queue_items.first().unwrap();
@@ -243,20 +245,23 @@ pub fn play_queue_top() -> Result<String, eyre::Report> {
 }
 
 pub fn pick_and_play_queue() -> Result<String, eyre::Report> {
-    let queues = db::get_queues()?;
-    if queues.is_empty() {
+    let queue_display_list = db::get_queue_display_list()?;
+    if queue_display_list.is_empty() {
         return Ok("There are no Queues to select".to_string());
     }
 
-    let queue_selection = inquire::Select::new("Pick the Queue you want to use:", queues)
-        .with_page_size(tui::MENU_PAGE_SIZE)
-        .prompt()?;
+    let queue_selection =
+        inquire::Select::new("Pick the Queue you want to Play from:", queue_display_list)
+            .with_formatter(&|i| i.value.simple_display())
+            .with_page_size(tui::MENU_PAGE_SIZE)
+            .prompt()?;
 
     let queue_items = db::get_queue_items(queue_selection.id)?;
     if queue_items.is_empty() {
-        return Ok("There are no Queue Items to pick from".to_string());
+        return Ok("There are no Profiles to pick from".to_string());
     }
 
+    // Build a list of ProfileDisplay from the QueueItems. Keep it in order_index order.
     let mut selected_profiles: Vec<ProfileDisplay> = Vec::new();
     for queue_item in queue_items {
         let profile = db::get_profile_display_by_id(queue_item.profile_id)?;

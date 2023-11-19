@@ -16,6 +16,7 @@ const DISPLAY_WIDTH1: usize = 30;
 const DISPLAY_WIDTH2: usize = 25;
 const DISPLAY_WIDTH_VERSION: usize = 12;
 const DISPLAY_WIDTH_IWAD: usize = 12;
+const DISPLAY_WIDTH_LONG: usize = 80;
 
 #[derive(Clone, Debug)]
 pub struct FileVersion {
@@ -420,6 +421,37 @@ pub struct QueueDisplay {
     pub name: String,
     #[tabled(rename = "Selected Profiles", display_with = "display_queue_profiles")]
     pub profiles: Vec<ProfileDisplay>,
+    #[tabled(skip)]
+    pub date_created: DateTime<Utc>,
+    #[tabled(skip)]
+    pub date_edited: DateTime<Utc>,
+}
+
+impl QueueDisplay {
+    pub fn simple_display(&self) -> String {
+        let profiles = display_combined_profiles_simple(&self.profiles);
+        format!(
+            "{} | {}",
+            self.name,
+            truncate_string_end(&profiles, DISPLAY_WIDTH_LONG)
+        )
+    }
+}
+
+impl fmt::Display for QueueDisplay {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let width = DISPLAY_WIDTH1;
+        let width2 = DISPLAY_WIDTH_LONG;
+        let profiles = display_combined_profiles_simple(&self.profiles);
+        write!(
+            f,
+            "{:<width$} | {:<width2$}",
+            truncate_string_end(&self.name, width),
+            truncate_string_end(&profiles, width2),
+            width = width,
+            width2 = width2,
+        )
+    }
 }
 
 pub fn display_queue_profiles(profiles: &[ProfileDisplay]) -> String {
@@ -433,6 +465,20 @@ pub fn display_queue_profiles(profiles: &[ProfileDisplay]) -> String {
             line_end
         ));
     }
+    result
+}
+
+pub fn display_combined_profiles_simple(profiles: &Vec<ProfileDisplay>) -> String {
+    if profiles.is_empty() {
+        return constants::EMPTY_QUEUE.to_string();
+    }
+
+    let mut result = String::new();
+    for (index, profile) in profiles.iter().enumerate() {
+        let line_end = if index < profiles.len() - 1 { ", " } else { "" };
+        result.push_str(&format!("{}{}", profile.short_display(), line_end));
+    }
+
     result
 }
 
@@ -568,22 +614,6 @@ pub enum CompLevel {
     Mbf21 = 21,
 }
 
-/*
-    TODO: Expand play settings to include additional args.
-    - save games
-    - complevels
-    - episode
-    - level
-    - difficult
-    - fast monsters
-    - no monsters
-    - respawn monsters
-    - demo record,
-    - demo playback
-    - GZDoom specific options
-    - DSDA specific options
-*/
-
 #[derive(Clone, Debug, FromRow, Default, Tabled)]
 pub struct PlaySettings {
     #[tabled(skip)]
@@ -634,16 +664,6 @@ pub fn display_combined_tabled_map_strings(data: &MapStrings) -> String {
 
     vec.join("\n")
 }
-
-// pub fn display_combined_map_strings(data: &MapStrings) -> String {
-//     let vec = [&data.0, &data.1, &data.2, &data.3, &data.4]
-//         .iter()
-//         .filter(|&&s| !s.is_empty() && s != constants::DEFAULT_NOT_SET)
-//         .map(|&s| s.as_str())
-//         .collect::<Vec<&str>>();
-
-//     vec.join(", ")
-// }
 
 pub fn display_combined_map_strings_simple(map_strings: &MapStrings) -> String {
     let (first, second, third, fourth, fifth) = map_strings;

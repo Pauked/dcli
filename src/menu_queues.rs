@@ -64,13 +64,14 @@ pub fn add_queue() -> Result<String, eyre::Report> {
 }
 
 pub fn edit_queue() -> Result<String, eyre::Report> {
-    let queues_list = db::get_queues()?;
-    if queues_list.is_empty() {
+    let queue_display_list = db::get_queue_display_list()?;
+    if queue_display_list.is_empty() {
         return Ok("There are no Queues to edit".to_string());
     }
 
     // Pick the queue to edit
-    let queue_selection = inquire::Select::new("Pick the Queue to Edit:", queues_list)
+    let queue_selection = inquire::Select::new("Pick the Queue to Edit:", queue_display_list)
+        .with_formatter(&|i| i.value.simple_display())
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt()?;
 
@@ -134,16 +135,21 @@ pub fn edit_queue() -> Result<String, eyre::Report> {
         db::add_queue_item(queue_item)?;
     }
 
-    Ok(format!("Successfully updated Queue '{}' with {} Profiles", queue_name, profile_selection.len()))
+    Ok(format!(
+        "Successfully updated Queue '{}' with {} Profiles",
+        queue_name,
+        profile_selection.len()
+    ))
 }
 
 pub fn delete_queue() -> Result<String, eyre::Report> {
-    let queues = db::get_queues()?;
-    if queues.is_empty() {
+    let queue_display_list = db::get_queue_display_list()?;
+    if queue_display_list.is_empty() {
         return Ok("There are no Queues to delete".to_string());
     }
 
-    let queue_selection = inquire::Select::new("Pick the Queue to Delete:", queues)
+    let queue_selection = inquire::Select::new("Pick the Queue to Delete:", queue_display_list)
+        .with_formatter(&|i| i.value.simple_display())
         .with_page_size(tui::MENU_PAGE_SIZE)
         .prompt_skippable()?;
 
@@ -236,8 +242,8 @@ pub fn get_profile_selection(
 }
 
 pub fn add_profile_to_queue() -> Result<String, eyre::Report> {
-    let queues = db::get_queues()?;
-    if queues.is_empty() {
+    let queue_display_list = db::get_queue_display_list()?;
+    if queue_display_list.is_empty() {
         return Ok("There are no Queues to add a Profile to".to_string());
     };
 
@@ -247,9 +253,11 @@ pub fn add_profile_to_queue() -> Result<String, eyre::Report> {
     }
 
     // Which queue are we editing
-    let queue_selection = inquire::Select::new("Pick the Queue to add a Profile to:", queues)
-        .with_page_size(tui::MENU_PAGE_SIZE)
-        .prompt()?;
+    let queue_selection =
+        inquire::Select::new("Pick the Queue to add a Profile to:", queue_display_list)
+            .with_formatter(&|i| i.value.simple_display())
+            .with_page_size(tui::MENU_PAGE_SIZE)
+            .prompt()?;
 
     // Pick a single profile to add
     let profile_selection = inquire::Select::new("Pick the Profile to add:", profiles_list)
@@ -291,15 +299,19 @@ pub fn add_profile_to_queue() -> Result<String, eyre::Report> {
 }
 
 pub fn delete_profile_from_queue() -> Result<String, eyre::Report> {
-    let queues = db::get_queues()?;
-    if queues.is_empty() {
+    let queue_display_list = db::get_queue_display_list()?;
+    if queue_display_list.is_empty() {
         return Ok("There are no Queues to delete a Profile from".to_string());
     };
 
     // Which queue are we deleting from
-    let queue_selection = inquire::Select::new("Pick the Queue to delete a Profile from:", queues)
-        .with_page_size(tui::MENU_PAGE_SIZE)
-        .prompt()?;
+    let queue_selection = inquire::Select::new(
+        "Pick the Queue to delete a Profile from:",
+        queue_display_list,
+    )
+    .with_formatter(&|i| i.value.simple_display())
+    .with_page_size(tui::MENU_PAGE_SIZE)
+    .prompt()?;
 
     // Get the queue items for the selected queue
     let queue_items = db::get_queue_items(queue_selection.id)?;
