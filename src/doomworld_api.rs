@@ -15,6 +15,7 @@ pub const SORT_FILENAME: &str = "filename";
 
 const DISPLAY_WIDTH1: usize = 45;
 const DISPLAY_WIDTH2: usize = 35;
+const DISPLAY_WIDTH_FILENAME: usize = 12;
 
 const EXPECTED_API_VERSION: i32 = 3;
 
@@ -28,6 +29,7 @@ pub struct DoomworldFile {
     pub filename: String,
     pub url: String,
     pub dir: String,
+    pub date: String,
 }
 
 fn deserialize_string_or_default<'de, D>(deserializer: D) -> Result<String, D::Error>
@@ -51,14 +53,17 @@ impl fmt::Display for DoomworldFile {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let width = DISPLAY_WIDTH1;
         let width2 = DISPLAY_WIDTH2;
+        let width3 = DISPLAY_WIDTH_FILENAME;
         write!(
             f,
-            "{:<width$} | {:<width2$} | {:<}",
+            "{:<width$} | {:<width2$} | {:<width3$} | {:<}",
             data::truncate_string_end(&self.title, width),
             data::truncate_string_end(&self.author, width2),
-            &self.filename,
+            data::truncate_string_end(&self.filename, width3),
+            &self.date,
             width = width,
             width2 = width2,
+            width3 = width3
         )
     }
 }
@@ -219,6 +224,7 @@ mod tests {
         assert_eq!(api_result.files[0].title, "Phobos Mission Control");
         assert_eq!(api_result.files[0].author, "John Romero");
         assert_eq!(api_result.files[0].filename, "e1m4b.zip");
+        assert_eq!(api_result.files[0].date, "2016-04-27");
         assert_eq!(
             api_result.files[0].url,
             "https://www.doomworld.com/idgames/levels/doom/Ports/d-f/e1m4b"
@@ -243,6 +249,7 @@ mod tests {
         assert_eq!(api_result.files[0].title, "Valiant");
         assert_eq!(api_result.files[0].author, "Paul \"skillsaw\" DeBruyne");
         assert_eq!(api_result.files[0].filename, "valiant.zip");
+        assert_eq!(api_result.files[0].date, "2015-05-30");
         assert_eq!(
             api_result.files[0].url,
             "https://www.doomworld.com/idgames/levels/doom2/Ports/megawads/valiant"
@@ -292,6 +299,7 @@ mod tests {
             constants::DEFAULT_UNKNOWN.to_string()
         );
         assert_eq!(api_result.files[0].filename, "0scraps.zip");
+        assert_eq!(api_result.files[0].date, "2002-04-09");
         assert_eq!(
             api_result.files[0].url,
             "https://www.doomworld.com/idgames/levels/doom2/0-9/0scraps"
@@ -317,6 +325,7 @@ mod tests {
         assert_eq!(api_result.files[0].title, "Final_2.wad");
         assert_eq!(api_result.files[0].author, "Chris Kleymeer");
         assert_eq!(api_result.files[0].filename, "final_2.zip");
+        assert_eq!(api_result.files[0].date, "1995-01-30");
         assert_eq!(
             api_result.files[0].url,
             "https://www.doomworld.com/idgames/levels/doom2/d-f/final_2"
@@ -326,6 +335,7 @@ mod tests {
         assert_eq!(api_result.files[21].title, "Machete");
         assert_eq!(api_result.files[21].author, "A2Rob");
         assert_eq!(api_result.files[21].filename, "machetefinal.zip");
+        assert_eq!(api_result.files[21].date, "2023-02-01");
         assert_eq!(
             api_result.files[21].url,
             "https://www.doomworld.com/idgames/levels/doom2/Ports/megawads/machetefinal"
@@ -351,6 +361,7 @@ mod tests {
         assert_eq!(api_result.files[0].title, "000 EMERGANCY");
         assert_eq!(api_result.files[0].author, "Paul Corfiatis");
         assert_eq!(api_result.files[0].filename, "000emg.zip");
+        assert_eq!(api_result.files[0].date, "2005-04-04");
         assert_eq!(
             api_result.files[0].url,
             "https://www.doomworld.com/idgames/levels/doom2/0-9/000emg"
@@ -366,6 +377,7 @@ mod tests {
             "Maps 1,3,5,7,(10,12,14): Paul O'Neill Maps 2,4,6,9,11,(13,15): Jerry P."
         );
         assert_eq!(api_result.files[99].filename, "fras.zip");
+        assert_eq!(api_result.files[99].date, "2002-03-02");
         assert_eq!(
             api_result.files[99].url,
             "https://www.doomworld.com/idgames/levels/doom2/deathmatch/d-f/fras"
