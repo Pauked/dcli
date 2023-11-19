@@ -7,7 +7,7 @@ use tabled::{
     settings::{object::Rows, Modify, Style, Width},
 };
 
-use crate::{data, db, menu_app_settings, menu_common, paths, tui};
+use crate::{data, db, menu_app_settings, menu_common, menu_queues, paths, tui};
 
 pub fn add_profile(
     map_id: Option<i32>,
@@ -85,7 +85,7 @@ pub fn add_profile(
 
     let profile = data::Profile {
         id: 0,
-        name: profile_name,
+        name: profile_name.clone(),
         engine_id: Some(engine_selection.id),
         iwad_id: Some(iwad_selection.id),
         map_id,
@@ -102,6 +102,27 @@ pub fn add_profile(
     let add_result = db::add_profile(profile.clone())?;
     let add_profile_id: i32 = add_result.last_insert_rowid().try_into().unwrap();
     set_profile_as_default(add_profile_id, &profile.name, false)?;
+
+    // Add new Profile to existing Queue?
+    let queue_prompt_result = inquire::Confirm::new(&format!(
+        "Would you like to add this Profile '{}' to a Queue?",
+        profile_name
+    ))
+    .with_default(false)
+    .prompt_skippable()?;
+
+    if let Some(true) = queue_prompt_result {
+        let profile_display = db::get_profile_display_by_id(add_profile_id)?;
+        let queue_result = menu_queues::add_profile_to_queue(Some(profile_display));
+        match queue_result {
+            Ok(success_message) => {
+                log::info!("  {}", success_message);
+            }
+            Err(e) => {
+                log::error!("  Failed to add Profile to Queue: {}", e);
+            }
+        }
+    }
 
     Ok(format!(
         "Successfully created a new Profile - '{}'",

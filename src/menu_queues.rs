@@ -241,7 +241,7 @@ pub fn get_profile_selection(
     Ok(ordered_items)
 }
 
-pub fn add_profile_to_queue() -> Result<String, eyre::Report> {
+pub fn add_profile_to_queue(profile: Option<data::ProfileDisplay>) -> Result<String, eyre::Report> {
     let queue_display_list = db::get_queue_display_list()?;
     if queue_display_list.is_empty() {
         return Ok("There are no Queues to add a Profile to".to_string());
@@ -260,9 +260,12 @@ pub fn add_profile_to_queue() -> Result<String, eyre::Report> {
             .prompt()?;
 
     // Pick a single profile to add
-    let profile_selection = inquire::Select::new("Pick the Profile to add:", profiles_list)
-        .with_page_size(tui::MENU_PAGE_SIZE)
-        .prompt()?;
+    let profile_selection = match profile {
+        Some(profile) => profile,
+        None => inquire::Select::new("Pick the Profile to add:", profiles_list)
+            .with_page_size(tui::MENU_PAGE_SIZE)
+            .prompt()?,
+    };
 
     // Check this profile isn't already in the queue
     let queue_items = db::get_queue_items(queue_selection.id)?;

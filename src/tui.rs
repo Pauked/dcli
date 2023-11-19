@@ -745,7 +745,7 @@ pub fn run_menu_command_with_force(
         MenuCommand::NewQueue => menu_queues::add_queue(),
         MenuCommand::EditQueue => menu_queues::edit_queue(),
         MenuCommand::DeleteQueue => menu_queues::delete_queue(),
-        MenuCommand::AddProfileToQueue => menu_queues::add_profile_to_queue(),
+        MenuCommand::AddProfileToQueue => menu_queues::add_profile_to_queue(None),
         MenuCommand::DeleteProfileFromQueue => menu_queues::delete_profile_from_queue(),
         MenuCommand::ListQueue => menu_queues::list_queues(),
 
