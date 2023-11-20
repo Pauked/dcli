@@ -5,9 +5,9 @@
 [x] When downloading from /idgames, use map title as suggested profile name
 [x] Improve readme file name detection (Attack on IO, Ozonia)
 [x] Pick Profile to run off last run date
-[ ] Add Queues to Export/Import
-[ ] When deleting a Profile, check if linked to a Queue
+[x] When deleting a Profile, check if linked to a Queue. Delete if there and re-order queues.
 [x] Add save game field to Profile with menu option to quickly change
+[ ] CLI for Queues
 
 ## Future Dev / Nice to haves
 

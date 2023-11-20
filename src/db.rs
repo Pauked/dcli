@@ -1009,6 +1009,24 @@ pub fn delete_all_queue_items(
     })
 }
 
+pub fn delete_profile_from_queues(profile_id: i32) -> Result<String, eyre::Report> {
+    // FIXME: This is not very efficient.
+
+    // Get a list of all the queue items containing this profile
+    let queue_items = get_queue_items_containing_profile(profile_id)?;
+
+    // For each queue item, we need to remove it from the queue and also make
+    // sure the remaining queue is ordered correctly
+    for queue_item in &queue_items {
+        delete_queue_item(queue_item)?;
+    }
+
+    Ok(format!(
+        "Deleted profile from {} queue(s)",
+        queue_items.len()
+    ))
+}
+
 pub fn get_queue_items(queue_id: i32) -> Result<Vec<data::QueueItem>, eyre::Report> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
@@ -1022,6 +1040,25 @@ pub fn get_queue_items(queue_id: i32) -> Result<Vec<data::QueueItem>, eyre::Repo
         .wrap_err(format!(
             "Failed to get list of all queue items for queue_id '{}'",
             queue_id
+        ))
+    })
+}
+
+fn get_queue_items_containing_profile(
+    profile_id: i32,
+) -> Result<Vec<data::QueueItem>, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+        sqlx::query_as::<_, data::QueueItem>(
+            "SELECT * FROM profile_queue_items WHERE profile_id = ?",
+        )
+        .bind(profile_id)
+        .fetch_all(&db)
+        .await
+        .wrap_err(format!(
+            "Failed to get list of all queue items containing profile_id '{}'",
+            profile_id
         ))
     })
 }

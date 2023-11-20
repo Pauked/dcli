@@ -537,6 +537,9 @@ fn delete_profile_core(
         // Check if "Default Profile" and remove link if so
         menu_app_settings::remove_profile_from_app_settings(profile_id)?;
 
+        // Remove from any queues...
+        db::delete_profile_from_queues(profile_id)?;
+
         // Now delete the profile
         db::delete_profile(profile_id)
             .wrap_err(format!("Failed to delete Profile - '{}", profile_name))?;
