@@ -39,9 +39,9 @@ $dcli_path add-profile "Classic Doom 2" "$gzdoom_path" "$doom2_wad"
 $dcli_path add-profile "Ancient Aliens" "$gzdoom_path" "$doom2_wad" --maps "aaliens.wad"
 $dcli_path add-profile "Sigil" "$gzdoom_path" "$doom_wad" --maps SIGIL_v1_21.wad,SIGIL_SHREDS.wad
 $dcli_path add-profile "Phobos Mission Control" "$gzdoom_path" "$doom_wad" --maps e1m4b.wad --args " -warp 1 4"
-$dcli_path add-profile "TNT: Revilution" "$gzdoom_path" "$tnt_wad" --maps "tntr.wad" --args " -deh $maps_path/Tntr/tntr.deh"
+$dcli_path add-profile "TNT: Revilution" "$gzdoom_path" "$tnt_wad" --maps "tntr.wad" --save-game "save26.zds" --args " -deh $maps_path/Tntr/tntr.deh"
 $dcli_path add-profile "RAMP 2021" "$gzdoom_path" "$doom2_wad" --maps ramp.pk3 --args " -loadgame save03.zds"
-$dcli_path add-profile "UAC Ultra" "$gzdoom_path" "$doom2_wad" --maps uacultra.wad
+$dcli_path add-profile "UAC Ultra" "$gzdoom_path" "$doom2_wad" --maps uacultra.wad  --save-game "save05.zds"
 $dcli_path add-profile "Heretic" "$gzdoom_path" "$heretic_wad"
 $dcli_path add-profile "Hexen" "$gzdoom_path" "$hexen_wad"
 $dcli_path add-profile "Hexen: Deathkings of the Dark Citadel" "$gzdoom_path" "$hexdd_wad"

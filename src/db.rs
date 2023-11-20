@@ -538,8 +538,8 @@ pub fn add_profile(
         sqlx::query(
             "INSERT INTO profiles (name, engine_id, iwad_id,
             map_id, map_id2, map_id3, map_id4, map_id5, additional_arguments,
-            date_created, date_edited, date_last_run, run_count)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            date_created, date_edited, date_last_run, save_game, run_count)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(&profile.name)
         .bind(profile.engine_id)
@@ -553,6 +553,7 @@ pub fn add_profile(
         .bind(profile.date_created)
         .bind(profile.date_edited)
         .bind(profile.date_last_run)
+        .bind(&profile.save_game)
         .bind(profile.run_count)
         .execute(&db)
         .await
@@ -571,7 +572,7 @@ pub fn update_profile(
             "UPDATE profiles SET name = $2, engine_id = $3, iwad_id = $4,
             map_id = $5, map_id2 = $6, map_id3 = $7, map_id4 = $8, map_id5 = $9,
             additional_arguments = $10, date_created = $11, date_edited = $12,
-            date_last_run = $13, run_count = $14 WHERE id=$1",
+            date_last_run = $13, save_game = $14, run_count = $15 WHERE id=$1",
         )
         .bind(profile.id)
         .bind(&profile.name)
@@ -586,6 +587,7 @@ pub fn update_profile(
         .bind(profile.date_created)
         .bind(profile.date_edited)
         .bind(profile.date_last_run)
+        .bind(&profile.save_game)
         .bind(profile.run_count)
         .execute(&db)
         .await
@@ -625,6 +627,26 @@ pub fn update_profile_date_last_run_and_run_count(
             .await
             .wrap_err(format!(
                 "Failed to update last run for profile with id '{}'",
+                id
+            ))
+    })
+}
+
+pub fn update_profile_save_game(
+    id: i32,
+    save_game: Option<String>,
+) -> Result<sqlx::sqlite::SqliteQueryResult, eyre::Report> {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let db = get_db().await;
+
+        sqlx::query("UPDATE profiles SET save_game = $2 WHERE id=$1")
+            .bind(id)
+            .bind(save_game)
+            .execute(&db)
+            .await
+            .wrap_err(format!(
+                "Failed to update save game for profile with id '{}'",
                 id
             ))
     })
@@ -722,6 +744,7 @@ fn get_profile_display(
         date_created: profile.date_created,
         date_edited: profile.date_edited,
         date_last_run: profile.date_last_run,
+        save_game: profile.save_game.unwrap_or_default(),
         run_count: profile.run_count,
     }
 }

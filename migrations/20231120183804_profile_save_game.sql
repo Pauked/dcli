@@ -1,0 +1,1 @@
+ALTER TABLE profiles ADD COLUMN save_game TEXT NULL;

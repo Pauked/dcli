@@ -42,11 +42,11 @@ $udb_editor = Join-Path $doom_editors_base "UltimateDoomBuilder\builder.exe"
 & $dcli_path add-profile "Ancient Aliens" $dsda_doom_path $doom2_wad --maps  "aaliens.wad"
 & $dcli_path add-profile "Sigil" $dsda_doom_path $doom_wad --maps SIGIL_v1_21.wad,SIGIL_SHREDS.wad
 & $dcli_path add-profile "Phobos Mission Control" $dsda_doom_path $doom_wad --maps e1m4b.wad --args " -warp 1 4"
-& $dcli_path add-profile "TNT: Revilution" $dsda_doom_path $tnt_wad --maps "tntr.wad" --args " -deh $(Join-Path $doom_maps_base 'Tntr\tntr.deh')"
+& $dcli_path add-profile "TNT: Revilution" $dsda_doom_path $tnt_wad --maps "tntr.wad" --save-game "save26.zds" --args " -deh $(Join-Path $doom_maps_base 'Tntr\tntr.deh')"
 & $dcli_path add-profile "Heartland" $ee_path $doom2_wad --maps "heartland.pke" --args " -loadgame 7"
 & $dcli_path add-profile "RAMP 2021" $gzdoom_path $doom2_wad --maps ramp.pk3 --args " -loadgame save03.zds"
 & $dcli_path add-profile "RAMP 2023" $gzdoom_path $doom2_wad --maps ramp2023.pk3
-& $dcli_path add-profile "UAC Ultra" $dsda_doom_path $doom2_wad --maps "uacultra.wad"
+& $dcli_path add-profile "UAC Ultra" $dsda_doom_path $doom2_wad --maps "uacultra.wad" --save-game "save05.zds"
 & $dcli_path add-profile "Heretic" $gzdoom_path $heretic_wad
 & $dcli_path add-profile "Hexen" $gzdoom_path $hexen_wad
 & $dcli_path add-profile "Hexen: Deathkings of the Dark Citadel" $gzdoom_path $hexdd_wad

@@ -1,10 +1,13 @@
-## DCLI v0.3.15
+## DCLI v0.4.0
 
 [x] Map Play Queue - user selected
 [x] Create Profile (optional) on Download from Doomworld /idgames
 [x] When downloading from /idgames, use map title as suggested profile name
 [x] Improve readme file name detection (Attack on IO, Ozonia)
 [x] Pick Profile to run off last run date
+[ ] Add Queues to Export/Import
+[ ] When deleting a Profile, check if linked to a Queue
+[x] Add save game field to Profile with menu option to quickly change
 
 ## Future Dev / Nice to haves
 
@@ -38,7 +41,7 @@
 ## Save game notes
 
 - dsda-doom - save files are .dsg. subfolder of app, dsda-doom\IWAD name\Map name
-- GDoom - save files are .zds. Zip file containing JSON files.
+- GZDoom - save files are .zds. Zip file containing JSON files.
   - info.json is what I need!
   - Folders - C:\Users\<user>\Saved Games\GZDoom\doom.id.doom2.tnt\
 

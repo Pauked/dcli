@@ -176,6 +176,11 @@ pub fn pick_and_play_map() -> Result<String, eyre::Report> {
             .prompt_skippable()?;
     let map_id = map_selection.as_ref().map(|map| map.id);
 
+    let save_game =
+        inquire::Text::new("Enter save game file name you want to automatically load (optional):")
+            .with_help_message("For example with GZDoom 'save26.zds'")
+            .prompt_skippable()?;
+
     let additional_arguments =
         inquire::Text::new("Enter any additional arguments (optional):").prompt_skippable()?;
 
@@ -203,6 +208,7 @@ pub fn pick_and_play_map() -> Result<String, eyre::Report> {
             map_id3: None,
             map_id4: None,
             map_id5: None,
+            save_game,
             additional_arguments,
             date_created: Utc::now(),
             date_edited: Utc::now(),
@@ -218,6 +224,7 @@ pub fn pick_and_play_map() -> Result<String, eyre::Report> {
             engine_selection.id,
             iwad_selection.id,
             data::map_ids_from_options(map_id, None, None, None, None),
+            save_game,
             additional_arguments,
         )
     }

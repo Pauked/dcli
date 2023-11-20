@@ -88,6 +88,8 @@ pub enum MenuCommand {
     EditProfile,
     #[strum(serialize = "Change Engine on Profile")]
     ChangeEngineOnProfile,
+    #[strum(serialize = "Change Save Game on Profile")]
+    ChangeSaveGameOnProfile,
     #[strum(serialize = "Delete Profile")]
     DeleteProfile,
     #[strum(serialize = "Set Default Profile")]
@@ -288,6 +290,10 @@ pub fn menu_prompt(
                 (MenuCommand::EditProfile.to_string(), MenuMode::Simple),
                 (
                     MenuCommand::ChangeEngineOnProfile.to_string(),
+                    MenuMode::Simple,
+                ),
+                (
+                    MenuCommand::ChangeSaveGameOnProfile.to_string(),
                     MenuMode::Simple,
                 ),
                 (MenuCommand::SetDefaultProfile.to_string(), MenuMode::Simple),
@@ -737,6 +743,7 @@ pub fn run_menu_command_with_force(
         MenuCommand::NewProfile => menu_profiles::add_profile(None, None),
         MenuCommand::EditProfile => menu_profiles::edit_profile(),
         MenuCommand::ChangeEngineOnProfile => menu_profiles::change_engine_on_profile(),
+        MenuCommand::ChangeSaveGameOnProfile => menu_profiles::change_save_game_on_profile(),
         MenuCommand::DeleteProfile => menu_profiles::delete_profile(),
         MenuCommand::SetDefaultProfile => menu_profiles::set_default_profile(),
         MenuCommand::ListProfile => menu_profiles::list_profiles(data::ListType::Summary),

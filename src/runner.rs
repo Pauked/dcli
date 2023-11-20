@@ -26,6 +26,7 @@ pub fn play_from_profile(
             profile.map_id4,
             profile.map_id5,
         ),
+        profile.save_game,
         profile.additional_arguments,
     )?;
 
@@ -46,6 +47,7 @@ pub fn play_from_engine_iwad_and_map(
     engine_id: i32,
     iwad_id: i32,
     map_ids: data::MapIds,
+    save_game: Option<String>,
     additional_arguments: Option<String>,
 ) -> Result<String, eyre::Report> {
     let engine = db::get_engine_by_id(engine_id)?;
@@ -99,6 +101,11 @@ pub fn play_from_engine_iwad_and_map(
                 cmd.arg(&map.path);
             }
         }
+    }
+
+    // Add in save game
+    if let Some(save_game) = save_game {
+        cmd.arg("-loadgame").arg(save_game);
     }
 
     // Add in additional arguments

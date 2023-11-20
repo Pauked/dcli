@@ -96,6 +96,10 @@ pub enum Action {
         #[clap(long, value_delimiter = ',')]
         maps: Option<Vec<String>>,
 
+        /// Save game file to automatically load
+        #[arg(long)]
+        save_game: Option<String>,
+
         /// Additional arguments to pass to the engine
         #[arg(long)]
         args: Option<Vec<String>>,
@@ -331,11 +335,12 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                 engine,
                 iwad,
                 maps,
+                save_game,
                 args,
             } => {
                 debug!(
-                    "AddProfile: name '{}', engine '{}', iwad '{}', maps '{:?}', args '{:?}'",
-                    name, engine, iwad, maps, args
+                    "AddProfile: name '{}', engine '{}', iwad '{}', maps '{:?}', save_game '{:?}', args '{:?}'",
+                    name, engine, iwad, maps, save_game, args
                 );
                 Ok((
                     menu_profiles::cli_add_profile(
@@ -343,6 +348,7 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
                         &paths::resolve_path(&engine),
                         &paths::resolve_path(&iwad),
                         maps,
+                        save_game,
                         args,
                     )?,
                     CliRunMode::Quit,

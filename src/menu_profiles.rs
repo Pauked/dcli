@@ -7,7 +7,7 @@ use tabled::{
     settings::{object::Rows, Modify, Style, Width},
 };
 
-use crate::{data, db, menu_app_settings, menu_common, menu_queues, paths, tui};
+use crate::{constants, data, db, menu_app_settings, menu_common, menu_queues, paths, tui};
 
 pub fn add_profile(
     map_id: Option<i32>,
@@ -80,6 +80,11 @@ pub fn add_profile(
         }
     };
 
+    let save_game =
+        inquire::Text::new("Enter save game file name you want to automatically load (optional):")
+            .with_help_message("For example with GZDoom 'save26.zds'")
+            .prompt_skippable()?;
+
     let additional_arguments =
         inquire::Text::new("Enter any additional arguments (optional):").prompt_skippable()?;
 
@@ -93,6 +98,7 @@ pub fn add_profile(
         map_id3,
         map_id4,
         map_id5,
+        save_game,
         additional_arguments,
         date_created: Utc::now(),
         date_edited: Utc::now(),
@@ -135,6 +141,7 @@ pub fn cli_add_profile(
     engine: &str,
     iwad: &str,
     maps_in: Option<Vec<String>>,
+    save_game: Option<String>,
     args: Option<Vec<String>>,
 ) -> Result<String, eyre::Report> {
     let engines = db::get_engines()?;
@@ -245,6 +252,7 @@ pub fn cli_add_profile(
         map_id3: map_ids[2],
         map_id4: map_ids[3],
         map_id5: map_ids[4],
+        save_game,
         additional_arguments,
         date_created: Utc::now(),
         date_edited: Utc::now(),
@@ -368,6 +376,12 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
     let map_id4 = Some(map_selection[3].id).filter(|&id| id > 0);
     let map_id5 = Some(map_selection[4].id).filter(|&id| id > 0);
 
+    let save_game =
+        inquire::Text::new("Enter save game file name you want to automatically load (optional):")
+            .with_help_message("For example with GZDoom 'save26.zds'")
+            .with_default(&profile_display.save_game)
+            .prompt_skippable()?;
+
     let additional_arguments = inquire::Text::new("Enter any additional arguments (optional):")
         .with_default(&profile_display.additional_arguments)
         .prompt_skippable()?;
@@ -382,6 +396,7 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
         map_id3,
         map_id4,
         map_id5,
+        save_game,
         additional_arguments,
         date_created: profile_display.date_created,
         date_edited: Utc::now(),
@@ -468,6 +483,42 @@ pub fn change_engine_on_profile() -> Result<String, eyre::Report> {
         after_engine.short_display(),
         selected_display_profiles.len()
     ))
+}
+
+pub fn change_save_game_on_profile() -> Result<String, eyre::Report> {
+    let display_profile_list = db::get_profile_display_list(data::ProfileOrder::Name)?;
+    if display_profile_list.is_empty() {
+        return Ok("There are no Profiles to edit the Save Game on".to_string());
+    }
+
+    let profile_display = inquire::Select::new(
+        "Pick the Profile to edit the Save Game on:",
+        display_profile_list,
+    )
+    .with_page_size(tui::MENU_PAGE_SIZE)
+    .with_formatter(&|i| i.value.simple_display())
+    .prompt()?;
+
+    let save_game =
+        inquire::Text::new("Enter save game file name you want to automatically load (optional):")
+            .with_help_message("For example with GZDoom 'save26.zds'")
+            .with_default(&profile_display.save_game)
+            .prompt_skippable()?;
+
+    if save_game.clone().unwrap_or_default() != profile_display.save_game {
+        db::update_profile_save_game(profile_display.id, save_game.clone())?;
+
+        Ok(format!(
+            "Successfully updated Save Game to '{}' on Profile '{}'",
+            save_game.unwrap_or(constants::DEFAULT_NOT_SET.to_string()),
+            profile_display.name
+        ))
+    } else {
+        Ok(format!(
+            "No changes made to Save Game on Profile '{}'",
+            profile_display.name
+        ))
+    }
 }
 
 fn delete_profile_core(
@@ -578,6 +629,7 @@ pub fn list_profiles(list_type: data::ListType) -> Result<String, eyre::Report> 
                 "Engine",
                 "IWAD File",
                 "Map Files",
+                "Save Game",
                 "Additional Args",
                 //"Run Count",
                 //"Date Last Run",
@@ -589,6 +641,7 @@ pub fn list_profiles(list_type: data::ListType) -> Result<String, eyre::Report> 
                     //format!("{} ({})", profile.engine_app_name, profile.engine_version),
                     profile.iwad_file,
                     data::display_combined_tabled_map_strings(&profile.map_files),
+                    profile.save_game,
                     profile.additional_arguments,
                     //profile.run_count.to_string(),
                     //data::display_option_utc_datetime_to_local(&profile.date_last_run),
