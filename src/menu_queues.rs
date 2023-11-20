@@ -4,7 +4,7 @@ use inquire::validator::Validation;
 use log::info;
 use tabled::settings::{object::Rows, Modify, Style, Width};
 
-use crate::{data, db, tui};
+use crate::{constants, data, db, tui};
 
 pub fn add_queue() -> Result<String, eyre::Report> {
     let profiles = db::get_profile_display_list(data::ProfileOrder::Name)?;
@@ -23,9 +23,13 @@ pub fn add_queue() -> Result<String, eyre::Report> {
                 return Ok(Validation::Invalid("Queue name already exists".into()));
             }
 
-            if input.len() < 5 {
+            if input.len() < constants::MIN_NAME_LENGTH {
                 Ok(Validation::Invalid(
-                    "Queue name must be at least 5 characters".into(),
+                    format!(
+                        "Queue name must be at least {} characters",
+                        constants::MIN_NAME_LENGTH
+                    )
+                    .into(),
                 ))
             } else {
                 Ok(Validation::Valid)
@@ -63,6 +67,36 @@ pub fn add_queue() -> Result<String, eyre::Report> {
     ))
 }
 
+pub fn cli_add_queue(queue_name: &str) -> Result<String, eyre::Report> {
+    let queue_result = db::get_queue_by_name(queue_name);
+    if queue_result.is_ok() {
+        return Ok(format!(
+            "Cannot add Queue '{}'. Queue name already exists",
+            queue_name
+        ));
+    }
+    if queue_name.len() < constants::MIN_NAME_LENGTH {
+        return Ok(format!(
+            "Cannot add Queue '{}'. Queue name must be at least {} characters",
+            queue_name,
+            constants::MIN_NAME_LENGTH
+        ));
+    }
+
+    let queue = data::Queue {
+        id: 0,
+        name: queue_name.to_string(),
+        date_created: Utc::now(),
+        date_edited: Utc::now(),
+    };
+    db::add_queue(queue)?;
+
+    Ok(format!(
+        "Successfully created a new Queue - '{}'",
+        queue_name
+    ))
+}
+
 pub fn edit_queue() -> Result<String, eyre::Report> {
     let queue_display_list = db::get_queue_display_list()?;
     if queue_display_list.is_empty() {
@@ -85,9 +119,13 @@ pub fn edit_queue() -> Result<String, eyre::Report> {
                 }
             }
 
-            if input.len() < 5 {
+            if input.len() < constants::MIN_NAME_LENGTH {
                 Ok(Validation::Invalid(
-                    "Queue name must be at least 5 characters".into(),
+                    format!(
+                        "Queue name must be at least {} characters",
+                        constants::MIN_NAME_LENGTH
+                    )
+                    .into(),
                 ))
             } else {
                 Ok(Validation::Valid)
@@ -142,6 +180,30 @@ pub fn edit_queue() -> Result<String, eyre::Report> {
     ))
 }
 
+fn delete_queue_core(queue_id: i32, queue_name: &str, force: bool) -> Result<String, eyre::Report> {
+    if force
+        || inquire::Confirm::new(&format!(
+            "Are you sure you want to delete this Queue - '{}'? This cannot be undone",
+            queue_name
+        ))
+        .with_default(false)
+        .prompt()?
+    {
+        // Delete the queue items first
+        db::delete_all_queue_items(queue_id).wrap_err(format!(
+            "Failed to delete Queue Items for Queue - '{}",
+            queue_name
+        ))?;
+
+        // Now delete the queue
+        db::delete_queue(queue_id).wrap_err(format!("Failed to delete Queue - '{}", queue_name))?;
+
+        return Ok(format!("Successfully deleted Queue '{}'", queue_name));
+    }
+
+    Ok("Canceled Queue deletion".to_string())
+}
+
 pub fn delete_queue() -> Result<String, eyre::Report> {
     let queue_display_list = db::get_queue_display_list()?;
     if queue_display_list.is_empty() {
@@ -154,28 +216,22 @@ pub fn delete_queue() -> Result<String, eyre::Report> {
         .prompt_skippable()?;
 
     if let Some(queue) = queue_selection {
-        if inquire::Confirm::new(&format!(
-            "Are you sure you want to delete this Queue - '{}'? This cannot be undone",
-            queue.name
-        ))
-        .with_default(false)
-        .prompt()?
-        {
-            // Delete the queue items first
-            db::delete_all_queue_items(queue.id).wrap_err(format!(
-                "Failed to delete Queue Items for Queue - '{}",
-                queue.name
-            ))?;
-
-            // Now delete the queue
-            db::delete_queue(queue.id)
-                .wrap_err(format!("Failed to delete Queue - '{}", queue.name))?;
-
-            return Ok(format!("Successfully deleted Queue '{}'", queue.name));
-        }
+        delete_queue_core(queue.id, &queue.name, false)
+    } else {
+        Ok("No changes made to deleting Queue".to_string())
     }
+}
 
-    Ok("Canceled Queue deletion".to_string())
+pub fn cli_delete_queue(queue_name: &str, force: bool) -> Result<String, eyre::Report> {
+    let queue_result = db::get_queue_by_name(queue_name);
+    if let Ok(queue) = queue_result {
+        delete_queue_core(queue.id, &queue.name, force)
+    } else {
+        Ok(format!(
+            "Cannot delete Queue. Queue not found - '{}'",
+            queue_name
+        ))
+    }
 }
 
 pub fn get_profile_selection(
@@ -241,6 +297,46 @@ pub fn get_profile_selection(
     Ok(ordered_items)
 }
 
+fn add_profile_to_queue_core(
+    queue_id: i32,
+    queue_name: &str,
+    profile_id: i32,
+    profile_name: &str,
+) -> Result<String, eyre::Report> {
+    // Check this profile isn't already in the queue
+    let queue_items = db::get_queue_items(queue_id)?;
+    if queue_items
+        .iter()
+        .any(|queue_item| queue_item.profile_id == profile_id)
+    {
+        return Ok(format!(
+            "Cannot add Profile '{}' to Queue '{}' since it already exists",
+            profile_name, queue_name
+        ));
+    }
+
+    // Determine the order index for this new queue item
+    let highest_order = queue_items
+        .iter()
+        .map(|item| item.order_index)
+        .max()
+        .unwrap_or(-1) + 1;
+
+    // Save the new queue item
+    let queue_item = data::QueueItem {
+        id: 0,
+        profile_queue_id: queue_id,
+        profile_id,
+        order_index: highest_order,
+    };
+    db::add_queue_item(queue_item)?;
+
+    Ok(format!(
+        "Successfully added Profile '{}' to Queue '{}'",
+        profile_name, queue_name
+    ))
+}
+
 pub fn add_profile_to_queue(profile: Option<data::ProfileDisplay>) -> Result<String, eyre::Report> {
     let queue_display_list = db::get_queue_display_list()?;
     if queue_display_list.is_empty() {
@@ -267,38 +363,74 @@ pub fn add_profile_to_queue(profile: Option<data::ProfileDisplay>) -> Result<Str
             .prompt()?,
     };
 
-    // Check this profile isn't already in the queue
-    let queue_items = db::get_queue_items(queue_selection.id)?;
-    if queue_items
-        .iter()
-        .any(|queue_item| queue_item.profile_id == profile_selection.id)
+    add_profile_to_queue_core(
+        queue_selection.id,
+        &queue_selection.name,
+        profile_selection.id,
+        &profile_selection.name,
+    )
+}
+
+pub fn cli_add_profile_to_queue(
+    queue_name: &str,
+    profile_name: &str,
+) -> Result<String, eyre::Report> {
+    let queue_result = db::get_queue_by_name(queue_name);
+    if let Ok(queue) = queue_result {
+        let profile_result = db::get_profile_by_name(profile_name);
+        if let Ok(profile) = profile_result {
+            add_profile_to_queue_core(queue.id, &queue.name, profile.id, &profile.name)
+        } else {
+            Ok(format!(
+                "Cannot add Profile to Queue. Profile not found - '{}'",
+                profile_name
+            ))
+        }
+    } else {
+        Ok(format!(
+            "Cannot add Profile to Queue. Queue not found - '{}'",
+            queue_name
+        ))
+    }
+}
+
+fn delete_profile_from_queue_core(
+    queue_name: &str,
+    profile_name: &str,
+    profile_id: i32,
+    queue_items: Vec<data::QueueItem>,
+    force: bool,
+) -> Result<String, eyre::Report> {
+    if force
+        || inquire::Confirm::new(&format!(
+            "Are you sure you want to delete Profile '{}' from Queue '{}'?",
+            profile_name, queue_name
+        ))
+        .with_default(false)
+        .prompt()?
     {
-        return Ok(format!(
-            "Cannot add Profile '{}' to Queue '{}' since it already exists",
-            profile_selection.name, queue_selection.name
-        ));
+        // Get the queue item to delete
+        let selected_queue_item = queue_items
+            .iter()
+            .find(|queue_item| queue_item.profile_id == profile_id);
+
+        if let Some(queue_item) = selected_queue_item {
+            // Delete the queue item. Method will also fix the order indexes
+            db::delete_queue_item(queue_item)?;
+
+            return Ok(format!(
+                "Successfully deleted Profile '{}' from Queue '{}'",
+                profile_name, queue_name
+            ));
+        } else {
+            return Ok(format!(
+                "Cannot delete Profile from Queue. Profile '{}' not found in Queue '{}'",
+                profile_name, queue_name
+            ));
+        }
     }
 
-    // Determine the order index for this new queue item
-    let highest_order = queue_items
-        .iter()
-        .map(|item| item.order_index)
-        .max()
-        .unwrap_or(0);
-
-    // Save the new queue item
-    let queue_item = data::QueueItem {
-        id: 0,
-        profile_queue_id: queue_selection.id,
-        profile_id: profile_selection.id,
-        order_index: highest_order + 1,
-    };
-    db::add_queue_item(queue_item)?;
-
-    Ok(format!(
-        "Successfully added Profile '{}' to Queue '{}'",
-        profile_selection.name, queue_selection.name
-    ))
+    Ok("Canceled Profile deletion from Queue".to_string())
 }
 
 pub fn delete_profile_from_queue() -> Result<String, eyre::Report> {
@@ -340,31 +472,44 @@ pub fn delete_profile_from_queue() -> Result<String, eyre::Report> {
             .with_formatter(&|i| i.value.simple_display())
             .prompt()?;
 
-    if inquire::Confirm::new(&format!(
-        "Are you sure you want to delete Profile '{}' from Queue '{}'?",
-        profile_selection.simple_display(),
-        queue_selection.name
-    ))
-    .with_default(false)
-    .prompt()?
-    {
-        // Get the queue item to delete
-        let selected_queue_item = queue_items
-            .iter()
-            .find(|queue_item| queue_item.profile_id == profile_selection.id)
-            .unwrap();
+    delete_profile_from_queue_core(
+        &queue_selection.name,
+        &profile_selection.name,
+        profile_selection.id,
+        queue_items,
+        false,
+    )
+}
 
-        // Delete the queue item. Method will also fix the order indexes
-        db::delete_queue_item(selected_queue_item)?;
-
-        return Ok(format!(
-            "Successfully deleted Profile '{}' from Queue '{}'",
-            profile_selection.simple_display(),
-            queue_selection.name
-        ));
+pub fn cli_delete_profile_from_queue(
+    queue_name: &str,
+    profile_name: &str,
+    force: bool,
+) -> Result<String, eyre::Report> {
+    let queue_result = db::get_queue_by_name(queue_name);
+    if let Ok(queue) = queue_result {
+        let profile_result = db::get_profile_by_name(profile_name);
+        if let Ok(profile) = profile_result {
+            let queue_items = db::get_queue_items(queue.id)?;
+            delete_profile_from_queue_core(
+                &queue.name,
+                &profile.name,
+                profile.id,
+                queue_items,
+                force,
+            )
+        } else {
+            Ok(format!(
+                "Cannot delete Profile from Queue. Profile not found - '{}'",
+                profile_name
+            ))
+        }
+    } else {
+        Ok(format!(
+            "Cannot delete Profile from Queue. Queue not found - '{}'",
+            queue_name
+        ))
     }
-
-    Ok("Canceled Profile deletion from Queue".to_string())
 }
 
 pub fn list_queues() -> Result<String, eyre::Report> {

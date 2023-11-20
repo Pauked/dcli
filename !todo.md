@@ -7,7 +7,7 @@
 [x] Pick Profile to run off last run date
 [x] When deleting a Profile, check if linked to a Queue. Delete if there and re-order queues.
 [x] Add save game field to Profile with menu option to quickly change
-[ ] CLI for Queues
+[x] CLI for Queues and Profiles
 
 ## Future Dev / Nice to haves
 

@@ -370,7 +370,10 @@ pub fn cli_delete_editor(editor_path: &str, force: bool) -> Result<String, eyre:
     if let Ok(editor) = editor_result {
         delete_editor_core(editor.id, &editor.app_name, force)
     } else {
-        Ok(format!("Editor not found - '{}'", editor_path))
+        Ok(format!(
+            "Cannot delete Editor. Editor not found - '{}'",
+            editor_path
+        ))
     }
 }
 
@@ -392,6 +395,9 @@ pub fn cli_set_default_editor(path: &str) -> Result<String, eyre::Report> {
     if let Ok(editor) = editor_result {
         set_default_editor_core(editor.id, &editor.simple_display())
     } else {
-        Ok(format!("Editor not found - '{}'", path))
+        Ok(format!(
+            "Cannot set defaullt Editor. Editor not found - '{}'",
+            path
+        ))
     }
 }

@@ -50,10 +50,37 @@ $udb_editor = Join-Path $doom_editors_base "UltimateDoomBuilder\builder.exe"
 & $dcli_path add-profile "Heretic" $gzdoom_path $heretic_wad
 & $dcli_path add-profile "Hexen" $gzdoom_path $hexen_wad
 & $dcli_path add-profile "Hexen: Deathkings of the Dark Citadel" $gzdoom_path $hexdd_wad
+& $dcli_path list profiles
+
+# Delete a profile
+& $dcli_path delete-profile "UAC Ultra" --force
+
+# Add a Queues and add Profiles to them
+& $dcli_path add-queue "Doom Fun!"
+& $dcli_path add-profile-to-queue "Doom Fun!" "Classic Doom"
+& $dcli_path add-profile-to-queue "Doom Fun!" "Classic Doom 2"
+& $dcli_path add-queue "RAMP"
+& $dcli_path add-profile-to-queue "RAMP" "RAMP 2021"
+& $dcli_path add-profile-to-queue "RAMP" "RAMP 2023"
+& $dcli_path add-queue "Heretic & Hexen"
+& $dcli_path add-profile-to-queue "Heretic & Hexen" "Heretic"
+& $dcli_path add-profile-to-queue "Heretic & Hexen" "Hexen: Deathkings of the Dark Citadel"
+& $dcli_path add-profile-to-queue "Heretic & Hexen" "Hexen"
+& $dcli_path list queues
+
+# Delete a profile from a queue
+& $dcli_path delete-profile-from-queue "Heretic & Hexen" "Hexen: Deathkings of the Dark Citadel" --force
+
+# Delete a queue
+& $dcli_path delete-queue "Doom Fun!" --force
 
 # Add an editor
 & $dcli_path add-editor $slade_editor
 & $dcli_path add-editor $udb_editor
+& $dcli_path list editors
+
+# Delete an editor
+& $dcli_path delete-editor $slade_editor --force
 
 # Set defaults
 & $dcli_path set-default --engine $dsda_doom_path
@@ -81,6 +108,8 @@ $udb_editor = Join-Path $doom_editors_base "UltimateDoomBuilder\builder.exe"
 
 # Show what we added
 & $dcli_path list profiles
+& $dcli_path list queues
+& $dcli_path list editors
 & $dcli_path list app-settings
 & $dcli_path list play-settings
 

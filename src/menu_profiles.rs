@@ -43,9 +43,13 @@ pub fn add_profile(
                 return Ok(Validation::Invalid("Profile name already exists".into()));
             }
 
-            if input.len() < 5 {
+            if input.len() < constants::MIN_NAME_LENGTH {
                 Ok(Validation::Invalid(
-                    "Profile name must be at least 5 characters".into(),
+                    format!(
+                        "Profile name must be at least {} characters",
+                        constants::MIN_NAME_LENGTH
+                    )
+                    .into(),
                 ))
             } else {
                 Ok(Validation::Valid)
@@ -174,10 +178,11 @@ pub fn cli_add_profile(
             name
         ));
     }
-    if name.len() < 5 {
+    if name.len() < constants::MIN_NAME_LENGTH {
         return Ok(format!(
-            "Cannot add Profile '{}'. Profile name must be at least 5 characters",
-            name
+            "Cannot add Profile '{}'. Profile name must be at least {} characters",
+            name,
+            constants::MIN_NAME_LENGTH
         ));
     }
 
@@ -188,7 +193,7 @@ pub fn cli_add_profile(
         Some(engine) => engine,
         None => {
             return Ok(format!(
-                "Cannot add Profile '{}', Engine not found - '{}'",
+                "Cannot add Profile '{}'. Engine not found - '{}'",
                 name, engine
             ))
         }
@@ -201,7 +206,7 @@ pub fn cli_add_profile(
         Some(iwad) => iwad,
         None => {
             return Ok(format!(
-                "Cannot add Profile '{}', IWAD not found - '{}'",
+                "Cannot add Profile '{}'. IWAD not found - '{}'",
                 name, iwad
             ))
         }
@@ -211,7 +216,7 @@ pub fn cli_add_profile(
         Some(maps_unwrapped) => {
             if maps_unwrapped.len() > 5 {
                 return Ok(format!(
-                    "Cannot add Profile '{}', a max of 5 maps can be specified per Profile",
+                    "Cannot add Profile '{}'. A max of 5 maps can be specified per Profile",
                     name
                 ));
             }
@@ -294,7 +299,10 @@ pub fn cli_set_default_profile(name: &str) -> Result<String, eyre::Report> {
     if let Ok(profile) = profile_result {
         set_profile_as_default(profile.id, &profile.name, true)
     } else {
-        Ok(format!("Profile not found - '{}'", name))
+        Ok(format!(
+            "Cannot set Default Profile. Profile not found - '{}'",
+            name
+        ))
     }
 }
 
@@ -346,9 +354,13 @@ pub fn edit_profile() -> Result<String, eyre::Report> {
                 }
             }
 
-            if input.len() < 5 {
+            if input.len() < constants::MIN_NAME_LENGTH {
                 Ok(Validation::Invalid(
-                    "Profile name must be at least 5 characters".into(),
+                    format!(
+                        "Profile name must be at least {} characters",
+                        constants::MIN_NAME_LENGTH
+                    )
+                    .into(),
                 ))
             } else {
                 Ok(Validation::Valid)
@@ -572,7 +584,10 @@ pub fn cli_delete_profile(profile_name: &str, force: bool) -> Result<String, eyr
     if let Ok(profile) = profile_result {
         delete_profile_core(profile.id, &profile.name, force)
     } else {
-        Ok(format!("Profile not found - '{}'", profile_name))
+        Ok(format!(
+            "Cannot delete Profile. Profile not found - '{}'",
+            profile_name
+        ))
     }
 }
 

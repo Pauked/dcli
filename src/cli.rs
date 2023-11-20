@@ -115,6 +115,44 @@ pub enum Action {
         force: bool,
     },
 
+    /// Add a Queue to group Profiles together
+    AddQueue {
+        /// Queue name
+        name: String,
+    },
+
+    /// Delete a Queue
+    DeleteQueue {
+        /// Queue name
+        name: String,
+
+        /// Force queue delete and skip confirmation prompt
+        #[arg(long, default_value = "false")]
+        force: bool,
+    },
+
+    /// Add a Profile to a Queue
+    AddProfileToQueue {
+        /// Queue name
+        queue_name: String,
+
+        /// Profile name
+        profile_name: String,
+    },
+
+    /// Delete a Profile from a Queue
+    DeleteProfileFromQueue {
+        /// Queue name
+        queue_name: String,
+
+        /// Profile name to delete
+        profile_name: String,
+
+        /// Force queue item delete and skip confirmation prompt
+        #[arg(long, default_value = "false")]
+        force: bool,
+    },
+
     /// Add a new Editor to view and edit maps
     AddEditor {
         /// Editor path
@@ -356,6 +394,26 @@ pub fn run_cli_action(args: Args) -> Result<(String, CliRunMode), eyre::Report> 
             }
             Action::DeleteProfile { name, force } => Ok((
                 menu_profiles::cli_delete_profile(&name, force)?,
+                CliRunMode::Quit,
+            )),
+            Action::AddQueue { name } => Ok((menu_queues::cli_add_queue(&name)?, CliRunMode::Quit)),
+            Action::DeleteQueue { name, force } => Ok((
+                menu_queues::cli_delete_queue(&name, force)?,
+                CliRunMode::Quit,
+            )),
+            Action::AddProfileToQueue {
+                queue_name,
+                profile_name,
+            } => Ok((
+                menu_queues::cli_add_profile_to_queue(&queue_name, &profile_name)?,
+                CliRunMode::Quit,
+            )),
+            Action::DeleteProfileFromQueue {
+                queue_name,
+                profile_name,
+                force,
+            } => Ok((
+                menu_queues::cli_delete_profile_from_queue(&queue_name, &profile_name, force)?,
                 CliRunMode::Quit,
             )),
             Action::AddEditor {
