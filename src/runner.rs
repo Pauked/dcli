@@ -105,7 +105,9 @@ pub fn play_from_engine_iwad_and_map(
 
     // Add in save game
     if let Some(save_game) = save_game {
-        cmd.arg("-loadgame").arg(save_game);
+        if !save_game.trim().is_empty() {
+            cmd.arg("-loadgame").arg(save_game);
+        }
     }
 
     // Add in additional arguments
