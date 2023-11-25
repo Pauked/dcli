@@ -116,8 +116,9 @@ pub fn play_from_engine_iwad_and_map(
     // Add in shared play settings
     let play_settings = db::get_play_settings()?;
     if play_settings.comp_level.is_some() {
+        let complevel_value = play_settings.comp_level.unwrap() as i32;
         cmd.arg("-complevel")
-            .arg(play_settings.comp_level.unwrap().to_string());
+            .arg(complevel_value.to_string());
     }
     if play_settings.config_file.is_some() {
         cmd.arg("-config").arg(play_settings.config_file.unwrap());
