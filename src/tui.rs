@@ -624,7 +624,7 @@ pub fn menu_prompt(
         }
     };
 
-    let filtered_selections = selections
+    let filtered_selections: Vec<String> = selections
         .into_iter()
         .filter_map(|(cmd, cmd_mode)| {
             if cmd_mode == *menu_mode || menu_mode == &MenuMode::Full {
@@ -635,22 +635,28 @@ pub fn menu_prompt(
         })
         .collect();
 
+    // Number the menu options so you search by number
+    let numbered_options: Vec<String> = filtered_selections
+        .iter()
+        .enumerate()
+        .map(|(index, option)| format!("{}. {}", index + 1, option))
+        .collect();
+
     let final_help_message = format!(
         "↑↓ to move, enter to select, type to filter]\n[{}",
         help_message
     );
-    let choice = inquire::Select::new(
-        &format!("Select a {} option:", menu_name),
-        filtered_selections,
-    )
-    .with_page_size(MENU_PAGE_SIZE)
-    .with_help_message(&final_help_message)
-    .prompt_skippable()
-    .unwrap();
+    let choice = inquire::Select::new(&format!("Select a {} option:", menu_name), numbered_options)
+        .with_page_size(MENU_PAGE_SIZE)
+        .with_help_message(&final_help_message)
+        .prompt_skippable()
+        .unwrap();
 
     match choice {
         Some(choice) => {
-            let first_part = choice.split('(').next().unwrap_or("").trim();
+            let line = choice.split_once('.').unwrap().1.trim();
+            // log::info!("line: {:?}", line);
+            let first_part = line.split('(').next().unwrap_or("").trim();
             match MenuCommand::from_str(first_part) {
                 Ok(option) => Ok(option),
                 _ => Ok(MenuCommand::Ignore),

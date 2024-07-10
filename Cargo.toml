@@ -1,6 +1,6 @@
 [package]
 name = "dcli"
-version = "0.3.17"
+version = "0.3.18"
 edition = "2021"
 description = "dcli - Play Doom Quick"
 authors = ["Paul Healey"]
@@ -26,26 +26,26 @@ eyre = "0.6"
 color-eyre = { version = "0.6", default-features = false }
 log = "0.4"
 log4rs = "1"
-owo-colors = "3"
-strum = "0.25"
-strum_macros = "0.25"
+owo-colors = "4"
+strum = "0.26"
+strum_macros = "0.26"
 walkdir = "2.3"
 indicatif = "0.17"
 powershell_script = "1.1"
 regex = "1.9"
-tabled = "0.14"
-inquire = "0.6"
-clearscreen = "2"
+tabled = "0.15"
+inquire = "0.7"
+clearscreen = "3"
 plist = "1.5"
 shlex = "1.2"
 chrono = "0.4"
 clap = { version = "4", features = ["derive", "cargo"] }
 dirs = "5"
-reqwest = { version = "0.11", features = ["json", "stream"] }
-zip = "0.6"
+reqwest = { version = "0.12", features = ["json", "stream"] }
+zip = "2"
 urlencoding = "2.1"
-strsim = "0.10"
+strsim = "0.11"
 
 [dependencies.uuid]
-version = "1.4"
+version = "1.9"
 features = ["v4"]

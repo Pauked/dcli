@@ -471,7 +471,7 @@ pub fn display_queue_profiles(profiles: &[ProfileDisplay]) -> String {
     result
 }
 
-pub fn display_combined_profiles_simple(profiles: &Vec<ProfileDisplay>) -> String {
+pub fn display_combined_profiles_simple(profiles: &[ProfileDisplay]) -> String {
     if profiles.is_empty() {
         return constants::EMPTY_QUEUE.to_string();
     }

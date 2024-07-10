@@ -266,7 +266,7 @@ pub fn open_url(url: &str, description: &str) -> Result<String, eyre::Report> {
     #[cfg(target_os = "macos")]
     cmd.arg(url);
     #[cfg(target_os = "windows")]
-    cmd.args(["/C", "start", "", &url]);
+    cmd.args(["/C", "start", "", url]);
 
     cmd.stdout(Stdio::null())
         .stderr(Stdio::null())

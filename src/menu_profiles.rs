@@ -642,7 +642,7 @@ pub fn list_profiles(list_type: data::ListType) -> Result<String, eyre::Report> 
             .to_string(),
         data::ListType::Summary => {
             let mut builder = Builder::default();
-            builder.set_header([
+            builder.push_record([
                 "Name",
                 "Engine",
                 "IWAD File",
