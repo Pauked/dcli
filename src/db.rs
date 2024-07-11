@@ -1080,7 +1080,6 @@ pub fn get_queue_display_list() -> Result<Vec<data::QueueDisplay>, eyre::Report>
             name: queue.name,
             profiles: profile_list,
             date_created: queue.date_created,
-            date_edited: queue.date_edited,
         });
     }
 

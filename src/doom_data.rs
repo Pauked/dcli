@@ -139,7 +139,6 @@ pub enum InternalWadType {
 #[derive(Clone, Debug)]
 pub struct InternalWad {
     pub file_name: String,
-    pub name: String,
     pub internal_wad_type: InternalWadType,
 }
 
@@ -148,62 +147,50 @@ pub fn get_internal_wad_list() -> Vec<InternalWad> {
     vec![
         InternalWad {
             file_name: "DOOM1.WAD".to_string(),
-            name: InternalWadType::DoomShareware.to_string(),
             internal_wad_type: InternalWadType::DoomShareware,
         },
         InternalWad {
             file_name: "DOOM.WAD".to_string(),
-            name: InternalWadType::Doom.to_string(),
             internal_wad_type: InternalWadType::Doom,
         },
         InternalWad {
             file_name: "DOOM2.WAD".to_string(),
-            name: InternalWadType::Doom2.to_string(),
             internal_wad_type: InternalWadType::Doom2,
         },
         InternalWad {
             file_name: "TNT.WAD".to_string(),
-            name: InternalWadType::Tnt.to_string(),
             internal_wad_type: InternalWadType::Tnt,
         },
         InternalWad {
             file_name: "PLUTONIA.WAD".to_string(),
-            name: InternalWadType::Plutonia.to_string(),
             internal_wad_type: InternalWadType::Plutonia,
         },
         InternalWad {
             file_name: "HERETIC1.WAD".to_string(),
-            name: InternalWadType::HereticShareware.to_string(),
             internal_wad_type: InternalWadType::HereticShareware,
         },
         InternalWad {
             file_name: "HERETIC.WAD".to_string(),
-            name: InternalWadType::Heretic.to_string(),
             internal_wad_type: InternalWadType::Heretic,
         },
         InternalWad {
             file_name: "HEXEN.WAD".to_string(),
-            name: InternalWadType::Hexen.to_string(),
             internal_wad_type: InternalWadType::Hexen,
         },
         InternalWad {
             file_name: "HEXDD.WAD".to_string(),
-            name: InternalWadType::HexenDeathkings.to_string(),
             internal_wad_type: InternalWadType::HexenDeathkings,
         },
         InternalWad {
             file_name: "STRIFE0.WAD".to_string(),
-            name: InternalWadType::StrifeTeaser.to_string(),
             internal_wad_type: InternalWadType::StrifeTeaser,
         },
         InternalWad {
             file_name: "STRIFE1.WAD".to_string(),
-            name: InternalWadType::Strife.to_string(),
             internal_wad_type: InternalWadType::Strife,
         },
         InternalWad {
             file_name: "VOICES.WAD".to_string(),
-            name: InternalWadType::StrifeVoices.to_string(),
             internal_wad_type: InternalWadType::StrifeVoices,
         },
     ]

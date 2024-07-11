@@ -172,7 +172,6 @@ pub fn get_file_version(full_path: &str) -> Result<data::FileVersion, eyre::Repo
 
         return Ok(data::FileVersion {
             app_name: app_name.to_string(),
-            path: full_path.to_string(),
             prefix: "".to_string(),
             major: major.parse::<u32>().unwrap_or(0),
             minor: minor.parse::<u32>().unwrap_or(0),
@@ -189,7 +188,6 @@ pub fn get_file_version(full_path: &str) -> Result<data::FileVersion, eyre::Repo
             Some((prefix, major, minor, build, revision, suffix)) => {
                 return Ok(data::FileVersion {
                     app_name,
-                    path: full_path.to_string(),
                     prefix,
                     major,
                     minor,
@@ -240,7 +238,6 @@ pub fn get_prboom_file_version(full_path: &str) -> Result<data::FileVersion, eyr
 
                 Ok(data::FileVersion {
                     app_name: app_name.to_string(),
-                    path: full_path.to_string(),
                     prefix: "".to_string(),
                     major,
                     minor,

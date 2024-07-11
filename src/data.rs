@@ -21,7 +21,6 @@ const DISPLAY_WIDTH_LONG: usize = 80;
 #[derive(Clone, Debug)]
 pub struct FileVersion {
     pub app_name: String,
-    pub path: String,
     pub prefix: String,
     pub major: u32,
     pub minor: u32,
@@ -426,8 +425,6 @@ pub struct QueueDisplay {
     pub profiles: Vec<ProfileDisplay>,
     #[tabled(skip)]
     pub date_created: DateTime<Utc>,
-    #[tabled(skip)]
-    pub date_edited: DateTime<Utc>,
 }
 
 impl QueueDisplay {
