@@ -191,10 +191,11 @@ pub fn init_engines(default_folder: &str, force: bool) -> Result<String, eyre::R
     } else {
         let path = inquire::Text::new("Folder to search for Engines:")
             .with_validator(|input: &str| {
-                if paths::folder_exists(&paths::resolve_path(input)) {
+                let resolved_path = &paths::resolve_path(input);
+                if paths::folder_exists(resolved_path) {
                     Ok(Validation::Valid)
                 } else {
-                    Ok(Validation::Invalid("Folder does not exist".into()))
+                    Ok(Validation::Invalid(format!("Folder does not exist - '{}'", resolved_path).into()))
                 }
             })
             .with_default(default_folder)
@@ -365,10 +366,11 @@ pub fn init_iwads(default_folder: &str, force: bool) -> Result<String, eyre::Rep
     } else {
         let path = inquire::Text::new("Folder to search for IWADs (Internal WAD files):")
             .with_validator(|input: &str| {
-                if paths::folder_exists(&paths::resolve_path(input)) {
+                let resolved_path = &paths::resolve_path(input);
+                if paths::folder_exists(resolved_path) {
                     Ok(Validation::Valid)
                 } else {
-                    Ok(Validation::Invalid("Folder does not exist".into()))
+                    Ok(Validation::Invalid(format!("Folder does not exist - '{}'", resolved_path).into()))
                 }
             })
             .with_default(default_folder)
@@ -497,10 +499,11 @@ pub fn init_maps(
     } else {
         let paths = inquire::Text::new("Folder to search for Maps:")
             .with_validator(|input: &str| {
-                if paths::folder_exists(&paths::resolve_path(input)) {
+                let resolved_path = &paths::resolve_path(input);
+                if paths::folder_exists(resolved_path) {
                     Ok(Validation::Valid)
                 } else {
-                    Ok(Validation::Invalid("Folder does not exist".into()))
+                    Ok(Validation::Invalid(format!("Folder does not exist - '{}'", resolved_path).into()))
                 }
             })
             .with_default(default_folder)

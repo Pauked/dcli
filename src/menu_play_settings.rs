@@ -513,7 +513,7 @@ pub fn list_play_settings() -> Result<String, eyre::Report> {
         db::get_play_settings().wrap_err("Unable to get Play Settings listing".to_string())?;
 
     let table = tabled::Table::new(vec![play_settings])
-        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words()))
+        .with(Modify::new(Rows::new(1..)).with(Width::wrap(50).keep_words(true)))
         .with(Rotate::Left)
         .with(Rotate::Top)
         .with(Style::modern())

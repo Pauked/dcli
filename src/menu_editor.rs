@@ -130,10 +130,11 @@ pub fn add_editor() -> Result<String, eyre::Report> {
     let editor_search_folder: String = {
         let path = inquire::Text::new("Folder to search for Editor:")
             .with_validator(|input: &str| {
-                if paths::folder_exists(&paths::resolve_path(input)) {
+                let resolved_path = &paths::resolve_path(input);
+                if paths::folder_exists(resolved_path) {
                     Ok(Validation::Valid)
                 } else {
-                    Ok(Validation::Invalid("Folder does not exist".into()))
+                    Ok(Validation::Invalid(format!("Folder does not exist - '{}'", resolved_path).into()))
                 }
             })
             .with_default(&default_folder)

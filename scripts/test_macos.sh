@@ -6,13 +6,15 @@
 #
 # Test script to initialise the database with some profiles and run various commands.
 # Written for macOS. Should run without errors.
+#
+# If you have issues with your GzDoom config, look in ~/Library/Preferences/gzdoom.ini
 
 # Set top level variables
 base_path="$DROPBOX_PATH/Games/Doom"
 dcli_path="./target/debug/dcli"
 
 # Engine paths
-gzdoom_path="$base_path/Apps/GzDoom4111Mac/gzdoom.app"
+gzdoom_path="$base_path/Apps/GzDoom4140Mac/gzdoom.app"
 
 # IWAD paths
 maps_path="$base_path/Maps"
