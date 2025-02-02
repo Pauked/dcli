@@ -95,7 +95,7 @@ fn find_txt_files(directory: &Path) -> Result<Vec<String>, eyre::Report> {
         let entry = entry?;
         let path = entry.path();
 
-        if path.is_file() && path.extension().map_or(false, |e| e == doom_data::EXT_TXT) {
+        if path.is_file() && path.extension().is_some_and(|e| e == doom_data::EXT_TXT) {
             txt_files.push(path.to_string_lossy().into_owned());
         }
     }
